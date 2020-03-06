@@ -8,7 +8,6 @@ from M04_PhyProductionMgr import objWarehouse, objMachine
 from M05_ProductManager import objLot
 from M06_Utility import comUtility
 
-
 class Factory:
     def __init__(self, simul: PE_Simulator, facID: str):
         # --- Factory Standard 관련 속성 ---
