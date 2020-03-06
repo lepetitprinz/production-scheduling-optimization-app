@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import pandas as pd
 import datetime
 
 from M01_Simulator import PE_Simulator
@@ -47,9 +47,51 @@ class Factory:
 
     def SetupResumeData(self):
         # Warehouse 의 Lot을 배정하는 처리.
-
         wh_rm: objWarehouse.Warehouse = self._find_warehouse_by_id(wh_id="RM")
-        wh_rm.setup_resume_data(self._dataMgr.df_demand)
+        df_demand = self._dataMgr.df_demand
+        df_demand_lot_sizing = self._setDmdProdLotSizing(df_demand)
+        wh_rm.setup_resume_data(df_demand_lot_sizing)
+
+    def _setDmdProdLotSizing(self, demand):
+
+        minLotSize = comUtility.Utility.MinLotSize
+        maxLotSize = comUtility.Utility.MaxLotSize
+
+        dmdProdLot = pd.DataFrame(columns=['yyyymm', 'product', 'lotId', 'qty', 'region'])
+
+        idx = 0
+        for _, row in demand.iterrows():
+            # Lot Sizing
+            if row['qty'] < minLotSize:
+                dmdProdLot.loc[idx, 'qty'] = minLotSize
+                dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
+                dmdProdLot.loc[idx, 'product'] = row['product']
+                dmdProdLot.loc[idx, 'region'] = row['region']
+                idx += 1
+            elif row['qty'] > minLotSize and row['qty'] < maxLotSize:
+                dmdProdLot.loc[idx, 'qty'] = row['qty']
+                dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
+                dmdProdLot.loc[idx, 'product'] = row['product']
+                dmdProdLot.loc[idx, 'region'] = row['region']
+                idx += 1
+            else:
+                quotient = row['qty'] // maxLotSize
+                remainder = row['qty'] % maxLotSize
+                # Maximum Lot 단위 처리
+                for i in range(quotient):
+                    dmdProdLot.loc[idx, 'qty'] = maxLotSize
+                    dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
+                    dmdProdLot.loc[idx, 'product'] = row['product'] + '_' + str(i+1)
+                    dmdProdLot.loc[idx, 'region'] = row['region']
+                    idx += 1
+                # 나머지 lot 추가 처리
+                dmdProdLot.loc[idx, 'qty'] = remainder
+                dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
+                dmdProdLot.loc[idx, 'product'] = row['product'] + '_' + str(quotient+1)
+                dmdProdLot.loc[idx, 'region'] = row['region']
+                idx += 1
+
+        return dmdProdLot
 
         # facID = self.ID
         # totalWipList = []

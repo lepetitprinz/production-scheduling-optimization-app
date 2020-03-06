@@ -12,28 +12,29 @@ class Lot(object):
 
     lot_id_regex: re.Pattern = re.compile(comEnum.RegexCollection.lot_id.value)
     lot_id_format: dict = {
-        "Grade": 0,
-        "PackSize": 1,
-        "PackType": 2
-    }
+                            "Grade": 0,
+                            "PackSize": 1,
+                            "PackType": 2
+                          }
 
     def __init__(self, id: str, loc: object):
         self.Id: str = id
         self.Grade: str = ""
+        self.FinalProd:str = ""
         self.PackSize: str = ""
         self.PackType: str = ""
 
-        self.Region: str = ""
-
+        self.DueDate: str = ""
         self.Duration: float = 0.0
         self.PackDuration: float = 0.0
         self.ReactDuration: float = 0.0
 
-        self.DueDate: str = ""
         self.StartTimeMin: str = ""
         self.StartTimeMac: str = ""
 
+        self.Region: str = ""
         self.Qty: float = 0.0
+        self.Priority: int = None
 
         self.FromLoc: object = loc
         self.Location: object = loc
@@ -75,7 +76,6 @@ class Lot(object):
             )
         rslt: float = dict_prod_yield[grade]
         return rslt
-
 
     def _get_react_duration(self, grade: str):
 

@@ -15,6 +15,10 @@ class Utility:
     DayStartTime: str = "00:00:00"
     runtime: int = 0
 
+    # Lot 정보
+    MinLotSize: int = 50
+    MaxLotSize: int = 400
+
     @staticmethod
     def setup_object(simul: PE_Simulator):
         Utility._simul = simul
