@@ -1,3 +1,4 @@
 class Lot:
     def __init__(self):
-        self.
+        self.ID
+        self.Size
