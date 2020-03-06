@@ -1,6 +1,8 @@
 
 from M03_Site import simFactoryMgr
 from M02_DataManager import dbDataMgr
+from M03_Site import simFactoryMgr, simOperMgr
+from M05_ProductManager import objLot
 from M06_Utility import comUtility
 
 import numpy as np
@@ -89,46 +91,132 @@ class Simulator:
 
         return dmdReactorProdDict
 
+    def getDmdGradeList(self, dmdProdLotObjList):
+        dmdGradeList = []
 
+        for prodLotObj in dmdProdLotObjList:
+            lotObj:objLot.Lot = prodLotObj
+            if lotObj.Grade not in dmdGradeList:
+                dmdGradeList.append(lotObj.Grade)
 
+        return dmdGradeList
 
+    def getLotDueDate(self, lotObj):
+        return lotObj.DueDate
 
+    def getGradeDueSeq(self, dmdProdLotObjList:list):
+        dmdGradeList = self.getDmdGradeList(dmdProdLotObjList)
 
+        gradeDueSeqDict = {}
+        # 모든 Grade를 Dictionary Key로 setting
+        for dmdGrade in dmdGradeList:
+            gradeDueSeqDict.update({dmdGrade, []})
 
+        # Grade 별 Lot List 생성
+        for prodLotObj in dmdProdLotObjList:
+            lotObj:objLot.Lot = prodLotObj
+            gradeList = gradeDueSeqDict[lotObj.Grade]
+            gradeList.append(lotObj)
+            gradeDueSeqDict.update({lotObj.Grade : gradeList})
 
+        # Grade별 Due date 기준으로 sorting
+        for key, val in gradeDueSeqDict.items():
+            sorted_val = val.sort(key=self.getLotDueDate)
+            gradeDueSeqDict.update({key:sorted_val})
 
-    def getMinProdWheelCost(self, dmdReactorProdDict:dict, gradeCostDict:dict, costCalStandard:str = 'hour'):
+        return gradeDueSeqDict
 
-        '''
-        dmdReactorProdDict : {gradeGroup1: [GRADE_A, ...],
-                              gradeGroup2 : [GRADE_D, ...]}
-        gradeCostDict : {(GRADE_A, GRADE_B) : [Hour, OG_Qty],
-                         (GRADE_A, GRADE_C) : [Hour, OG_Qty],
-                         ...}
-        costCalStandard : hour or ogQty
-        '''
+    def getProdWheelCostDict(self, prodWheelDf, costCalStd:str='hour'):
 
         appliedGradeCost = {}
 
-        if costCalStandard == 'hour':
-            for key, val in gradeCostDict.items():
-                appliedGradeCost.update({key, val[0]})
-        else:
-            for key, val in gradeCostDict.items():
-                appliedGradeCost.update({key, val[1]})
+        for i in range(len(prodWheelDf)):
+            if costCalStd == 'hour':
+                appliedGradeCost[(prodWheelDf.loc[i, 'grade_from'], prodWheelDf.loc[i, 'grade_to'])] = prodWheelDf.loc[i, 'hour']
+            elif costCalStd == 'og':
+                appliedGradeCost[(prodWheelDf.loc[i, 'grade_from'], prodWheelDf.loc[i, 'grade_to'])] = prodWheelDf.loc[i, 'og']
+            else:
+                continue   # hour / og weight 버전 추가
 
-        gradeGroupSeq = []
-        gradeSeq = []
+        return appliedGradeCost
 
-        for val in dmdReactorProdDict.values():
-            gradeGroupSeq.append(list(permutations(val, len(val))))
+    def minCostProdWheelSeq(self, dmdProdLotObjList:list, gradeDueSeqDict:dict, prodWheelDf:dict):
+        '''
+        :param dmdProdLotObjList: [prodLotObj1, prodLotObj2, prodLotObj3, prodLotObj4, ...]
+        :param gradeDueSeqDict: {}
+        :param prodWheelDict: {(grade_X, grade_Y) : Hour / OG Qty / Weighted Cost}
+        :param costCalStd:
+        :return:
+        '''
 
-        # Make production schedule sequence
-        for group1 in gradeGroupSeq[0]:
-            group1 = list(group1)
-            for group2 in gradeGroupSeq[1]:
-                group2 = list(group2)
-                seq = np.append(group1, group2)
-                gradeSeq.append(seq)
+        minCostProdSeqList = []
+        prodWheelDict = self.getProdWheelCostDict(prodWheelDf)
+
+        prodSeqArr = []
+        # 각 Grade 별 product 초기화
+        for val in gradeDueSeqDict.values():
+            prodSeqArr = prodSeqArr.append[[val[0]]]     # 각 Grade 별 duedate가 가장 작은 값으로 초기화
+
+        for prodSeq in prodSeqArr:
+            # prodSeq: [FistProdLotObj]
+            candidate = {}
+            for prodLotObj in dmdProdLotObjList:
+                if prodLotObj != prodSeq[0]:
+                    lotObj:objLot.Lot = prodLotObj
+                    ### 제약조건 반영
+                    ## 1. 납기 조건
+                    if True == True:
+                        ## 2. 제약 조건
+                        if True == True:
+                            candidate.update({(prodSeq, lotObj) : prodWheelDict[(prodSeq, lotObj)]})
+
+        return minCostProdSeqList
+
+    def getBestSeq(self):
 
 
+
+    ########################################
+    # 제약
+    ########################################
+
+    # Time Constraint
+    # 1.Reactor Constraint
+
+    # 2.Packaging Constraint
+
+
+
+    # def getMinProdWheelCost(self, dmdReactorProdDict:dict, gradeCostDict:dict, costCalStandard:str = 'hour'):
+    #
+    #     '''
+    #     dmdReactorProdDict : {gradeGroup1: [GRADE_A, ...],
+    #                           gradeGroup2 : [GRADE_D, ...]}
+    #     gradeCostDict : {(GRADE_A, GRADE_B) : [Hour, OG_Qty],
+    #                      (GRADE_A, GRADE_C) : [Hour, OG_Qty],
+    #                      ...}
+    #     costCalStandard : hour or ogQty
+    #     '''
+    #
+    #     appliedGradeCost = {}
+    #
+    #     if costCalStandard == 'hour':
+    #         for key, val in gradeCostDict.items():
+    #             appliedGradeCost.update({key, val[0]})
+    #     else:
+    #         for key, val in gradeCostDict.items():
+    #             appliedGradeCost.update({key, val[1]})
+    #
+    #     gradeGroupSeq = []
+    #     gradeSeq = []
+    #
+    #     for val in dmdReactorProdDict.values():
+    #         gradeGroupSeq.append(list(permutations(val, len(val))))
+    #
+    #     # Make production schedule sequence
+    #     for group1 in gradeGroupSeq[0]:
+    #         group1 = list(group1)
+    #         for group2 in gradeGroupSeq[1]:
+    #             group2 = list(group2)
+    #             seq = np.append(group1, group2)
+    #             gradeSeq.append(seq)

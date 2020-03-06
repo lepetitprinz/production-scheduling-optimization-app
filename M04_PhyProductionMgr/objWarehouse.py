@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
-
+import numpy
 from M03_Site import simFactoryMgr
 from M05_ProductManager import objLot
 
@@ -11,6 +11,8 @@ class Warehouse:
         self._factory: simFactoryMgr = factory
         self.id: str = wh_id
         self.lot_obj_list: list = []
+        self.capacity:int = 0
+
 
     def setup_object(self):
         pass
