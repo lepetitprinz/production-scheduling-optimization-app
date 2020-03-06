@@ -1,3 +1,5 @@
+
+from M03_Site import simFactoryMgr
 from M02_DataManager import dbDataMgr
 from M03_Site import simFactoryMgr, simOperMgr
 from M05_ProductManager import objLot

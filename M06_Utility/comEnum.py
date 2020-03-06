@@ -4,5 +4,5 @@ import enum
 
 
 class RegexCollection(enum.Enum):
-    day_start_time: str = '[0-2][0-9][:][0-5][0-9]:[0-5][0-9]'
-
+    day_start_time: str = r'[0-2][0-9]:[0-5][0-9]:[0-5][0-9]'
+    lot_id: str = r'[A-Z]*[_][0-9]/[A-Z][0-9]/[a-zA-Z]*'
