@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+
 from M03_Site import simFactoryMgr
+
 
 class Machine(object):
     def __init__(self, factory: simFactoryMgr, mac_id: str):

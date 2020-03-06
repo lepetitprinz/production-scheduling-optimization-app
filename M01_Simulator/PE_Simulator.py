@@ -11,7 +11,7 @@ class Simulator:
         self._facObjList: list = []
 
     def SetupDbObject(self):
-        self.DataMgr = dbDataMgr.DataManager()
+        self.DataMgr = dbDataMgr.DataManager(source="file")
         self.DataMgr.SetupObject()
         self._util.setup_object(simul=self)
         self._util.set_runtime(runtime=0)
@@ -66,7 +66,6 @@ class Simulator:
         self._facObjList.append(facObj)
 
 
-
     def getDmdReactorProdGroup(self, gradeGroup:dict, dmdGradeList:list):
         '''
         gradeGroup: {gradeGroup1 : [GRADE_A, ...],
@@ -87,9 +86,6 @@ class Simulator:
                             dmdReactorProdDict.update({key: valList})
 
         return dmdReactorProdDict
-
-    def
-
 
 
 

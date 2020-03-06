@@ -24,11 +24,12 @@ class Warehouse:
                 "Lot 객체가 아닌것을 Lot 객체 리스트에 Append 하려 하고 있습니다."
             )
         self.lot_obj_list.append(lot_obj)
-        self._factory._lot_obj_list.append(lot_obj)
+        self._factory._register_lot_to(lot_obj=lot_obj, to="self")
 
 
 def test():
     pass
+
 
 if __name__ == '__main__':
     test()

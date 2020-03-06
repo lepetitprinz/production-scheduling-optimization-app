@@ -202,14 +202,24 @@ class Factory:
         whObj.setup_object()
         self.WhouseObjList.append(whObj)
 
-    def _register_lot_to(self, lot_obj_list: list, to: str):
-        if not (self._chk_is_machine(attr=to) or self._chk_is_warehouse(attr=to)):
+    def _register_lot_to(self, lot_obj: objLot, to: str):
+        if not (self._chk_is_type(attr=to, obj_type=objMachine.Machine) or
+                self._chk_is_type(attr=to, obj_type=objWarehouse.Warehouse) or
+                to == "self"):
             raise TypeError(
                 "Machine 이나 Warehouse 가 아닌 곳에 Lot 을 등록하려 합니다."
             )
-        for obj in lot_obj_list:
-            lotObj: objLot = obj
-            self._lot_obj_list.append(lotObj)
+        self._lot_obj_list.append(lot_obj)
+
+    def _chk_is_type(self, attr: str, obj_type: type):
+        is_type: bool = False
+        if not self._chk_exists(attr=attr):
+            return is_type
+        attr_obj = self._get_attr(attr=attr)
+        if type(attr_obj) is not obj_type:
+            return is_type
+        is_type = True
+        return is_type
 
     def _chk_is_warehouse(self, attr: str):
         is_warehouse: bool = False
