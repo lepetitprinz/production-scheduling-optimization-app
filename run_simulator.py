@@ -2,6 +2,7 @@
 
 from M01_Simulator.PE_Simulator import Simulator
 
+
 def run_simulator():
     simul: Simulator = Simulator()
     flag = simul.SetupDbObject()

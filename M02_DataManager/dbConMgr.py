@@ -120,6 +120,11 @@ class ConnectionManager(object):
 
         return False
 
+    def load_data(self):
+        raise Exception(
+            f"Make Me !! from {self.__class__.load_data}"
+        )
+
     def _getConnection(self):
         try:
             if self._pool is None:

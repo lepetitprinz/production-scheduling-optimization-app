@@ -3,7 +3,7 @@
 import datetime
 
 from M01_Simulator import PE_Simulator
-from M02_DataManager.dbDataMgr import DataManager
+from M02_DataManager import dbDataMgr
 from M04_PhyProductionMgr import objWarehouse, objMachine
 from M05_ProductManager import objLot
 from M06_Utility import comUtility
@@ -34,27 +34,31 @@ class Factory:
         self._lot_obj_list: list = []
 
         # --- DB 연결 결과 취득 ---
-        self._dataMgr = None  # DB에서 기준정보를 가지고 있는 객체
+        self._dataMgr: dbDataMgr.DataManager = simul.DataMgr  # DB에서 기준정보를 가지고 있는 객체
 
-    def SetupObject(self, dataMgr: DataManager, dayStartTime: str):
+    def SetupObject(self, dataMgr: dbDataMgr, dayStartTime: str):
         self._utility.set_day_start_time(value=dayStartTime)
 
-        self._register_new_machine(mac_id="MAC01")
+        self._setup_fac_environment()
+        # self._register_new_machine(mac_id="MAC01")
         # self.StockList = self._facUtil.GetStockObjList()
-        self._register_new_warehouse(wh_id="WH01")
+        # self._register_new_warehouse(wh_id="RM")
+        # self._register_new_warehouse(wh_id="WH01")
         # self.OperMgrList = self._facUtil.GetOperMgrObjList()
 
     def SetupResumeData(self):
         # Warehouse 의 Lot을 배정하는 처리.
-        facID = self.ID
-        totalWipList = []
-        operLotDict: dict = {}  # {OperID : [LotObj1, LotObj2, ...]}
-        for obj in self.WhouseObjList:
-            whObj: objWarehouse.Warehouse = obj
-            lot_obj_list: list = [objLot.Lot('111'), objLot.Lot('123')]
-            for obj in lot_obj_list:
-                lotObj: objLot = obj
-                whObj._register_lot_obj(lotObj)
+
+        wh_rm: objWarehouse.Warehouse = self._find_warehouse_by_id(wh_id="RM")
+        wh_rm.setup_resume_data(self._dataMgr.df_demand)
+
+        # facID = self.ID
+        # totalWipList = []
+        # operLotDict: dict = {}  # {OperID : [LotObj1, LotObj2, ...]}
+        # for obj in self.WhouseObjList:
+        #     whObj: objWarehouse.Warehouse = obj
+        #     self._dataMgr
+        #     whObj.setup_resume_data(lot_obj_array=)
 
         # # Lot 셋팅: Machine
         # for obj in self.MachineList:
@@ -63,6 +67,13 @@ class Factory:
         #         macObj.SetupResumeData(operLotDict[macObj.ID])
         #     # Machine SetupType 셋팅 오류 수정
         #     oper.FixMachineSetupTypeError()
+
+    def _setup_fac_environment(self):
+        self._register_new_machine(mac_id="MAC01")
+        # self.StockList = self._facUtil.GetStockObjList()
+        self._register_new_warehouse(wh_id="RM")
+        for i in range(1, 1+10):
+            self._register_new_warehouse(wh_id=f"SILO{'%02d' % i}")
 
     def send_init_event(self):
         """공장 객체 초기화 정보를 DB에 전달하는 메서드"""
@@ -190,6 +201,13 @@ class Factory:
 
         return mac_list
 
+    def _find_warehouse_by_id(self, wh_id: str):
+        for obj in self.WhouseObjList:
+            whObj: objWarehouse.Warehouse = obj
+            if whObj.id == wh_id:
+                return whObj
+        return None
+
     def _register_new_machine(self, mac_id: str):
 
         macObj: objMachine = objMachine.Machine(factory=self, mac_id=mac_id)
@@ -209,7 +227,11 @@ class Factory:
             raise TypeError(
                 "Machine 이나 Warehouse 가 아닌 곳에 Lot 을 등록하려 합니다."
             )
-        self._lot_obj_list.append(lot_obj)
+        if to == "self":
+            self._lot_obj_list.append(lot_obj)
+        else:
+            attr_obj = self._get_attr(attr=to)
+            # attr_obj.
 
     def _chk_is_type(self, attr: str, obj_type: type):
         is_type: bool = False
@@ -245,7 +267,7 @@ class Factory:
         attr_obj = None
         if self._chk_exists(attr=attr):
             attr_obj = self.__getattribute__(name=attr)
-        return attr
+        return attr_obj
 
     def _chk_exists(self, attr: str):
         existence: bool = attr in self.__dict__.keys()
