@@ -2,9 +2,8 @@
 
 import pandas as pd
 
-import dbConMgr, fileConMgr
+from M02_DataManager import dbConMgr, fileConMgr
 # from M06_Utility import comUtility
-
 
 class DataManager:
 
