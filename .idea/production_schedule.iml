@@ -2,9 +2,15 @@
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/M01_Simulator" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/M02_DataManager" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/M03_Site" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/M04_PhyProductionMgr" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/M05_ProductManager" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/M06_Utility" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.7" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.7 (codepad0)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

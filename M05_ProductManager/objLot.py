@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import re
+import datetime
+import calendar
+import math
 
 from M02_DataManager import dbDataMgr
 from M03_Site import simOperMgr
@@ -17,21 +20,22 @@ class Lot(object):
         "PackType": 2
     }
 
-    def __init__(self, id: str, loc: object):
+    def __init__(self, id: str, prodId: str, loc: object):
         self.Id: str = id
+        self.ProdId: str = prodId
         self.Grade: str = ""
         self.PackSize: str = ""
         self.PackType: str = ""
 
         self.Region: str = ""
 
-        self.Duration: float = 0.0
+        self.Duration: int = 0.0
         self.PackDuration: float = 0.0
         self.ReactDuration: float = 0.0
 
-        self.DueDate: str = ""
-        self.StartTimeMin: str = ""
-        self.StartTimeMac: str = ""
+        self.DueDate: datetime.datetime = None
+        self.StartTimeMin: datetime.datetime = None
+        self.StartTimeMax: datetime.datetime = None
 
         self.Qty: float = 0.0
 
@@ -49,7 +53,7 @@ class Lot(object):
         else:
             pass
 
-    def setup_object(self, due_date: str, qty: float, region: str, duration: float):
+    def setup_object(self, due_date: str, qty: float, region: str):
 
         self.Grade = self._get_attr_from_id(id=self.Id, attr="Grade")
         self.PackSize = self._get_attr_from_id(id=self.Id, attr="PackSize")
@@ -57,12 +61,22 @@ class Lot(object):
 
         self.Region = region
 
-        self.Duration
-
-        self.DueDate = due_date
+        self.DueDate = self._get_last_day_of_month(due_date=due_date)
 
         self.Qty = qty
 
+        self.PackDuration = self._get_pack_duration(grade=self.Id)
+        self.ReactDuration = self._get_react_duration(grade=self.Grade)
+        self.Duration = math.ceil(self.PackDuration + self.ReactDuration)
+
+        self.StartTimeMax = self.DueDate - datetime.timedelta(hours=self.Duration)
+        self.StartTimeMin = self.DueDate.replace(day=1, hour=8, minute=0, second=0)
+
+    def _get_last_day_of_month(self, due_date: str):
+        date_tmp: datetime.datetime = datetime.datetime.strptime(due_date, '%Y%m')
+        last_day, month_len = calendar.monthrange(year=date_tmp.year, month=date_tmp.month)
+        date_tmp = date_tmp.replace(day=month_len, hour=23, minute=59, second=59)
+        return date_tmp
 
     def _get_pack_duration(self, grade: str):
 
@@ -73,7 +87,7 @@ class Lot(object):
             raise Exception(
                 ""
             )
-        rslt: float = dict_prod_yield[grade]
+        rslt: float = self.Qty/dict_prod_yield[grade]
         return rslt
 
 
@@ -82,6 +96,12 @@ class Lot(object):
         dataMgr: dbDataMgr.DataManager = comUtility.Utility.get_data_manager()
         dict_prod_yield: dict = dataMgr._get_dict_prod_yield()
         dict_prod_yield: dict = dict_prod_yield['reactor']
+        if grade not in dict_prod_yield.keys():
+            raise Exception(
+                ""
+            )
+        rslt: float = self.Qty/dict_prod_yield[grade]
+        return rslt
 
     def _get_attr_from_id(self, id: str, attr: str):
         # if not self._chk_id_format(id):

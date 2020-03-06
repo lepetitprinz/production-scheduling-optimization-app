@@ -18,7 +18,7 @@ class Warehouse:
     def setup_resume_data(self, lot_obj_array: pd.DataFrame):
         for idx, row in lot_obj_array.iterrows():
             print(row)
-            lotObj: objLot.Lot = objLot.Lot(id=row['product'], loc=self)
+            lotObj: objLot.Lot = objLot.Lot(id=row['product'], prodId=row['product'], loc=self)
             lotObj.setup_object(
                 due_date=row['yyyymm'],
                 qty=row['qty'],
