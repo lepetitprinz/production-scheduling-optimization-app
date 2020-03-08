@@ -397,7 +397,6 @@ class Factory:
     # ================================================================================= #
 
     def AssignLotToPackaging(self, lotObjList):
-
         packOperObj = self._getPackOper()
         packMacList = self._getPackMacList()
 
@@ -449,12 +448,44 @@ class Factory:
         return lotObjGradeList
 
     # ================================================================================= #
-    # Packagin -> Auto Warehouse
+    # Packagin -> FGI
     # ================================================================================= #
 
+    def AssignLotToFGI(self, lotObjList):
+
+        fgiWhObj = self._getFgiWh()
+
+        for lot in lotObjList:
+            lotObj:objLot.Lot = lot
+
+            if fgiWhObj.CurCapa > lotObj.Qty:   # 자동창고의 현재 capa 체크
+                lotObj.Oper = None
+                lotObj.Machine = None
+                lotObj.Location = fgiWhObj
+                lotObj.ToLoc = fgiWhObj.ToLoc
+
+                fgiWhObj.LotObjList.append(lotObj)  # 자동창고에 lot 추가
+                fgiWhObj.CurCapa -= lotObj.Qty      # 추가한 lot 수량만큰 현재 창고 capa에서 차감 처리
+
+            else:
+                # ==================================== #
+                # 중합공정 중단 처리 or 강제 출하처리 추가 필요
+                # ==================================== #
+                break    # 자동창고가 Full 인 상태이므로 적재 중
 
 
-    def _findWhById(self, wh_id: str):
+    def _getFgiWh(self):
+
+        for wh in self.WhouseObjList:
+            whObj:objWarehouse.Warehouse = wh
+
+            if whObj.Kind == "FGI":
+                return whObj
+
+        print("FGS warehouse 객체가 없음")
+        raise AssertionError()
+
+    def _finWhById(self, wh_id: str):
         for obj in self.WhouseObjList:
             whObj: objWarehouse.Warehouse = obj
             if whObj.Id == wh_id:
