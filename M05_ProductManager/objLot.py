@@ -43,6 +43,9 @@ class Lot(object):
         self.Location: object = loc
         self.ToLoc: object = None
 
+        # Silo 관련 속성
+        self.Silo = ""
+
         # self.Oper = None
         self.Machine: objMachine.Machine = None
         self.WareHouse: objWarehouse.Warehouse = None

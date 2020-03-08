@@ -242,10 +242,67 @@ class Factory:
 
         return mac_list
 
+    def CheckLotObjSiloGrade(self, lotObjList:list):
+
+        siloList = self.GetCurSiloState()
+
+        for prodLotObj in lotObjList:
+            lotObj:objLot.Lot = prodLotObj
+
+            # 각각의 Silo에 lotObj가 들어있는지 search
+            for silo in siloList:
+                siloLotObjList = silo.lotObjList
+                lotObjGradeList = self._getLotObjGrade(siloLotObjList)
+
+                # silo에 여러 grade 제품이 들어있는지 확인 - 았으면 에러처리
+                if len(lotObjGradeList) > 1:
+                    print("{} Silo에 여러 grade 제품이 들어있음")
+                    raise AssertionError()
+
+                if lotObjGradeList == None: # Silo에 제품이 없는 경우
+                    continue
+
+                elif lotObj.Grade == lotObjGradeList[0]:
+                    lotObj.Silo = silo.Id
+                    break
+
+        return lotObjList
+
+    def AssignLotToSilo(self, lotObjList):
+
+        for prodLotObj in lotObjList:
+            lotObj:objLot.Lot = prodLotObj
+
+            if lotObj.Silo !=
+
+    def GetCurSiloState(self):
+
+        siloWhList = []
+
+        for whObj in self.WhouseObjList:
+            wh:objWarehouse.Warehouse = whObj
+
+            if wh.Kind == 'silo':
+                siloWhList.append(wh)
+
+        return siloWhList
+
+
+    def _getLotObjGrade(self, lotObjList):
+        lotObjGradeList = []
+
+        for prodLotObj in lotObjList:
+            lotObj:objLot.Lot = prodLotObj
+
+            if lotObj.Grade not in lotObjGradeList:
+                lotObjGradeList.append(lotObj.Grade)
+
+        return lotObjGradeList
+
     def _find_warehouse_by_id(self, wh_id: str):
         for obj in self.WhouseObjList:
             whObj: objWarehouse.Warehouse = obj
-            if whObj.id == wh_id:
+            if whObj.Id == wh_id:
                 return whObj
         return None
 
@@ -257,7 +314,7 @@ class Factory:
 
     def _register_new_warehouse(self, wh_id: str):
 
-        whObj: objWarehouse = objWarehouse.Warehouse(factory=self, wh_id=wh_id)
+        whObj: objWarehouse = objWarehouse.Warehouse(factory=self, whId=wh_id)
         whObj.setup_object()
         self.WhouseObjList.append(whObj)
 
