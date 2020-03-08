@@ -167,7 +167,7 @@ class Factory:
         pass
 
     def run_factory(self):
-        print(f"Factory {self.ID} is Running.")
+        print(f"\n\nFactory {self.ID} is Running.")
 
         endFlag: bool = False
         end_date: datetime.datetime = self._utility.DayEndDate
