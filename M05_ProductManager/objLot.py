@@ -27,6 +27,8 @@ class Lot(object):
         self.PackSize: str = ""     # P2 / P7 / P9
         self.PackType: str = ""     # WV / FS / BK / SB
 
+        self.Lpst: int = 0
+
         self.Region: str = ""
 
         self.Duration: int = 0.0
@@ -54,7 +56,7 @@ class Lot(object):
 
         self.Grade = self._get_attr_from_id(id=self.Id, attr="Grade")
         self.PackSize = self._get_attr_from_id(id=self.Id, attr="PackSize")
-        self.PackType = self._get_attr_from_id(id=self.Id, attr="PackType")
+        self.PackType = self._get_attr_from_id(id=self.Id, attr="PackType").split("_")[0]
 
         self.Region = region
 

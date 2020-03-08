@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import datetime
+
 from M03_Site import simFactoryMgr
 from M05_ProductManager import objLot
 
@@ -15,6 +17,8 @@ class Machine(object):
 
         # STATUS
         self.Status: str = "IDLE"   # IDLE / PROC
+        self.StartTime: datetime.datetime = None
+        self.EndTime: datetime.datetime = None
 
         # CURRENT PROCESSING LOT
         self.Lot: objLot.Lot = None

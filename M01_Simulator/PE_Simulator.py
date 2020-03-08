@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+import datetime
 
 from M03_Site import simFactoryMgr
 from M02_DataManager import dbDataMgr
@@ -14,7 +17,7 @@ class Simulator:
         self.DataMgr: dbDataMgr.DataManager = None
         self._facObjList: list = []
 
-    def SetupDbObject(self):
+    def SetupDbObject(self, year: int, month: int, day: int, day_start_time: str, horizon_days: int):
         self.DataMgr = dbDataMgr.DataManager(source="file")
         self.DataMgr.SetupObject()
         self._util.setup_object(simul=self)
@@ -24,7 +27,7 @@ class Simulator:
         print("=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=")
 
         # Factory 인스턴스 세팅
-        self._create_new_factory(factory_id="HARDCODED_FAC", day_start_time="")
+        self._create_new_factory(factory_id="HARDCODED_FAC", day_start_time=day_start_time, year=year, month=month, day=day, horizon_days=horizon_days)
 
         flag = self.SetupObject()
 
@@ -54,18 +57,21 @@ class Simulator:
         # Lot 할당
         facObj.AssignLot()
 
-        self._util.set_runtime(runtime=-1)
+        self._util.set_runtime(runtime=self._util.DayStartDate)
 
         facObj.run_factory()
 
     def _run_multi_factory(self):
         pass
 
-    def _create_new_factory(self, factory_id: str, day_start_time: str):
+    def _create_new_factory(self, factory_id: str, day_start_time: str, year: int, month: int, day: int, horizon_days: int):
         facObj: simFactoryMgr = simFactoryMgr.Factory(simul=self, facID=factory_id)
         facObj.SetupObject(
-            dataMgr=self.DataMgr,
-            dayStartTime=day_start_time
+            dayStartTime=day_start_time,
+            year=year,
+            month=month,
+            day=day,
+            horizon_days=horizon_days
         )
         self._facObjList.append(facObj)
 

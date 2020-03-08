@@ -23,12 +23,13 @@ class Factory:
 
         # --- Time 관련 객체 ---
         self._startTime: datetime.datetime = None  # 시스템 구동 시작 시간
+        self._operTime: datetime.datetime = None
+        self._whTime: datetime.datetime = None
 
         # --- Resource 관련 객체 리스트 ---
         self.OperList: list = []  # OperationMgr 리스트
         self.MachineList: list = []  # Machine 객체 리스트
         self.WhouseObjList: list = []  # objWarehouse 객체 리스트
-        # self.StockList: list = []  # Stocker 객체 리스트
         # self._initWipLotList: list = []  # Lot 초기상태 리스트
         # self._initInvLotList: list = []  # WH에 있던 Lot 초기상태 정보
         self._lot_obj_list: list = []
@@ -36,13 +37,15 @@ class Factory:
         # --- DB 연결 결과 취득 ---
         self._dataMgr: dbDataMgr.DataManager = simul.DataMgr  # DB에서 기준정보를 가지고 있는 객체
 
-        # Production Wheel
-        self._prodWheel = self._dataMgr.dfProdWheel
-        self._prodWheelDict: dict = {}
-
-    def SetupObject(self, dataMgr: dbDataMgr, dayStartTime: str):
+    def SetupObject(self, dayStartTime: str, year: int, month: int, day: int, horizon_days: int):
         self._utility.setDayStartTime(value=dayStartTime)
+        self._utility.setDayStartDate(year=year, month=month, day=day)
+        self._utility.setDayHorizon(days=horizon_days)
+        self._utility.calcDayEndDate()
+
         self._buildFactory(silo_qty=400, nof_silo=10)
+
+        self._base_first_event_time()
 
         self._prodWheelDict = self._setProdWheelDict()
 
@@ -58,6 +61,47 @@ class Factory:
         df_demand = self._dataMgr.df_demand
         dfDmdLotSizing = self._setDmdProdLotSizing(df_demand)
         wh_rm.setup_resume_data(dfDmdLotSizing)
+
+    def _setDmdProdLotSizing(self, demand: pd.DataFrame):
+
+        minLotSize = comUtility.Utility.MinLotSize
+        maxLotSize = comUtility.Utility.MaxLotSize
+
+        dmdProdLot = pd.DataFrame(columns=['yyyymm', 'product', 'lotId', 'qty', 'region'])
+
+        idx = 0
+        for _, row in demand.iterrows():
+            # Lot Sizing
+            if row['qty'] < minLotSize:
+                dmdProdLot.loc[idx, 'qty'] = minLotSize
+                dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
+                dmdProdLot.loc[idx, 'product'] = row['product']
+                dmdProdLot.loc[idx, 'region'] = row['region']
+                idx += 1
+            elif row['qty'] > minLotSize and row['qty'] < maxLotSize:
+                dmdProdLot.loc[idx, 'qty'] = row['qty']
+                dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
+                dmdProdLot.loc[idx, 'product'] = row['product']
+                dmdProdLot.loc[idx, 'region'] = row['region']
+                idx += 1
+            else:
+                quotient = row['qty'] // maxLotSize
+                remainder = row['qty'] % maxLotSize
+                # Maximum Lot 단위 처리
+                for i in range(int(quotient)):
+                    dmdProdLot.loc[idx, 'qty'] = maxLotSize
+                    dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
+                    dmdProdLot.loc[idx, 'product'] = row['product'] + '_' + str(i+1)
+                    dmdProdLot.loc[idx, 'region'] = row['region']
+                    idx += 1
+                # 나머지 lot 추가 처리
+                dmdProdLot.loc[idx, 'qty'] = remainder
+                dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
+                dmdProdLot.loc[idx, 'product'] = row['product'] + '_' + str(quotient+1)
+                dmdProdLot.loc[idx, 'region'] = row['region']
+                idx += 1
+
+        return dmdProdLot
 
         # facID = self.ID
         # totalWipList = []
@@ -91,8 +135,8 @@ class Factory:
         for i in range(1, 1 + nof_silo):
             silo: objWarehouse.Warehouse = self._register_new_warehouse(wh_id=f"SILO{'%02d' % i}", kind="silo", capacity=silo_qty, return_flag=True)
             silos.append(silo)
-        hopper: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="HOPPER", kind="hopper", return_flag=True)
-        fgi: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="FGI", kind="WareHouse", return_flag=True)
+        # hopper: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="HOPPER", kind="hopper", return_flag=True)
+        fgi: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="FGI", kind="WareHouse", capacity=43000, return_flag=True)
 
         rm.set_to_location(to_loc=reactor.Id)
         reactor.set_to_location(to_loc=silos[0].Kind)
@@ -102,12 +146,74 @@ class Factory:
         bagging.set_to_location(to_loc=fgi.Id)
         fgi.set_to_location(to_loc="Sales")     # Ternminal Status
 
+    def _base_first_event_time(self):
+        for obj in self.OperList:
+            operObj: simOperMgr.Operation = obj
+            operObj.reset_first_event_time()
+        for obj in self.WhouseObjList:
+            whObj: objWarehouse.Warehouse = obj
+            if whObj.Id == "RM":
+                whObj.set_first_event_time(runTime=self._utility.DayStartDate)
+            else:
+                whObj.set_first_event_time()
+
     def sendInitEvent(self):
         """공장 객체 초기화 정보를 DB에 전달하는 메서드"""
         pass
 
     def run_factory(self):
         print(f"Factory {self.ID} is Running.")
+
+        endFlag: bool = False
+        end_date: datetime.datetime = self._utility.DayEndDate
+        loopCnt: int = 0
+        while not endFlag:
+            # OperTAT, Machine, Transporter, Warehouse 에서 이벤트 처리 대상을 찾기
+            runTime: datetime.datetime = self.Get1stTgtMinTime()
+            tgtArr: list = self.Get1stTgtArray(runTime=runTime)
+
+            if len(tgtArr) < 1:
+                # self._utility.LotStatusObj.PrintWaitLotList()
+                endFlag = True
+                continue
+            elif runTime >= end_date:
+                endFlag = True
+                self._utility.set_runtime(runtime=end_date)
+                continue
+
+            # if len(tgtArr) < 1:
+            #     endFlag = len(util.LotStatusObj.WaitLotIdDict.keys()) < 1
+            #     if endRTime < 1:
+            #         endRTime = runTime
+            #     else:
+            #         loopCnt += 1
+            #     continue
+            # else:
+            #     endFlag, prevRunTime, prevLotEvtCnt, prevMacEvtCnt, loopCnt = self._chkInfiniteLoop(
+            #         prevTime=prevRunTime,
+            #         prevLotEvt=prevLotEvtCnt,
+            #         prevMacEvt=prevMacEvtCnt,
+            #         runTIme=runTime,
+            #         loopCnt=loopCnt
+            #     )
+
+            endRTime = 0
+
+            if runTime != self._utility.runtime:
+                self._utility.set_runtime(runTime)
+
+            tgtCnt = len(tgtArr)
+            for obj in tgtArr:
+                obj.SyncRunningTime()
+                # # [[Time], [FacID], [TgtID], [TgtType], [PrevTime], [FlowID]]
+                # if row[3] == self._TGT_TRANS:  # "TRANS"
+                #     self.TransObj.SyncRunningTime(runTime=runTime, tgtCnt=tgtCnt)
+                # elif row[3] == self._TGT_OPER:  # "OPER_TAT"
+                #     operObj: simOperMgr.OperationManager = self._geTatOperObj(operID=row[2])
+                #     operObj.SyncRunningTime(runTime=runTime)
+                # elif row[3] == self._TGT_WH:
+                #     whObj: objWarehouse.Warehouse = self.GetWhouseObj(whID=row[2])
+                #     whObj.SyncRunningTime(runTime=runTime)
 
         # prevRunTime = -1  # 전 회차 Time
         # prevLotEvtCnt = -1  # 전 회차 Lot이벤트 누적 횟수.
@@ -187,6 +293,70 @@ class Factory:
         #
         # print("Lot events: {}, Machine events: {}".format(comUtility.Utility.LotStatusObj.HistoryCount,
         #                                                   self._facUtil.MacStatusObj.HistoryCount))
+
+    def Get1stTgtArray(self, runTime: datetime.datetime):
+        rslt = []
+        if runTime is None:
+            return rslt
+
+        if self._operTime == runTime:
+            # rslt에 OperTAT 처리대상 정보 추가
+            rslt = self._get1stOperTgtInfo(tgtList=rslt, eventTime=runTime)
+            self._operTime = None
+        if self._whTime == runTime:
+            # rslt에 Warehouse 처리대상 정보 추가
+            rslt = self._get1stWhouseTgtInfo(tgtList=rslt, eventTime=runTime)
+            self._whTime = None
+        return rslt
+
+    def _get1stOperTgtInfo(self, tgtList: list, eventTime: datetime.datetime):
+
+        for obj in self.OperList:
+            operObj: simOperMgr.Operation = obj
+            if operObj.FirstEventTime == eventTime:
+                tgtList.append(operObj)
+
+        return tgtList
+
+    def _get1stWhouseTgtInfo(self, tgtList: list, eventTime: datetime.datetime):
+
+        for obj in self.WhouseObjList:
+            whObj: objWarehouse.Warehouse = obj
+            if whObj.FirstEventTime == eventTime:
+                tgtList.append(whObj)
+
+        return tgtList
+
+    def Get1stTgtMinTime(self):
+        self._operTime = self._getOperFirstTime()
+        self._whTime = self._getWhouseFirstTime()
+
+        tmpList: list = []
+        if self._operTime is not None:
+            tmpList.append(self._operTime)
+        if self._whTime is not None:
+            tmpList.append(self._whTime)
+
+        if len(tmpList) < 1:
+            return None
+
+        return min(tmpList)
+
+    def _getOperFirstTime(self):
+        operFirstEventTimes: list = [oper.FirstEventTime for oper in self.OperList]
+        if sum([ft is not None for ft in operFirstEventTimes]) == 0:
+            return None
+        else:
+            operFirstEventTimes = [ft for ft in operFirstEventTimes if ft is not None]
+            return min(operFirstEventTimes)
+
+    def _getWhouseFirstTime(self):
+        whFirstEventTimes: list = [wh.FirstEventTime for wh in self.WhouseObjList]
+        if sum([ft is not None for ft in whFirstEventTimes]) == 0:
+            return None
+        else:
+            whFirstEventTimes = [ft for ft in whFirstEventTimes if ft is not None]
+            return min(whFirstEventTimes)
 
     def wake_up_machine(self):
         # Lot이 버퍼에 장착 된 채 IDLE인 머신을 깨우는 처리
