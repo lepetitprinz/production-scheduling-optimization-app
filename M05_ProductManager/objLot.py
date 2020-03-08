@@ -88,10 +88,14 @@ class Lot(object):
         dict_prod_yield: dict = dataMgr._get_dict_prod_yield()
         dict_prod_yield: dict = dict_prod_yield['package']
         if grade not in dict_prod_yield.keys():
-            raise Exception(
-                ""
-            )
-        rslt: float = self.Qty/dict_prod_yield[grade]
+            grade_adj: str = grade[:grade.find("_", grade.find("_") + 1)]
+            if grade_adj not in dict_prod_yield.keys():
+                raise Exception(
+                    ""
+                )
+            rslt: float = self.Qty/dict_prod_yield[grade_adj]
+        else:
+            rslt: float = self.Qty/dict_prod_yield[grade]
         return rslt
 
 
