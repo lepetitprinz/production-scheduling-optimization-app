@@ -39,7 +39,7 @@ class Factory:
     def SetupObject(self, dataMgr: dbDataMgr, dayStartTime: str):
         self._utility.setDayStartTime(value=dayStartTime)
 
-        self._SetupFacEnv(silo_qty=400, nof_silo=10)
+        self._buildFactory(silo_qty=400, nof_silo=10)
         # self._register_new_machine(mac_id="MAC01")
         # self.StockList = self._facUtil.GetStockObjList()
         # self._register_new_warehouse(wh_id="RM")
@@ -110,7 +110,7 @@ class Factory:
         #     # Machine SetupType 셋팅 오류 수정
         #     oper.FixMachineSetupTypeError()
 
-    def _SetupFacEnv(self, silo_qty: float, nof_silo: int = 1):
+    def _buildFactory(self, silo_qty: float, nof_silo: int = 1):
         reactor: simOperMgr.Operation = self._register_new_oper(oper_id="REACTOR", kind="REACTOR", return_flag=True)
         self._register_new_machine(mac_id="M1", oper=reactor)
 
@@ -133,9 +133,9 @@ class Factory:
         reactor.set_to_location(to_loc=silos[0].Kind)
         for silo in silos:
             silo.set_to_location(to_loc=bagging.Id)
-        bagging.set_to_location(to_loc=hopper.Id)
-        hopper.set_to_location(to_loc=fgi.Id)
-        fgi.set_to_location(to_loc=None)
+        # hopper.set_to_location(to_loc=fgi.Id)
+        bagging.set_to_location(to_loc=fgi.Id)
+        fgi.set_to_location(to_loc="Sales")     # Ternminal Status
 
     def send_init_event(self):
         """공장 객체 초기화 정보를 DB에 전달하는 메서드"""
@@ -268,7 +268,7 @@ class Factory:
     ################################################
 
     def AssignLotToReactor(self, lotObjList):
-
+        pass
 
 
     ################################################
