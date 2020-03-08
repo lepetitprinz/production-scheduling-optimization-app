@@ -14,7 +14,7 @@ class Machine(object):
         self.PackKind: str = ""     # WV / FS / BK / SB
 
         # STATUS
-        self.Status: str = "IDLE"
+        self.Status: str = "IDLE"   # IDLE / PROC
 
         # CURRENT PROCESSING LOT
         self.Lot: objLot.Lot = None
@@ -27,4 +27,8 @@ class Machine(object):
         self.Uom = uom
 
     def RunMachine(self):
-        pass
+        if self.Lot is not None:
+            self._set_status("PROC")
+
+    def _set_status(self, status: str):
+        self.Status = status
