@@ -1,2 +1,9 @@
 
 *.xml
+.idea/misc.xml
+.idea/production_schedule.iml
+.idea/workspace.xml
+__init__.py
+*.pyc
+*.xml
+*.xml
