@@ -37,13 +37,15 @@ class Factory:
         # --- DB 연결 결과 취득 ---
         self._dataMgr: dbDataMgr.DataManager = simul.DataMgr  # DB에서 기준정보를 가지고 있는 객체
 
-    def SetupObject(self, dayStartTime: str, year: int, month: int, day: int, horizon_days: int):
+    def SetupObject(self, dayStartTime: str, year: int, month: int, day: int, horizon_days: int, silo_qty: int, nof_silo: int = 1):
         self._utility.setDayStartTime(value=dayStartTime)
         self._utility.setDayStartDate(year=year, month=month, day=day)
         self._utility.setDayHorizon(days=horizon_days)
         self._utility.calcDayEndDate()
 
-        self._buildFactory(silo_qty=400, nof_silo=10)
+        self._startTime = self._utility.DayStartDate
+
+        self._buildFactory(silo_qty=silo_qty, nof_silo=nof_silo)
 
         self._base_first_event_time()
 
@@ -130,6 +132,7 @@ class Factory:
 
         # self.StockList = self._facUtil.GetStockObjList()
         rm: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="RM", kind="RM", return_flag=True)     # RM / WareHouse / silo / hopper
+        rm.assign_random_lpst()
         silo_qty /= nof_silo
         silos: list = []
         for i in range(1, 1 + nof_silo):
@@ -527,7 +530,7 @@ class Factory:
 
     # 월별 생산 Capa / 월별 수요 capa 계산
     def _calcMonDmdCapa(self):
-
+        pass
 
     def GetFirstBestGrade(self):
 
@@ -600,7 +603,8 @@ class Factory:
 
     def _setProdWheelDict(self):
         costCalStd = comUtility.Utility.ProdWheelCalStd
-        prodWheel = self._prodWheel
+        # prodWheel = self._prodWheel
+        prodWheel = self._dataMgr.dfProdWheel
         appliedProdWheel = {}
 
         for i in range(len(prodWheel)):

@@ -17,17 +17,18 @@ class Simulator:
         self.DataMgr: dbDataMgr.DataManager = None
         self._facObjList: list = []
 
-    def SetupDbObject(self, year: int, month: int, day: int, day_start_time: str, horizon_days: int):
+    def SetupDbObject(self, year: int, month: int, day: int, day_start_time: str, horizon_days: int, silo_qty: int, nof_silo: int = 1):
         self.DataMgr = dbDataMgr.DataManager(source="file")
         self.DataMgr.SetupObject()
+        self.DataMgr.build_demand_max_days_by_month()
         self._util.setup_object(simul=self)
-        self._util.set_runtime(runtime=0)
+        # self._util.set_runtime(runtime=0)
 
         print("=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*= Configuration Information =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=")
         print("=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=")
 
         # Factory 인스턴스 세팅
-        self._create_new_factory(factory_id="HARDCODED_FAC", day_start_time=day_start_time, year=year, month=month, day=day, horizon_days=horizon_days)
+        self._create_new_factory(factory_id="GS_CALTEX", day_start_time=day_start_time, year=year, month=month, day=day, horizon_days=horizon_days, silo_qty=silo_qty, nof_silo=nof_silo)
 
         flag = self.SetupObject()
 
@@ -64,14 +65,16 @@ class Simulator:
     def _run_multi_factory(self):
         pass
 
-    def _create_new_factory(self, factory_id: str, day_start_time: str, year: int, month: int, day: int, horizon_days: int):
+    def _create_new_factory(self, factory_id: str, day_start_time: str, year: int, month: int, day: int, horizon_days: int, silo_qty: int, nof_silo: int):
         facObj: simFactoryMgr = simFactoryMgr.Factory(simul=self, facID=factory_id)
         facObj.SetupObject(
             dayStartTime=day_start_time,
             year=year,
             month=month,
             day=day,
-            horizon_days=horizon_days
+            horizon_days=horizon_days,
+            silo_qty=silo_qty,
+            nof_silo=nof_silo
         )
         self._facObjList.append(facObj)
 

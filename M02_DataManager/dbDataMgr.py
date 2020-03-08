@@ -1,9 +1,10 @@
 # -*- coding: utf-8
 
+import datetime
 import pandas as pd
 
 from M02_DataManager import dbConMgr, fileConMgr
-# from M06_Utility import comUtility
+from M06_Utility import comUtility
 
 
 class DataManager:
@@ -21,6 +22,7 @@ class DataManager:
 
         # Dictionary 변수 선언
         self._dict_prod_yield: dict = {}
+        self._dict_days_by_month: dict = {}
 
     def SetupObject(self):    # or source = "db"
         if self._source == "db":
@@ -39,9 +41,16 @@ class DataManager:
         # comUtility.Utility.SetRootPath(rootPath=self._conMgr.RootPath)
         # comUtility.Utility.SetConfPath(confPath=self._conMgr.conf_path)
 
-    def get_demand_max_days_by_month(self):
+    def build_demand_max_days_by_month(self):
+        yyyy_mm_list: list = []
         for _, row in self.df_demand.iterrows():
-
+            yyyymm: str = row['yyyymm']
+            yyyymm_date: datetime.datetime = datetime.datetime.strptime(yyyymm, "%Y%m")
+            yyyy: int = yyyymm_date.year
+            mm: int = yyyymm_date.month
+            yyyy_mm_tuple: tuple = (yyyy, mm)
+            yyyy_mm_list.append(yyyy_mm_tuple)
+        self._dict_days_by_month = comUtility.Utility.GetMonthMaxDayDict(yyyy_mm_list)
 
     def _setup_db_connection(self):
         self._conMgr = dbConMgr.ConnectionManager()

@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import datetime
 
-from M03_Site import simFactoryMgr
+from M03_Site import simFactoryMgr, simOperMgr
 from M05_ProductManager import objLot
 from M06_Utility import comUtility
 
@@ -45,7 +45,8 @@ class Warehouse:
 
     def SyncRunningTime(self):
         # to_loc: object =
-        self.lot_leave(to_loc=to_loc)
+        to_oper, available_machines = self._find_available_to_operation()
+        self.lot_leave(to_loc=to_oper)
 
     def lot_leave(self, to_loc: object):
         least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
@@ -60,6 +61,18 @@ class Warehouse:
         self._registerLotObj(lotObj=lotObj)
         self._rebuild_lpst_lot_dict()
 
+    def _find_available_to_operation(self):
+        rsltOper: simOperMgr.Operation = None
+        rsltMachines: list = []
+        if self.Id == "RM":
+            for obj in self._factory.OperList:
+                operObj: simOperMgr.Operation = obj
+                is_oper_assignable, available_machines = operObj.get_assignable_flag()
+                if operObj.Id == "REACTOR" and is_oper_assignable:
+                    rsltOper = operObj
+                    rsltMachines = available_machines
+        return rsltOper, rsltMachines
+
     def _remove_lot(self, lot: objLot):
         try:
             self.LotObjList.remove(lot)
@@ -67,6 +80,8 @@ class Warehouse:
             pass
 
     def _get_least_lpst_lot(self):
+        self.assign_random_lpst()
+        Warning(f"Fix Me !! from {self.__class__}._get_least_lpst_lot !!")
         least_lpst_lot: objLot.Lot = self.LpstLotDict[min(self.LpstLotDict.keys())][0]
         return least_lpst_lot
 
@@ -105,6 +120,12 @@ class Warehouse:
 
     def set_first_event_time(self, runTime: datetime.datetime = None):
         self.FirstEventTime = runTime
+
+    def assign_random_lpst(self):
+        for obj in self.LotObjList:
+            lotObj: objLot.Lot = obj
+            lotObj.Lpst = self.LotObjList.index(lotObj)
+        self._rebuild_lpst_lot_dict()
 
 def test():
     pass
