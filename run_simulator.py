@@ -3,9 +3,9 @@
 from M01_Simulator.PE_Simulator import Simulator
 
 
-def run_simulator():
+def run_simulator(year: int, month: int, day: int, day_start_time: str, horizon_days: int):
     simul: Simulator = Simulator()
-    flag = simul.SetupDbObject()
+    flag = simul.SetupDbObject(year=year, month=month, day=day, day_start_time=day_start_time, horizon_days=horizon_days)
 
     # Simul 구동
     simul.run_simulator()
@@ -14,4 +14,4 @@ def run_simulator():
 
 
 if __name__ == '__main__':
-    run_simulator()
+    run_simulator(year=2020, month=3, day=1, day_start_time="08:00:00", horizon_days=92)

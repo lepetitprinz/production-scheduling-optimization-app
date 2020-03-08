@@ -3,6 +3,7 @@
 import os
 import re
 import datetime
+import calendar
 
 from M02_DataManager import dbDataMgr
 from M06_Utility import comEnum
@@ -15,14 +16,13 @@ class Utility:
     _simul: PE_Simulator = None
     DayStartTime: str = "00:00:00"
     DayStartDate: datetime.datetime = None
+    DayEndDate: datetime.datetime = None
+    DayHorizon: datetime.timedelta = datetime.timedelta(days=60)
+    MonthMaxDays: dict = {}
     runtime: int = 0
 
     # 날짜 문자열 형식 검사를 위한 정규식
     day_start_time_regex: re.Pattern = re.compile(comEnum.RegexCollection.day_start_time.value)
-
-    # Lot 정보
-    MinLotSize: int = 50
-    MaxLotSize: int = 400
 
     @staticmethod
     def setup_object(simul: PE_Simulator):
@@ -33,14 +33,32 @@ class Utility:
 
         if hour is None or min is None or second is None:
             if Utility.chk_day_start_time(Utility.DayStartTime):
-                hour = int(Utility.DayStartTime.split(":")[0])
-                min = int(Utility.DayStartTime.split(":")[1])
-                second = int(Utility.DayStartTime.split(":")[2])
+                hour = int(Utility.DayStartTime.split(":")[0]) if hour is None else hour
+                min = int(Utility.DayStartTime.split(":")[1]) if min is None else min
+                second = int(Utility.DayStartTime.split(":")[2]) if second is None else second
             else:
                 hour = 0
                 min = 0
                 second = 0
-        Utility.DayStartDate = datetime.datetime(year=year, month=month, day=day, hour=hour, minute=min, second=second)
+            Utility.DayStartDate = datetime.datetime(year=year, month=month, day=day, hour=hour, minute=min, second=second)
+        else:
+            Utility.DayStartDate = datetime.datetime(year=year, month=month, day=day, hour=hour, minute=min, second=second)
+
+    @staticmethod
+    def GetMonthMaxDayDict(year_month_pairs: list):
+        monthMaxDayDict: dict = {}
+        for year_month_pair in year_month_pairs:
+            monthMaxDayDict[year_month_pair] = Utility.GetMonthMaxDay(year=year_month_pair[0],
+                                                                      month=year_month_pair[1])[-1]
+        return monthMaxDayDict
+
+    @staticmethod
+    def GetMonthMaxDay(year: int, month: int):
+        return calendar.monthrange(year=year, month=month)
+
+    @staticmethod
+    def calcDayEndDate():
+        Utility.DayEndDate = Utility.DayStartDate + Utility.DayHorizon
 
     @staticmethod
     def setDayStartTime(value: str):
@@ -48,7 +66,11 @@ class Utility:
             Utility.DayStartTime = value
 
     @staticmethod
-    def set_runtime(runtime: int):
+    def setDayHorizon(days: int):
+        Utility.DayHorizon = datetime.timedelta(days=days)
+
+    @staticmethod
+    def set_runtime(runtime: datetime.datetime):
         Utility.runtime = runtime
 
     @staticmethod
@@ -68,11 +90,13 @@ def test():
     Utility.setDayStartTime("23:53:62")
     print(Utility.DayStartTime)
 
-    Utility.setDayStartTime("00:00:00")
+    Utility.setDayStartTime("00:12:12")
     print(Utility.DayStartTime)
 
     Utility.setDayStartDate(year=2020, month=3, day=8)
     print(Utility.DayStartDate)
+
+    print(Utility.GetMonthMaxDayDict([(2020, 3), (2020, 4), (2020, 5)]))
 
 
 if __name__ == '__main__':

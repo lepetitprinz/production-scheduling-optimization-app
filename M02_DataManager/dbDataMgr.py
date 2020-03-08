@@ -5,6 +5,7 @@ import pandas as pd
 from M02_DataManager import dbConMgr, fileConMgr
 # from M06_Utility import comUtility
 
+
 class DataManager:
 
     def __init__(self, source: str = "file"):
@@ -37,6 +38,10 @@ class DataManager:
 
         # comUtility.Utility.SetRootPath(rootPath=self._conMgr.RootPath)
         # comUtility.Utility.SetConfPath(confPath=self._conMgr.conf_path)
+
+    def get_demand_max_days_by_month(self):
+        for _, row in self.df_demand.iterrows():
+
 
     def _setup_db_connection(self):
         self._conMgr = dbConMgr.ConnectionManager()
