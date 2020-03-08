@@ -12,6 +12,7 @@ class Operation(object):
         self.ToLoc: object = None
 
         self.MacObjList: list = []
+        self.StockObj: objStocker.Stocker = None
 
         self.FirstEventTime: int = -1
 

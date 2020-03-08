@@ -11,6 +11,7 @@ class Machine(object):
 
         # PACKAGING MACHINE PROPERTIES
         self.Uom: str = ""          # 25 KG / 750 KG / BULK
+        self.PackKind: str = ""     # WV / FS / BK / SB
 
         # STATUS
         self.status: str = "IDLE"
