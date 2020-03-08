@@ -24,7 +24,7 @@ class Utility:
         Utility._simul = simul
 
     @staticmethod
-    def set_day_start_time(value: str):
+    def setDayStartTime(value: str):
         day_start_time_regex: re.Pattern = re.compile(comEnum.RegexCollection.day_start_time.value)
         if type(value) is str and day_start_time_regex.match(value) is not None:
             Utility.DayStartTime = value
@@ -40,10 +40,10 @@ class Utility:
 
 
 def test():
-    Utility.set_day_start_time("23:53:62")
+    Utility.setDayStartTime("23:53:62")
     print(Utility.DayStartTime)
 
-    Utility.set_day_start_time("04:54:22")
+    Utility.setDayStartTime("04:54:22")
     print(Utility.DayStartTime)
 
 

@@ -36,9 +36,9 @@ class Factory:
         self._dataMgr: dbDataMgr.DataManager = simul.DataMgr  # DB에서 기준정보를 가지고 있는 객체
 
     def SetupObject(self, dataMgr: dbDataMgr, dayStartTime: str):
-        self._utility.set_day_start_time(value=dayStartTime)
+        self._utility.setDayStartTime(value=dayStartTime)
 
-        self._setup_fac_environment()
+        self._SetupFacEnv()
         # self._register_new_machine(mac_id="MAC01")
         # self.StockList = self._facUtil.GetStockObjList()
         # self._register_new_warehouse(wh_id="RM")
@@ -47,10 +47,10 @@ class Factory:
 
     def SetupResumeData(self):
         # Warehouse 의 Lot을 배정하는 처리.
-        wh_rm: objWarehouse.Warehouse = self._find_warehouse_by_id(wh_id="RM")
+        wh_rm: objWarehouse.Warehouse = self._findWhById(wh_id="RM")
         df_demand = self._dataMgr.df_demand
-        df_demand_lot_sizing = self._setDmdProdLotSizing(df_demand)
-        wh_rm.setup_resume_data(df_demand_lot_sizing)
+        dfDmdLotSizing = self._setDmdProdLotSizing(df_demand)
+        wh_rm.setup_resume_data(dfDmdLotSizing)
 
     def _setDmdProdLotSizing(self, demand):
 
@@ -109,7 +109,7 @@ class Factory:
         #     # Machine SetupType 셋팅 오류 수정
         #     oper.FixMachineSetupTypeError()
 
-    def _setup_fac_environment(self):
+    def _SetupFacEnv(self):
         self._register_new_machine(mac_id="MAC01")
         # self.StockList = self._facUtil.GetStockObjList()
         self._register_new_warehouse(wh_id="RM")
@@ -251,7 +251,7 @@ class Factory:
 
             # 각각의 Silo에 lotObj가 들어있는지 search
             for silo in siloList:
-                siloLotObjList = silo.lotObjList
+                siloLotObjList = silo.LotObjList
                 lotObjGradeList = self._getLotObjGrade(siloLotObjList)
 
                 # silo에 여러 grade 제품이 들어있는지 확인 - 았으면 에러처리
@@ -263,6 +263,10 @@ class Factory:
                     continue
 
                 elif lotObj.Grade == lotObjGradeList[0]:
+                    if lotObj.Qty < silo.
+
+
+
                     lotObj.Silo = silo.Id
                     break
 
@@ -273,7 +277,14 @@ class Factory:
         for prodLotObj in lotObjList:
             lotObj:objLot.Lot = prodLotObj
 
-            if lotObj.Silo !=
+
+            if len(lotObj.Silo) != 0:   # Silo가 존재하는 경우 그 silo에 할당
+                lotObj.Location = lotObj.Silo
+                lotObj.WareHouse = lotObj.Silo
+                lotObj.Machine = ""
+
+
+
 
     def GetCurSiloState(self):
 
@@ -299,7 +310,7 @@ class Factory:
 
         return lotObjGradeList
 
-    def _find_warehouse_by_id(self, wh_id: str):
+    def _findWhById(self, wh_id: str):
         for obj in self.WhouseObjList:
             whObj: objWarehouse.Warehouse = obj
             if whObj.Id == wh_id:

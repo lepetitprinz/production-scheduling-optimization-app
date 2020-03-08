@@ -10,10 +10,10 @@ class Warehouse:
     def __init__(self, factory: simFactoryMgr, whId: str, kind: str):
         self._factory: simFactoryMgr = factory
         self.Id: str = whId
-        self.Kind = kind                            # WareHouse / silo / hopper
-        self.lotObjList: list = []
-        self.Capacity:int = 0
-
+        self.Kind: str = kind                            # WareHouse / silo / hopper
+        self.LotObjList: list = []
+        self.Capacity: int = 0          # warehouse 고유 capa
+        self.CurCapa: int = 0           # 현재 할당된 재고를 고려한 capa
 
     def setup_object(self):
         pass
@@ -27,17 +27,17 @@ class Warehouse:
                 qty=row['qty'],
                 region=row['region']
             )
-            self._register_lot_obj(lot_obj=lotObj)
+            self._registerLotObj(lotObj=lotObj)
             # lotObj: objLot = obj
             # self._register_lot_obj(lot_obj=lotObj)
 
-    def _register_lot_obj(self, lot_obj: objLot):
-        if type(lot_obj) is not objLot.Lot:
+    def _registerLotObj(self, lotObj: objLot):
+        if type(lotObj) is not objLot.Lot:
             raise TypeError(
                 "Lot 객체가 아닌것을 Lot 객체 리스트에 Append 하려 하고 있습니다."
             )
-        self.lotObjList.append(lot_obj)
-        self._factory._register_lot_to(lot_obj=lot_obj, to="self")
+        self.LotObjList.append(lotObj)
+        self._factory._register_lot_to(lot_obj=lotObj, to="self")
 
 
 def test():
