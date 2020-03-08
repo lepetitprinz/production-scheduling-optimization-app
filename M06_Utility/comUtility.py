@@ -19,7 +19,7 @@ class Utility:
     DayEndDate: datetime.datetime = None
     DayHorizon: datetime.timedelta = datetime.timedelta(days=60)
     MonthMaxDays: dict = {}
-    runtime: int = 0
+    runtime: datetime.datetime = None
 
     # 날짜 문자열 형식 검사를 위한 정규식
     day_start_time_regex: re.Pattern = re.compile(comEnum.RegexCollection.day_start_time.value)
@@ -49,6 +49,7 @@ class Utility:
             Utility.DayStartDate = datetime.datetime(year=year, month=month, day=day, hour=hour, minute=min, second=second)
         else:
             Utility.DayStartDate = datetime.datetime(year=year, month=month, day=day, hour=hour, minute=min, second=second)
+        Utility.runtime = datetime.datetime(year=year, month=month, day=day, hour=hour, minute=min, second=second)
 
     @staticmethod
     def GetMonthMaxDayDict(year_month_pairs: list):

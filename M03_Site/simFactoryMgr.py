@@ -139,13 +139,15 @@ class Factory:
             silo: objWarehouse.Warehouse = self._register_new_warehouse(wh_id=f"SILO{'%02d' % i}", kind="silo", capacity=silo_qty, return_flag=True)
             silos.append(silo)
         # hopper: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="HOPPER", kind="hopper", return_flag=True)
-        fgi: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="FGI", kind="WareHouse", capacity=43000, return_flag=True)
+        fgi: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="FGI", kind="FGI", capacity=43000, return_flag=True)
 
         rm.set_to_location(to_loc=reactor.Id)
+        reactor.set_from_location(from_locs=[rm])
         reactor.set_to_location(to_loc=silos[0].Kind)
         for silo in silos:
             silo.set_to_location(to_loc=bagging.Id)
         # hopper.set_to_location(to_loc=fgi.Id)
+        bagging.set_from_location(from_locs=silos)
         bagging.set_to_location(to_loc=fgi.Id)
         fgi.set_to_location(to_loc="Sales")     # Ternminal Status
 
@@ -174,6 +176,8 @@ class Factory:
             # OperTAT, Machine, Transporter, Warehouse 에서 이벤트 처리 대상을 찾기
             runTime: datetime.datetime = self.Get1stTgtMinTime()
             tgtArr: list = self.Get1stTgtArray(runTime=runTime)
+
+            print(f"runTime: {runTime}")
 
             if len(tgtArr) < 1:
                 # self._utility.LotStatusObj.PrintWaitLotList()
@@ -208,6 +212,8 @@ class Factory:
             tgtCnt = len(tgtArr)
             for obj in tgtArr:
                 obj.SyncRunningTime()
+
+            print("")
                 # # [[Time], [FacID], [TgtID], [TgtType], [PrevTime], [FlowID]]
                 # if row[3] == self._TGT_TRANS:  # "TRANS"
                 #     self.TransObj.SyncRunningTime(runTime=runTime, tgtCnt=tgtCnt)
@@ -499,7 +505,9 @@ class Factory:
 
         # 월 단위로 Lot Sequencing
         for val in monDmdLotDict.values():
-
+            raise Warning(
+                f"Make Me ! {self.__class__}.optLotSeqMon() !"
+            )
 
         # prodSeqArr = []
         # # 각 Grade 별 product 초기화
@@ -873,7 +881,7 @@ class Factory:
 
     def _register_new_oper(self, oper_id: str, kind: str, return_flag: bool = False):
 
-        operObj: simOperMgr.Operation = simOperMgr.Operation(oper_id=oper_id, kind=kind)
+        operObj: simOperMgr.Operation = simOperMgr.Operation(factory=self, oper_id=oper_id, kind=kind)
         operObj.setup_object()
         self.OperList.append(operObj)
 
@@ -882,7 +890,7 @@ class Factory:
 
     def _register_new_machine(self, mac_id: str, oper: simOperMgr, uom=""):
 
-        macObj: objMachine = objMachine.Machine(factory=self, mac_id=mac_id)
+        macObj: objMachine = objMachine.Machine(factory=self, operation=oper, mac_id=mac_id)
         macObj.setup_object(status="IDLE", uom=uom)
 
         operObj: simOperMgr.Operation = oper
@@ -907,10 +915,18 @@ class Factory:
                 "Machine 이나 Warehouse 가 아닌 곳에 Lot 을 등록하려 합니다."
             )
         if to == "self":
-            self._lot_obj_list.append(lot_obj)
+            if lot_obj not in self._lot_obj_list:
+                self._lot_obj_list.append(lot_obj)
         else:
             attr_obj = self._get_attr(attr=to)
             # attr_obj.
+
+    def _remove_lot(self, lot: objLot):
+        lotObj: objLot.Lot = lot
+        try:
+            self._lot_obj_list.remove(lotObj)
+        except ValueError as e:
+            raise e
 
     def _chk_is_type(self, attr: str, obj_type: type):
         is_type: bool = False

@@ -2,15 +2,20 @@
 
 import datetime
 
-from M04_PhyProductionMgr import objMachine, objStocker
+from M03_Site import simFactoryMgr
+from M04_PhyProductionMgr import objMachine, objStocker, objWarehouse
 from M05_ProductManager import objLot
+from M06_Utility import comUtility
+
 
 class Operation(object):
-    def __init__(self, oper_id: str, kind: str):
+    def __init__(self, factory: simFactoryMgr, oper_id: str, kind: str):
         # self._facUtil: facUtility.FacUtility = None  #
         self.Id: str = oper_id
         self.Kind: str = kind
+        self._factory: simFactoryMgr.Factory = factory
 
+        self.FromLocs: list = []
         self.ToLoc: object = None
 
         self.MacObjList: list = []
@@ -22,29 +27,83 @@ class Operation(object):
         pass
         # self.set_to_location(to_loc)
 
-    def SetupResumeData(self, lotObjList: list):
-        # self.ProdLotList 에 추가하는 처리.
-        # TAT모드인 경우, ActEndTime 계산 필요.
-        # 09/19 self._lotCnt 에 카운트 필요.
-        lotObjList = self._checkInitErrorLotList(lotObjList=lotObjList)
+    # def SetupResumeData(self, lotObjList: list):
+    #     # self.ProdLotList 에 추가하는 처리.
+    #     # TAT모드인 경우, ActEndTime 계산 필요.
+    #     # 09/19 self._lotCnt 에 카운트 필요.
+    #     lotObjList = self._checkInitErrorLotList(lotObjList=lotObjList)
 
     def AppendMac(self, tgtMac: objMachine):
         self.MacObjList.append(tgtMac)
 
+    def set_from_location(self, from_locs: list):
+        self.FromLocs = from_locs
+
+    def SyncRunningTime(self):
+        # to_loc: object
+        self.lot_leave()
+        self.inform_to_previous()
+        self.reset_first_event_time()
+
+    def inform_to_previous(self):
+        for obj in self.FromLocs:
+            self.inform_to(from_obj=obj)
+
+    def inform_to(self, from_obj: object):
+        from_loc: objWarehouse.Warehouse = from_obj
+        if from_loc.FirstEventTime is None and len(from_loc.LotObjList) > 0:
+            from_loc.set_first_event_time(runTime=comUtility.Utility.runtime)
+
+    def lot_leave(self):
+        for obj in self.MacObjList:
+            macObj: objMachine.Machine = obj
+            if macObj.EndTime == comUtility.Utility.runtime:
+                lotObj: objLot.Lot = macObj.lot_leave()
+                available_wh: objWarehouse.Warehouse = self._pick_to_wh(lot=lotObj)
+                if available_wh is not None:
+                    available_wh.lot_arrive(from_loc=macObj, lot=lotObj)
+        self.reset_first_event_time()
+
     def lot_arrive(self, lot: objLot.Lot):
-        machines: list = self._get_available_machines()
+        is_assignable, machines = self.get_assignable_flag()
+        if not is_assignable:
+            return False
         machine: objMachine.Machine = self._pick_machine(macList=machines)
+        machine.assign_lot(lot=lot)
+        machine.RunMachine()
+        self.reset_first_event_time()
+        return True
+
+    def _pick_to_wh(self, lot: objLot):
+        whs: list = self._find_available_to_wh_list(lot=lot)
+        if len(whs) == 0:
+            return None
+        return whs[0]
+
+    def _find_available_to_wh_list(self, lot: objLot):
+        rsltWhs: list = []
+        lotObj: objLot.Lot = lot
+        for obj in self._factory.WhouseObjList:
+            whObj: objWarehouse.Warehouse = obj
+            if self.ToLoc == whObj.Kind:
+                is_wh_assignable = whObj.get_assignable_flag(lot=lotObj)
+                if is_wh_assignable:
+                    rsltWhs.append(whObj)
+        return rsltWhs
 
     def _pick_machine(self, macList: list):
         return macList[0]
 
+    def set_first_event_time(self, runTime: datetime.datetime = None):
+        self.FirstEventTime = runTime
+
     def reset_first_event_time(self):
         mac_end_times: list = [mac.EndTime for mac in self.MacObjList]
-        if sum([endTime is None for endTime in mac_end_times]) > 0:
-            self.FirstEventTime = None
+        if sum([endTime is None for endTime in mac_end_times]) == len(mac_end_times):
+            self.set_first_event_time()
         else:
             mac_end_times = [endTime for endTime in mac_end_times if endTime is not None]
-            self.FirstEventTime = min(mac_end_times)
+            self.set_first_event_time(min(mac_end_times))
 
     def set_to_location(self, to_loc: object):
         self.ToLoc = to_loc
@@ -59,5 +118,5 @@ class Operation(object):
 
     def get_assignable_flag(self):
         available_machines: list = self._get_available_machines()
-        return len(available_machines) == 0 , available_machines
+        return len(available_machines) > 0, available_machines
 

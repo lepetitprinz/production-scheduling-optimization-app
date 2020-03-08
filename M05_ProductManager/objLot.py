@@ -32,8 +32,10 @@ class Lot(object):
         self.Region: str = ""
 
         self.Duration: int = 0.0
-        self.PackDuration: float = 0.0
-        self.ReactDuration: float = 0.0
+        self.PackDuration: datetime.timedelta = datetime.timedelta(hours=0)
+        self.PackDurationFloat: float = 0.0
+        self.ReactDuration: datetime.timedelta = datetime.timedelta(hours=0)
+        self.ReactDurationFloat: float = 0.0
 
         self.DueDate: datetime.datetime = None
         self.StartTimeMin: datetime.datetime = None
@@ -64,12 +66,15 @@ class Lot(object):
 
         self.Qty = qty
 
-        self.PackDuration = self._get_pack_duration(grade=self.Id)
-        self.ReactDuration = self._get_react_duration(grade=self.Grade)
-        self.Duration = math.ceil(self.PackDuration + self.ReactDuration)
+        self.PackDuration, self.PackDurationFloat = self._get_pack_duration(grade=self.Id)
+        self.ReactDuration, self.ReactDurationFloat = self._get_react_duration(grade=self.Grade)
+        self.Duration = math.ceil(self.PackDurationFloat + self.ReactDurationFloat)
 
         self.StartTimeMax = self.DueDate - datetime.timedelta(hours=self.Duration)
         self.StartTimeMin = self.DueDate.replace(day=1, hour=8, minute=0, second=0)
+
+    def set_location(self, location: str):
+        self.Location = location
 
     def _get_last_day_of_month(self, due_date: str):
         date_tmp: datetime.datetime = datetime.datetime.strptime(due_date, '%Y%m')
@@ -82,29 +87,32 @@ class Lot(object):
         dataMgr: dbDataMgr.DataManager = comUtility.Utility.get_data_manager()
         dict_prod_yield: dict = dataMgr._get_dict_prod_yield()
         dict_prod_yield: dict = dict_prod_yield['package']
+        rslt: datetime.timedelta = datetime.timedelta(hours=0)
         if grade not in dict_prod_yield.keys():
             grade_adj: str = grade[:grade.find("_", grade.find("_") + 1)]
             if grade_adj not in dict_prod_yield.keys():
                 raise Exception(
                     ""
                 )
-            rslt: float = self.Qty/dict_prod_yield[grade_adj]
+            tmp_rslt: float = self.Qty/dict_prod_yield[grade_adj]
         else:
-            rslt: float = self.Qty/dict_prod_yield[grade]
-        return rslt
-
+            tmp_rslt: float = self.Qty/dict_prod_yield[grade]
+        rslt = datetime.timedelta(hours=tmp_rslt)
+        return rslt, tmp_rslt
 
     def _get_react_duration(self, grade: str):
 
         dataMgr: dbDataMgr.DataManager = comUtility.Utility.get_data_manager()
         dict_prod_yield: dict = dataMgr._get_dict_prod_yield()
         dict_prod_yield: dict = dict_prod_yield['reactor']
+        rslt: datetime.timedelta = datetime.timedelta(hours=0)
         if grade not in dict_prod_yield.keys():
             raise Exception(
                 ""
             )
-        rslt: float = self.Qty/dict_prod_yield[grade]
-        return rslt
+        tmp_rslt: float = self.Qty/dict_prod_yield[grade]
+        rslt = datetime.timedelta(hours=tmp_rslt)
+        return rslt, tmp_rslt
 
     def _get_attr_from_id(self, id: str, attr: str):
         # if not self._chk_id_format(id):

@@ -45,8 +45,19 @@ class Warehouse:
 
     def SyncRunningTime(self):
         # to_loc: object =
-        to_oper, available_machines = self._find_available_to_operation()
-        self.lot_leave(to_loc=to_oper)
+        if self.ToLoc == "Sales":
+            self.shipping()
+        else:
+            to_oper, available_machines = self._find_available_to_operation()
+            if len(available_machines) > 0:
+                self.lot_leave(to_loc=to_oper)
+            self.set_first_event_time()
+
+    def shipping(self):
+        least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
+        self._remove_lot(lot=least_lpst_lot, shipping_flag=True)
+        self._rebuild_lpst_lot_dict()
+        self.set_first_event_time()
 
     def lot_leave(self, to_loc: object):
         least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
@@ -55,29 +66,52 @@ class Warehouse:
         to_loc.lot_arrive(least_lpst_lot)
         self._remove_lot(lot=least_lpst_lot)
         self._rebuild_lpst_lot_dict()
+        self.set_first_event_time()
 
     def lot_arrive(self, from_loc: object, lot: objLot):
         lotObj: objLot.Lot = lot
         self._registerLotObj(lotObj=lotObj)
+        self._update_curr_capa(lot=lotObj)
         self._rebuild_lpst_lot_dict()
+        self.set_first_event_time(comUtility.Utility.runtime)
+
+    def get_assignable_flag(self, lot: objLot):
+        is_assignable: bool = False
+        lotObj: objLot.Lot = lot
+        if self.CurCapa >= lotObj.Qty:
+            is_assignable = True
+        return is_assignable
+
+    def _update_curr_capa(self, lot: objLot):
+        rslt: float = 0.0
+        lotObj: objLot.Lot = lot
+        self.CurCapa -= lotObj.Qty
 
     def _find_available_to_operation(self):
-        rsltOper: simOperMgr.Operation = None
-        rsltMachines: list = []
-        if self.Id == "RM":
-            for obj in self._factory.OperList:
-                operObj: simOperMgr.Operation = obj
-                is_oper_assignable, available_machines = operObj.get_assignable_flag()
-                if operObj.Id == "REACTOR" and is_oper_assignable:
-                    rsltOper = operObj
-                    rsltMachines = available_machines
-        return rsltOper, rsltMachines
+        # rsltOper: simOperMgr.Operation = None
+        # rsltMachines: list = []
 
-    def _remove_lot(self, lot: objLot):
+        rsltOperList: list = \
+            [oper for oper in self._factory.OperList if oper.Kind == self.ToLoc]
+        rsltOper: simOperMgr.Operation = rsltOperList[0]
+        is_oper_assignable, available_machines = rsltOper.get_assignable_flag()
+        return rsltOper, available_machines
+
+        # if self.Id == "RM":
+        #     for obj in self._factory.OperList:
+        #         operObj: simOperMgr.Operation = obj
+        #         is_oper_assignable, available_machines = operObj.get_assignable_flag()
+        #         if operObj.Id == "REACTOR" and is_oper_assignable:
+        #             rsltOper = operObj
+        #             rsltMachines = available_machines
+
+    def _remove_lot(self, lot: objLot, shipping_flag: bool = False):
         try:
             self.LotObjList.remove(lot)
-        except ValueError:
-            pass
+            if shipping_flag:
+                self._factory._remove_lot(lot=lot)
+        except ValueError as e:
+            raise e
 
     def _get_least_lpst_lot(self):
         self.assign_random_lpst()
@@ -115,6 +149,8 @@ class Warehouse:
             raise TypeError(
                 "Lot 객체가 아닌것을 Lot 객체 리스트에 Append 하려 하고 있습니다."
             )
+        lotObj: objLot.Lot = lotObj
+        lotObj.set_location(self)
         self.LotObjList.append(lotObj)
         self._factory._register_lot_to(lot_obj=lotObj, to="self")
 
