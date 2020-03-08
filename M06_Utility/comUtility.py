@@ -15,6 +15,7 @@ class Utility:
     _simul: PE_Simulator = None
     DayStartTime: str = "00:00:00"
     DayStartDate: datetime.datetime = None
+    DueDateUom: str = 'nan'     # nan / mon / day
     runtime: int = 0
 
     # 날짜 문자열 형식 검사를 위한 정규식
@@ -23,6 +24,8 @@ class Utility:
     # Lot 정보
     MinLotSize: int = 50
     MaxLotSize: int = 400
+
+    ProdWheelCalStd: str = 'hour'
 
     @staticmethod
     def setup_object(simul: PE_Simulator):

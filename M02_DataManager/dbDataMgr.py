@@ -15,7 +15,7 @@ class DataManager:
 
         # 쿼리 및 파일 Read 결과를 담을 Array 변수들을 선언
         self.df_demand: pd.DataFrame = None
-        self.df_prod_wheel: pd.DataFrame = None
+        self.dfProdWheel: pd.DataFrame = None
         self.df_prod_yield: pd.DataFrame = None
 
         # Dictionary 변수 선언
@@ -28,7 +28,7 @@ class DataManager:
             self._setup_file_connection()
 
         self.df_demand = self._conMgr.load_data(data_name="demand")
-        self.df_prod_wheel = self._conMgr.load_data(data_name="prod_wheel")
+        self.dfProdWheel = self._conMgr.load_data(data_name="prod_wheel")
         self.df_prod_yield = self._conMgr.load_data(data_name="prod_yield")
 
         self._preprocessing()
