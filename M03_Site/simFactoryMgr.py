@@ -263,17 +263,37 @@ class Factory:
 
         return mac_list
 
-    ################################################
+    # ================================================================================= #
     # RM -> Reactor
-    ################################################
+    # ================================================================================= #
 
     def AssignLotToReactor(self, lotObjList):
 
+        reactorOperObj = self._getReactorOper()
 
+        for lot in lotObjList:
+            lotObj:objLot.Lot = lot
 
-    ################################################
+            macObj = reactorOperObj.MacObjList[0]
+            lotObj.Machine = macObj
+            lotObj.WareHouse = None
+            lotObj.Location = reactorOperObj
+            lotObj.ToLoc = reactorOperObj.ToLoc
+
+    def _getReactorOper(self):
+
+        for oper in self.OperList:
+            operObj:simOperMgr.Operation = oper
+
+            if operObj.Kind == "REACTOR":
+                return operObj
+
+        print("RACTOR 공정 존재하지 않음")
+        raise AssertionError()
+
+    # ================================================================================= #
     # Reactor -> Silo
-    ################################################
+    # ================================================================================= #
 
     def CheckLotObjSiloGrade(self, lotObjList:list):
         '''
@@ -372,10 +392,9 @@ class Factory:
 
         return siloWhList
 
-
-    ################################################
-    # Silo -> Packacging
-    ################################################
+    # ================================================================================= #
+    # Silo -> Packaging
+    # ================================================================================= #
 
     def AssignLotToPackaging(self, lotObjList):
 
@@ -398,6 +417,7 @@ class Factory:
 
                     elif packMacObj.Status == 'PROGRESS':   # 해당 machine이 이미 돌아가는 있는 경우 할당 불가
                         continue
+
 
     def _getPackOper(self):
 
@@ -428,7 +448,9 @@ class Factory:
 
         return lotObjGradeList
 
-    # ===================================================================== #
+    # ================================================================================= #
+    # Packagin -> Auto Warehouse
+    # ================================================================================= #
 
 
 

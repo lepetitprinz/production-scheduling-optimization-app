@@ -25,9 +25,9 @@ class Warehouse:
             print(row)
             lotObj: objLot.Lot = objLot.Lot(id=row['product'], prodId=row['product'], loc=self)
             lotObj.setup_object(
-                due_date=row['yyyymm'],
-                qty=row['qty'],
-                region=row['region']
+                due_date = row['yyyymm'],
+                qty = row['qty'],
+                region = row['region']
             )
             self._registerLotObj(lotObj=lotObj)
             # lotObj: objLot = obj

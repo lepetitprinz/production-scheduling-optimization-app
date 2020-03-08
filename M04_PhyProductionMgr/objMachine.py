@@ -19,6 +19,7 @@ class Machine(object):
         # CURRENT PROCESSING LOT
         self.Lot: objLot.Lot = None
 
+
     def setup_object(self, status: str, uom: str = ""):
         self.Status = status
 

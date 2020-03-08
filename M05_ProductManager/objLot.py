@@ -40,22 +40,15 @@ class Lot(object):
         self.Qty: float = 0.0
 
         self.Location: object = loc
-        self.FromLoc: str = loc
         self.ToLoc: str = None
 
         # Silo 관련 속성
         self.Silo = ""
 
-
         self.Oper = simOperMgr.Operation = None
         self.Machine: objMachine.Machine = None
         self.WareHouse: objWarehouse.Warehouse = None
-        if type(self.Location) is objMachine.Machine:
-            self.Machine = self.Location
-        elif type(self.Location) is objWarehouse.Warehouse:
-            self.WareHouse = self.Location
-        else:
-            pass
+
 
     def setup_object(self, due_date: str, qty: float, region: str):
 
@@ -75,6 +68,10 @@ class Lot(object):
 
         self.StartTimeMax = self.DueDate - datetime.timedelta(hours=self.Duration)
         self.StartTimeMin = self.DueDate.replace(day=1, hour=8, minute=0, second=0)
+
+    def _getRmWhObj(self):
+
+
 
     def _get_last_day_of_month(self, due_date: str):
         date_tmp: datetime.datetime = datetime.datetime.strptime(due_date, '%Y%m')
