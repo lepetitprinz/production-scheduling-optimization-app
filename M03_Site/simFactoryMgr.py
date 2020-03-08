@@ -52,6 +52,11 @@ class Factory:
         dfDmdLotSizing = self._setDmdProdLotSizing(df_demand)
         wh_rm.setup_resume_data(dfDmdLotSizing)
 
+
+    #############################################
+    # Lot Sizing
+    #############################################
+
     def _setDmdProdLotSizing(self, demand):
 
         minLotSize = comUtility.Utility.MinLotSize
@@ -248,14 +253,15 @@ class Factory:
 
     def CheckLotObjSiloGrade(self, lotObjList:list):
 
-        siloList = self._getCurSiloState()
+        siloObjList = self._getCurSiloState()
 
         for prodLotObj in lotObjList:
             lotObj:objLot.Lot = prodLotObj
 
             # 각각의 Silo에 lotObj가 들어있는지 search
-            for silo in siloList:
-                siloLotObjList = silo.LotObjList
+            for silo in siloObjList:
+                siloObj:objWarehouse.Warehouse = silo
+                siloLotObjList = siloObj.LotObjList
                 lotObjGradeList = self._getLotObjGrade(siloLotObjList)
 
                 # silo에 여러 grade 제품이 들어있는지 확인 - 았으면 에러처리
@@ -267,26 +273,43 @@ class Factory:
                     continue
 
                 elif lotObj.Grade == lotObjGradeList[0]:
-                    if lotObj.Qty < silo.CurCapa:       # Silo capa 고
-                        lotObj.Silo = silo.Id
-                        silo.CurCapa -= lotObj.Qty      # silo에 할당된 양 차감 처
+                    if lotObj.Qty < siloObj.CurCapa:        # Silo capa
+                        lotObj.Silo = siloObj.Id
+                        siloObj.CurCapa -= lotObj.Qty       # silo에 할당된 양 capa에서 차감하는 처리
+                        siloObj.LotObjList.append(lotObj)   # silo에 할당할 lot을 추가하는 처리
                         break
 
         return lotObjList
 
     def AssignLotToSilo(self, lotObjList):
 
+        siloObjList = self._getCurSiloState()
+
         for prodLotObj in lotObjList:
             lotObj:objLot.Lot = prodLotObj
 
             if len(lotObj.Silo) != 0:   # Silo가 존재하는 경우 그 silo에 할당
-                lotObj.Location = lotObj.Silo
                 whObj = self._getSiloWhObj(lotObj.Silo)
                 lotObj.WareHouse = whObj
                 lotObj.Machine = None
                 lotObj.Location = whObj
                 lotObj.FromLoc = whObj.FromLoc
                 lotObj.ToLoc = whObj.ToLoc
+
+            else:   # mapping 할 silo가 없는 경우 새로 할당할 silo를 찾는 처리
+                for silo in siloObjList:
+                    siloObj:objWarehouse.Warehouse = silo
+                    siloLotObjList = siloObj.LotObjList
+                    lotObjGradeList = self._getLotObjGrade(siloLotObjList)
+
+                    if len(siloObj.LotObjList) == 0:    # Silo에 할당 된 lot이 없으면 할당 처리
+                       whObj = self._getSiloWhObj(lotObj.Silo)
+                       lotObj.WareHouse = whObj
+                       lotObj.Machine = None
+                       lotObj.Location = whObj
+                       lotObj.FromLoc = whObj.FromLoc
+                       lotObj.ToLoc = whObj.ToLoc
+
 
     def _getSiloWhObj(self, whId:str):
 
