@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from M03_Site import simFactoryMgr
+from M05_ProductManager import objLot
 
 
 class Machine(object):
@@ -8,21 +9,21 @@ class Machine(object):
         self._factory: simFactoryMgr = factory
         self.Id: str = mac_id
 
-        #
-        self.Additive: str = ""
-
         # PACKAGING MACHINE PROPERTIES
         self.Uom: str = ""          # 25 KG / 750 KG / BULK
         self.PackKind: str = ""     # WV / FS / BK / SB
 
         # STATUS
-        self.Status: str = "IDLE"   # IDLE / PROGRESS
+        self.status: str = "IDLE"
 
         # CURRENT PROCESSING LOT
-        self.Lot: str = ""
+        self.Lot: objLot.Lot = None
 
-    def setup_object(self, status: str, additive: str, ):
-        self.Status = status
+    def setup_object(self, status: str, uom: str = ""):
+        self.status = status
+
+        # PACKAGING MACHINE PROPERTIES
+        self.Uom = uom
 
     def RunMachine(self):
         pass

@@ -15,15 +15,10 @@ class Warehouse:
         self.Capacity: int = 0          # warehouse 고유 capa
         self.CurCapa: int = 0           # 현재 할당된 재고를 고려한 capa
 
-        self.ToLoc: str = 0
+        self.ToLoc: object = None
 
-    def setup_object(self, arr: pd.DataFrame):
-        if self.Kind == "RM":
-            self.CurCapa = np.Inf
-        elif self.Kind == "silo":
-            raise Exception(
-                f"Make Me ! from {self.__class__}.setup_object !!"
-            )
+    def setup_object(self, capacity: float = None):
+        self._setCapacity(capacity=capacity)
 
     def setup_resume_data(self, lotObjArr: pd.DataFrame):
         for idx, row in lotObjArr.iterrows():
@@ -37,6 +32,20 @@ class Warehouse:
             self._registerLotObj(lotObj=lotObj)
             # lotObj: objLot = obj
             # self._register_lot_obj(lot_obj=lotObj)
+
+    def set_to_location(self, to_loc: object):
+        self.ToLoc = to_loc
+
+    def _setCapacity(self, capacity: float):
+        if self.Kind == "RM":
+            self.Capacity = np.Inf
+            self.CurCapa = np.Inf
+        else:
+            self.Capacity = capacity
+            self.CurCapa = capacity
+            # raise Exception(
+            #     f"Make Me ! from {self.__class__}.setup_object !!"
+            # )
 
     def _registerLotObj(self, lotObj: objLot):
         if type(lotObj) is not objLot.Lot:

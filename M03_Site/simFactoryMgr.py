@@ -39,7 +39,7 @@ class Factory:
     def SetupObject(self, dataMgr: dbDataMgr, dayStartTime: str):
         self._utility.setDayStartTime(value=dayStartTime)
 
-        self._SetupFacEnv()
+        self._SetupFacEnv(silo_qty=400, nof_silo=10)
         # self._register_new_machine(mac_id="MAC01")
         # self.StockList = self._facUtil.GetStockObjList()
         # self._register_new_warehouse(wh_id="RM")
@@ -110,22 +110,32 @@ class Factory:
         #     # Machine SetupType 셋팅 오류 수정
         #     oper.FixMachineSetupTypeError()
 
-    def _SetupFacEnv(self, silo_qty: float, multi_silo: bool = False
-                     ):
-        reactor: simOperMgr.Operation = self._register_new_oper(oper_id="REACTOR", return_flag=True)
+    def _SetupFacEnv(self, silo_qty: float, nof_silo: int = 1):
+        reactor: simOperMgr.Operation = self._register_new_oper(oper_id="REACTOR", kind="REACTOR", return_flag=True)
         self._register_new_machine(mac_id="M1", oper=reactor)
 
-        bagging: simOperMgr.Operation = self._register_new_oper(oper_id="BAGGING", return_flag=True)
-        self._register_new_machine(mac_id="P2", oper=bagging)
-        self._register_new_machine(mac_id="P7", oper=reactor)
-        self._register_new_machine(mac_id="P9", oper=reactor)
+        bagging: simOperMgr.Operation = self._register_new_oper(oper_id="BAGGING", kind="BAGGING", return_flag=True)
+        self._register_new_machine(mac_id="P2", oper=bagging, uom="25 KG")
+        self._register_new_machine(mac_id="P7", oper=bagging, uom="750 KG")
+        self._register_new_machine(mac_id="P9", oper=bagging, uom="BULK")
 
         # self.StockList = self._facUtil.GetStockObjList()
-        self._register_new_warehouse(wh_id="RM", kind="RM")
-        silo_qty /= 10
-        for i in range(1, 1+10):
-            self._register_new_warehouse(wh_id=f"SILO{'%02d' % i}", kind="silo", capa=silo_qty)
-        self._register_new_warehouse(wh_id="FGI", kind="wh")
+        rm: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="RM", kind="RM", return_flag=True)     # RM / WareHouse / silo / hopper
+        silo_qty /= nof_silo
+        silos: list = []
+        for i in range(1, 1+nof_silo):
+            silo: objWarehouse.Warehouse = self._register_new_warehouse(wh_id=f"SILO{'%02d' % i}", kind="silo", capacity=silo_qty, return_flag=True)
+            silos.append(silo)
+        hopper: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="HOPPER", kind="hopper", return_flag=True)
+        fgi: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="FGI", kind="WareHouse", return_flag=True)
+
+        rm.set_to_location(to_loc=reactor.Id)
+        reactor.set_to_location(to_loc=silos[0].Kind)
+        for silo in silos:
+            silo.set_to_location(to_loc=bagging.Id)
+        bagging.set_to_location(to_loc=hopper.Id)
+        hopper.set_to_location(to_loc=fgi.Id)
+        fgi.set_to_location(to_loc=None)
 
     def send_init_event(self):
         """공장 객체 초기화 정보를 DB에 전달하는 메서드"""
@@ -431,30 +441,33 @@ class Factory:
                 return whObj
         return None
 
-    def _register_new_oper(self, oper_id: str, return_flag: bool = False):
+    def _register_new_oper(self, oper_id: str, kind: str, return_flag: bool = False):
 
-        operObj: simOperMgr.Operation = simOperMgr.Operation(oper_id=oper_id)
+        operObj: simOperMgr.Operation = simOperMgr.Operation(oper_id=oper_id, kind=kind)
         operObj.setup_object()
         self.OperList.append(operObj)
 
         if return_flag:
             return operObj
 
-    def _register_new_machine(self, mac_id: str, oper: simOperMgr):
+    def _register_new_machine(self, mac_id: str, oper: simOperMgr, uom=""):
 
         macObj: objMachine = objMachine.Machine(factory=self, mac_id=mac_id)
-        macObj.setup_object(status="IDLE")
+        macObj.setup_object(status="IDLE", uom=uom)
 
         operObj: simOperMgr.Operation = oper
-        operObj.MacObjList.append(operObj)
+        operObj.MacObjList.append(macObj)
 
         self.MachineList.append(macObj)
 
-    def _register_new_warehouse(self, wh_id: str, kind: str):
+    def _register_new_warehouse(self, wh_id: str, kind: str, capacity: float = None, return_flag: bool = False):
 
         whObj: objWarehouse = objWarehouse.Warehouse(factory=self, whId=wh_id, kind=kind)
-        whObj.setup_object()
+        whObj.setup_object(capacity)
         self.WhouseObjList.append(whObj)
+
+        if return_flag:
+            return whObj
 
     def _register_lot_to(self, lot_obj: objLot, to: str):
         if not (self._chk_is_type(attr=to, obj_type=objMachine.Machine) or
