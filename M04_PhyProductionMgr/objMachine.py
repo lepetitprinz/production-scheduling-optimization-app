@@ -8,9 +8,20 @@ class Machine(object):
         self._factory: simFactoryMgr = factory
         self.id: str = mac_id
 
+        #
+        self.additive: str = ""
+
+        # PACKAGING MACHINE PROPERTIES
+        self.Uom: str = ""          # 25 KG / 750 KG / BULK
+        self.PackKind: str = ""     # WV / FS / BK / SB
+
+        # STATUS
         self.status: str = "IDLE"
 
-    def setup_object(self, status: str):
+        # CURRENT PROCESSING LOT
+        self.Lot:  = ""
+
+    def setup_object(self, status: str, additive: str, ):
         self.status = status
 
     def RunMachine(self):

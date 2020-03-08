@@ -116,9 +116,9 @@ class Factory:
         self._register_new_machine(mac_id="M1", oper=reactor)
 
         bagging: simOperMgr.Operation = self._register_new_oper(oper_id="BAGGING", return_flag=True)
-        self._register_new_machine(mac_id="MAC01", oper=bagging)
-        self._register_new_machine(mac_id="MAC01", oper=reactor)
-        self._register_new_machine(mac_id="MAC01", oper=reactor)
+        self._register_new_machine(mac_id="P2", oper=bagging)
+        self._register_new_machine(mac_id="P7", oper=reactor)
+        self._register_new_machine(mac_id="P9", oper=reactor)
 
         # self.StockList = self._facUtil.GetStockObjList()
         self._register_new_warehouse(wh_id="RM", kind="RM")
