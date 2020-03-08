@@ -269,8 +269,6 @@ class Factory:
 
     def AssignLotToReactor(self, lotObjList):
 
-        
-
 
 
     ################################################
