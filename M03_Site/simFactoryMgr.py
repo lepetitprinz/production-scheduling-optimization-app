@@ -110,17 +110,17 @@ class Factory:
         #     oper.FixMachineSetupTypeError()
 
     def _SetupFacEnv(self):
-        self._register_new_machine(mac_id="MAC01")
+        self._regNewMac(mac_id="MAC01")
         # self.StockList = self._facUtil.GetStockObjList()
-        self._register_new_warehouse(wh_id="RM")
+        self._regNewWh(wh_id="RM")
         for i in range(1, 1+10):
-            self._register_new_warehouse(wh_id=f"SILO{'%02d' % i}")
+            self._regNewWh(wh_id=f"SILO{'%02d' % i}")
 
     def send_init_event(self):
         """공장 객체 초기화 정보를 DB에 전달하는 메서드"""
         pass
 
-    def run_factory(self):
+    def runFactory(self):
         print(f"Factory {self.ID} is Running.")
 
         # prevRunTime = -1  # 전 회차 Time
@@ -202,7 +202,7 @@ class Factory:
         # print("Lot events: {}, Machine events: {}".format(comUtility.Utility.LotStatusObj.HistoryCount,
         #                                                   self._facUtil.MacStatusObj.HistoryCount))
 
-    def wake_up_machine(self):
+    def wakUpMac(self):
         # Lot이 버퍼에 장착 된 채 IDLE인 머신을 깨우는 처리
         for obj in self.MachineList:
             macObj: objMachine = obj
@@ -242,9 +242,13 @@ class Factory:
 
         return mac_list
 
+    ###################################################
+    # Silo 관련 Code
+    ###################################################
+
     def CheckLotObjSiloGrade(self, lotObjList:list):
 
-        siloList = self.GetCurSiloState()
+        siloList = self._getCurSiloState()
 
         for prodLotObj in lotObjList:
             lotObj:objLot.Lot = prodLotObj
@@ -277,10 +281,23 @@ class Factory:
 
             if len(lotObj.Silo) != 0:   # Silo가 존재하는 경우 그 silo에 할당
                 lotObj.Location = lotObj.Silo
-                lotObj.WareHouse = lotObj.Silo
-                lotObj.Machine = ""
+                whObj = self._getSiloWhObj(lotObj.Silo)
+                lotObj.WareHouse = whObj
+                lotObj.Machine = None
+                lotObj.Location = whObj
+                lotObj.FromLoc = whObj.FromLoc
+                lotObj.ToLoc = whObj.ToLoc
 
-    def GetCurSiloState(self):
+    def _getSiloWhObj(self, whId:str):
+
+        for whObj in self.WhouseObjList:
+            wh:objWarehouse.Warehouse = whObj
+            if wh.Id == whId:
+                return wh
+
+        return None
+
+    def _getCurSiloState(self):
 
         siloWhList = []
 
@@ -291,7 +308,6 @@ class Factory:
                 siloWhList.append(wh)
 
         return siloWhList
-
 
     def _getLotObjGrade(self, lotObjList):
         lotObjGradeList = []
@@ -304,6 +320,7 @@ class Factory:
 
         return lotObjGradeList
 
+
     def _findWhById(self, wh_id: str):
         for obj in self.WhouseObjList:
             whObj: objWarehouse.Warehouse = obj
@@ -311,19 +328,19 @@ class Factory:
                 return whObj
         return None
 
-    def _register_new_machine(self, mac_id: str):
+    def _regNewMac(self, mac_id: str):
 
         macObj: objMachine = objMachine.Machine(factory=self, mac_id=mac_id)
         macObj.setup_object(status="IDLE")
         self.MachineList.append(macObj)
 
-    def _register_new_warehouse(self, wh_id: str):
+    def _regNewWh(self, wh_id: str):
 
         whObj: objWarehouse = objWarehouse.Warehouse(factory=self, whId=wh_id)
         whObj.setup_object()
         self.WhouseObjList.append(whObj)
 
-    def _register_lot_to(self, lot_obj: objLot, to: str):
+    def _regLotTo(self, lot_obj: objLot, to: str):
         if not (self._chk_is_type(attr=to, obj_type=objMachine.Machine) or
                 self._chk_is_type(attr=to, obj_type=objWarehouse.Warehouse) or
                 to == "self"):

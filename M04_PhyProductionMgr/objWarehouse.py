@@ -10,10 +10,15 @@ class Warehouse:
     def __init__(self, factory: simFactoryMgr, whId: str, kind: str):
         self._factory: simFactoryMgr = factory
         self.Id: str = whId
-        self.Kind: str = kind                            # WareHouse / silo / hopper
+        self.Kind: str = kind                            # rm / silo / hopper / autowh
         self.LotObjList: list = []
         self.Capacity: int = 0          # warehouse 고유 capa
         self.CurCapa: int = 0           # 현재 할당된 재고를 고려한 capa
+
+        # Location
+        self.FromLoc: str = ""
+        self.ToLoc: str = ""
+
 
     def setup_object(self):
         pass
@@ -37,7 +42,7 @@ class Warehouse:
                 "Lot 객체가 아닌것을 Lot 객체 리스트에 Append 하려 하고 있습니다."
             )
         self.LotObjList.append(lotObj)
-        self._factory._register_lot_to(lot_obj=lotObj, to="self")
+        self._factory._regLotTo(lot_obj=lotObj, to="self")
 
 
 def test():
