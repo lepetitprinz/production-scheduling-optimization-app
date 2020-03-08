@@ -39,12 +39,13 @@ class Lot(object):
 
         self.Qty: float = 0.0
 
-        self.FromLoc: object = loc
         self.Location: object = loc
-        self.ToLoc: object = None
+        self.FromLoc: str = loc
+        self.ToLoc: str = None
 
         # Silo 관련 속성
         self.Silo = ""
+
 
         # self.Oper = None
         self.Machine: objMachine.Machine = None

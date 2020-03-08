@@ -50,13 +50,13 @@ class Simulator:
     def _run_single_factory(self):
         facObj: simFactoryMgr.Factory = self._facObjList[0]
         # 머신 깨우기
-        facObj.wake_up_machine()
+        facObj.wakUpMac()
         # Lot 할당
         facObj.AssignLot()
 
         self._util.set_runtime(runtime=-1)
 
-        facObj.run_factory()
+        facObj.runFactory()
 
     def _run_multi_factory(self):
         pass
