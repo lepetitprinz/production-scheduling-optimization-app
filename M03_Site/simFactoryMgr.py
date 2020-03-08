@@ -263,12 +263,10 @@ class Factory:
                     continue
 
                 elif lotObj.Grade == lotObjGradeList[0]:
-                    if lotObj.Qty < silo.
-
-
-
-                    lotObj.Silo = silo.Id
-                    break
+                    if lotObj.Qty < silo.CurCapa:       # Silo capa 고
+                        lotObj.Silo = silo.Id
+                        silo.CurCapa -= lotObj.Qty      # silo에 할당된 양 차감 처
+                        break
 
         return lotObjList
 
@@ -277,14 +275,10 @@ class Factory:
         for prodLotObj in lotObjList:
             lotObj:objLot.Lot = prodLotObj
 
-
             if len(lotObj.Silo) != 0:   # Silo가 존재하는 경우 그 silo에 할당
                 lotObj.Location = lotObj.Silo
                 lotObj.WareHouse = lotObj.Silo
                 lotObj.Machine = ""
-
-
-
 
     def GetCurSiloState(self):
 

@@ -4,7 +4,7 @@ import pandas as pd
 import numpy
 from M03_Site import simFactoryMgr
 from M05_ProductManager import objLot
-
+from M06_Utility.comUtility import Utility
 
 class Warehouse:
     def __init__(self, factory: simFactoryMgr, whId: str, kind: str):
