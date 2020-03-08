@@ -276,7 +276,7 @@ class Factory:
                     if lotObj.Qty < siloObj.CurCapa:        # Silo capa
                         lotObj.Silo = siloObj.Id
                         siloObj.CurCapa -= lotObj.Qty       # silo에 할당된 양 capa에서 차감하는 처리
-                        siloObj.LotObjList.append(lotObj)   # silo에 할당할 lot을 추가하는 처리
+                        # siloObj.LotObjList.append(lotObj)   # silo에 할당할 lot을 추가하는 처리
                         break
 
         return lotObjList
@@ -296,6 +296,11 @@ class Factory:
                 lotObj.FromLoc = whObj.FromLoc
                 lotObj.ToLoc = whObj.ToLoc
 
+                for silo in siloObjList:
+                    siloObj: objWarehouse.Warehouse = silo
+                    if lotObj.Silo == siloObj.Id:
+                        siloObj.LotObjList.append(lotObj)
+
             else:   # mapping 할 silo가 없는 경우 새로 할당할 silo를 찾는 처리
                 for silo in siloObjList:
                     siloObj:objWarehouse.Warehouse = silo
@@ -309,6 +314,11 @@ class Factory:
                        lotObj.Location = whObj
                        lotObj.FromLoc = whObj.FromLoc
                        lotObj.ToLoc = whObj.ToLoc
+
+    def AssignSiloToPack(self, lotObjList):
+
+        siloObjList = self._getCurSiloState()
+
 
 
     def _getSiloWhObj(self, whId:str):
