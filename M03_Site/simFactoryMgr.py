@@ -280,11 +280,11 @@ class Factory:
     # 1.RM Warehouse 에서 LotObjList 받아오기
     # 2.Production Cycle 기준으로 Lot Sequencing 최적화(dueDataUom 기준)
     #   - nan: 고정생산주기가 없는 경우, Grade Sequencing (Production Wheel만 고려해서 산)
-    #   - mon: 월 단위로
+    #   - mon: 월 단위의 납기인 경
     #          우선순위
     #           - 월 생산 Capa > 월 수요 총 Capa : Production Wheel 고려)
-    #           - 월 생산 Capa < 월 수요 총 Capa : 납기일 고려)
-    #   - day: 납기일을 최우선 기준으로하여 lot Sequencing (우선순위: 납기일 > prodcution wheel cost)
+    #           - 월 생산 Capa < 월 수요 총 Capa : Demand Priority(내수/수출) 고려)
+    #   - day: 납기일을 최우선 기준으로하여 lot Sequencing (우선순위: Demand Priority > 납기일 > prodcution wheel cost)
     # 3.
     # ================================================================================= #
 
@@ -316,12 +316,16 @@ class Factory:
         facStartDate = comUtility.Utility.DayStartDate  # 공장 시작시간
         prodWheelDict = self._prodWheelDict
 
-
+        firstGrade = self._get
 
     def _optLotSeqMon(self, dmdLotObjList:list):
         facStartDate = comUtility.Utility.DayStartDate  # 공장 시작시간
 
         # 월별 생산 제품 분리
+        monDmdLotDict = self._getMonDmdLotDict()
+
+        # 월 단위로 Lot Sequencing
+        for val in monDmdLotDict.values():
 
 
         # prodSeqArr = []
@@ -345,9 +349,10 @@ class Factory:
 
         pass
     def _optLotSeqDay(self, dmdLotObjList:list):
-
         facStartDate = comUtility.Utility.DayStartDate  # 공장 시작시간
         pass
+
+    def _getFstBestGrade()
 
     # 월별 생산 할 lot 분리 처리
     def _getMonDmdLotDict(self, ):
