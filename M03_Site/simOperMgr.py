@@ -4,17 +4,21 @@ from M04_PhyProductionMgr import objMachine, objStocker
 
 
 class Operation(object):
-    def __init__(self, oper_id: str):
+    def __init__(self, oper_id: str, kind: str):
         # self._facUtil: facUtility.FacUtility = None  #
-        self.ID: str = oper_id
+        self.Id: str = oper_id
+        self.Kind: str = kind
+
+        self.ToLoc: object = None
+
         self.MacObjList: list = []
-        self.StockObj: objStocker.Stocker = None
 
         self.FirstEventTime: int = -1
 
 
     def setup_object(self):
         pass
+        # self.set_to_location(to_loc)
 
     def SetupResumeData(self, lotObjList: list):
         # self.ProdLotList 에 추가하는 처리.
@@ -25,3 +29,5 @@ class Operation(object):
     def AppendMac(self, tgtMac: objMachine):
         self.MacObjList.append(tgtMac)
 
+    def set_to_location(self, to_loc: object):
+        self.ToLoc = to_loc
