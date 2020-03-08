@@ -253,7 +253,24 @@ class Factory:
 
         return mac_list
 
+    ################################################
+    # RM -> Reactor
+    ################################################
+
+    def AssignLotToReactor(self, lotObjList):
+
+        
+
+
+
+    ################################################
+    # Reactor -> Silo
+    ################################################
+
     def CheckLotObjSiloGrade(self, lotObjList:list):
+        '''
+        Lot을 각 silo의 현재 상태를 고려해서 할당 가능한
+        '''
 
         siloObjList = self.GetCurSiloState()
 
@@ -327,45 +344,6 @@ class Factory:
                                siloObj.LotObjList.append(lotObj)    # silo에 할당할 lot을 추가하는 처리
                                siloObj.CurCapa -= lotObj.Qty        # silo에 할당된 양 capa에서 차감하는 처리
 
-    def AssignSiloToPackOper(self, lotObjList):
-
-        siloObjList = self.GetCurSiloState()
-        packOperObj = self._getPackOper()
-        packMacList = self._getPackMacList()
-
-
-        for lot in lotObjList:
-            lotObj:objLot.Lot = lot
-
-            for packMac in packMacList:
-                packMacObj:objMachine.Machine = packMac
-
-                if lotObj.PackSize == packMacObj.Id:
-                    if packMacObj.Status == 'IDLE':     # Machine이 idle 상태인 경우 제품 할당 처리
-                        lotObj.Oper = packOperObj
-                        lotObj.Machine = packMacObj.Id
-                        lotObj.Location = packOperObj
-                        # FromLoc = packOperObj.FromLoc
-                        lotObj.ToLoc = packOperObj.ToLoc
-
-    def _getPackOper(self):
-
-        for oper in self.OperList:
-            operObj:simOperMgr.Operation = oper
-            if operObj.ID == 'BAGGING':
-                return operObj
-
-    def _getPackMacList(self):
-
-        packMacList = []
-
-        for oper in self.OperList:
-            operObj:simOperMgr.Operation = oper
-            if operObj.ID == 'BAGGING':
-                packMacList = operObj.MacObjList
-
-        return packMacList
-
     def _getSiloWhObj(self, whId:str):
 
         for wh in self.WhouseObjList:
@@ -387,10 +365,49 @@ class Factory:
         return siloWhList
 
 
+    ################################################
+    # Silo -> Packacging
+    ################################################
 
+    def AssignLotToPackaging(self, lotObjList):
 
+        packOperObj = self._getPackOper()
+        packMacList = self._getPackMacList()
 
+        for lot in lotObjList:
+            lotObj:objLot.Lot = lot
 
+            for packMac in packMacList:
+                packMacObj:objMachine.Machine = packMac
+
+                if lotObj.PackSize == packMacObj.Id:
+                    if packMacObj.Status == 'IDLE':     # Machine이 idle 상태인 경우 제품 할당 처리
+                        lotObj.Oper = packOperObj
+                        lotObj.Machine = packMacObj.Id
+                        lotObj.Location = packOperObj
+                        # FromLoc = packOperObj.FromLoc
+                        lotObj.ToLoc = packOperObj.ToLoc
+
+                    elif packMacObj.Status == 'PROGRESS':   # 해당 machine이 이미 돌아가는 있는 경우 할당 불가
+                        continue
+
+    def _getPackOper(self):
+
+        for oper in self.OperList:
+            operObj:simOperMgr.Operation = oper
+            if operObj.ID == 'BAGGING':
+                return operObj
+
+    def _getPackMacList(self):
+
+        packMacList = []
+
+        for oper in self.OperList:
+            operObj:simOperMgr.Operation = oper
+            if operObj.ID == 'BAGGING':
+                packMacList = operObj.MacObjList
+
+        return packMacList
 
     def _getLotObjGrade(self, lotObjList):
         lotObjGradeList = []
@@ -402,6 +419,10 @@ class Factory:
                 lotObjGradeList.append(lotObj.Grade)
 
         return lotObjGradeList
+
+    # ===================================================================== #
+
+
 
     def _findWhById(self, wh_id: str):
         for obj in self.WhouseObjList:

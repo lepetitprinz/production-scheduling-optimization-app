@@ -19,7 +19,7 @@ class Machine(object):
         self.Status: str = "IDLE"   # IDLE / PROGRESS
 
         # CURRENT PROCESSING LOT
-        self.Lot:  = ""
+        self.Lot: str = ""
 
     def setup_object(self, status: str, additive: str, ):
         self.Status = status
