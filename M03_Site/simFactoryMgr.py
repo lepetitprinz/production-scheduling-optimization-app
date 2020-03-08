@@ -316,7 +316,7 @@ class Factory:
         facStartDate = comUtility.Utility.DayStartDate  # 공장 시작시간
         prodWheelDict = self._prodWheelDict
 
-        firstGrade = self._get
+        firstGrade = self._getFstBestGrade()
 
     def _optLotSeqMon(self, dmdLotObjList:list):
         facStartDate = comUtility.Utility.DayStartDate  # 공장 시작시간
@@ -352,7 +352,14 @@ class Factory:
         facStartDate = comUtility.Utility.DayStartDate  # 공장 시작시간
         pass
 
-    def _getFstBestGrade()
+    def _getFstBestGrade(self):
+        prodWheelDict = self._prodWheelDict
+
+        # bestGrade = []
+        bestGrade = 'GRADE_A'   # 임시적
+        # SLOP Optimization 적용 예정
+
+        return bestGrade
 
     # 월별 생산 할 lot 분리 처리
     def _getMonDmdLotDict(self, ):
@@ -362,17 +369,6 @@ class Factory:
 
     # 월별 생산 Capa / 월별 수요 capa 계산
     def _calcMonDmdCapa(self):
-
-
-    def GetFirstBestGrade(self):
-
-        prodWheelDict = self._prodWheelDict
-
-        # bestGrade = []
-        bestGrade = 'GRADE_A'   # 임시적
-        # SLOP Optimization 적용 예정
-
-        return bestGrade
 
     def GetNextBestGrade(self, grade):
         pass
