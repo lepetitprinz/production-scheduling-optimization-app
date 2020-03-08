@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
-import numpy
+import numpy as np
 from M03_Site import simFactoryMgr
 from M05_ProductManager import objLot
 
@@ -10,13 +10,18 @@ class Warehouse:
     def __init__(self, factory: simFactoryMgr, whId: str, kind: str):
         self._factory: simFactoryMgr = factory
         self.Id: str = whId
-        self.Kind: str = kind                            # WareHouse / silo / hopper
+        self.Kind: str = kind                            # RM / WareHouse / silo / hopper
         self.LotObjList: list = []
         self.Capacity: int = 0          # warehouse 고유 capa
         self.CurCapa: int = 0           # 현재 할당된 재고를 고려한 capa
 
-    def setup_object(self):
-        pass
+    def setup_object(self, arr: pd.DataFrame):
+        if self.Kind == "RM":
+            self.CurCapa = np.Inf
+        elif self.Kind == "silo":
+            raise Exception(
+                f"Make Me ! from {self.__class__}.setup_object !!"
+            )
 
     def setup_resume_data(self, lotObjArr: pd.DataFrame):
         for idx, row in lotObjArr.iterrows():

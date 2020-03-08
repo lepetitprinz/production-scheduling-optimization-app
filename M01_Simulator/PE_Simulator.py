@@ -173,7 +173,7 @@ class Simulator:
         return minCostProdSeqList
 
     def getBestSeq(self):
-
+        pass
 
 
     ########################################

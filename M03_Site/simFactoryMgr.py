@@ -4,6 +4,7 @@ import datetime
 
 from M01_Simulator import PE_Simulator
 from M02_DataManager import dbDataMgr
+from M03_Site import simOperMgr
 from M04_PhyProductionMgr import objWarehouse, objMachine
 from M05_ProductManager import objLot
 from M06_Utility import comUtility
@@ -24,7 +25,7 @@ class Factory:
         self._startTime: datetime.datetime = None  # 시스템 구동 시작 시간
 
         # --- Resource 관련 객체 리스트 ---
-        # self.OperMgrList: list = []  # OperationMgr 리스트
+        self.OperList: list = []  # OperationMgr 리스트
         self.MachineList: list = []  # Machine 객체 리스트
         # self.StockList: list = []  # Stocker 객체 리스트
         self.WhouseObjList: list = []  # objWarehouse 객체 리스트
@@ -52,7 +53,7 @@ class Factory:
         dfDmdLotSizing = self._setDmdProdLotSizing(df_demand)
         wh_rm.setup_resume_data(dfDmdLotSizing)
 
-    def _setDmdProdLotSizing(self, demand):
+    def _setDmdProdLotSizing(self, demand: pd.DataFrame):
 
         minLotSize = comUtility.Utility.MinLotSize
         maxLotSize = comUtility.Utility.MaxLotSize
@@ -78,7 +79,7 @@ class Factory:
                 quotient = row['qty'] // maxLotSize
                 remainder = row['qty'] % maxLotSize
                 # Maximum Lot 단위 처리
-                for i in range(quotient):
+                for i in range(int(quotient)):
                     dmdProdLot.loc[idx, 'qty'] = maxLotSize
                     dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
                     dmdProdLot.loc[idx, 'product'] = row['product'] + '_' + str(i+1)
@@ -109,12 +110,22 @@ class Factory:
         #     # Machine SetupType 셋팅 오류 수정
         #     oper.FixMachineSetupTypeError()
 
-    def _SetupFacEnv(self):
-        self._register_new_machine(mac_id="MAC01")
+    def _SetupFacEnv(self, silo_qty: float, multi_silo: bool = False
+                     ):
+        reactor: simOperMgr.Operation = self._register_new_oper(oper_id="REACTOR", return_flag=True)
+        self._register_new_machine(mac_id="M1", oper=reactor)
+
+        bagging: simOperMgr.Operation = self._register_new_oper(oper_id="BAGGING", return_flag=True)
+        self._register_new_machine(mac_id="MAC01", oper=bagging)
+        self._register_new_machine(mac_id="MAC01", oper=reactor)
+        self._register_new_machine(mac_id="MAC01", oper=reactor)
+
         # self.StockList = self._facUtil.GetStockObjList()
-        self._register_new_warehouse(wh_id="RM")
+        self._register_new_warehouse(wh_id="RM", kind="RM")
+        silo_qty /= 10
         for i in range(1, 1+10):
-            self._register_new_warehouse(wh_id=f"SILO{'%02d' % i}")
+            self._register_new_warehouse(wh_id=f"SILO{'%02d' % i}", kind="silo", capa=silo_qty)
+        self._register_new_warehouse(wh_id="FGI", kind="wh")
 
     def send_init_event(self):
         """공장 객체 초기화 정보를 DB에 전달하는 메서드"""
@@ -263,7 +274,7 @@ class Factory:
                     continue
 
                 elif lotObj.Grade == lotObjGradeList[0]:
-                    if lotObj.Qty < silo.
+                    # if lotObj.Qty < silo.
 
 
 
@@ -317,15 +328,28 @@ class Factory:
                 return whObj
         return None
 
-    def _register_new_machine(self, mac_id: str):
+    def _register_new_oper(self, oper_id: str, return_flag: bool = False):
+
+        operObj: simOperMgr.Operation = simOperMgr.Operation(oper_id=oper_id)
+        operObj.setup_object()
+        self.OperList.append(operObj)
+
+        if return_flag:
+            return operObj
+
+    def _register_new_machine(self, mac_id: str, oper: simOperMgr):
 
         macObj: objMachine = objMachine.Machine(factory=self, mac_id=mac_id)
         macObj.setup_object(status="IDLE")
+
+        operObj: simOperMgr.Operation = oper
+        operObj.MacObjList.append(operObj)
+
         self.MachineList.append(macObj)
 
-    def _register_new_warehouse(self, wh_id: str):
+    def _register_new_warehouse(self, wh_id: str, kind: str):
 
-        whObj: objWarehouse = objWarehouse.Warehouse(factory=self, whId=wh_id)
+        whObj: objWarehouse = objWarehouse.Warehouse(factory=self, whId=wh_id, kind=kind)
         whObj.setup_object()
         self.WhouseObjList.append(whObj)
 
