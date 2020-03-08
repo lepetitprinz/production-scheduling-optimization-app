@@ -13,7 +13,7 @@ from M06_Utility import comEnum, comUtility
 
 class Lot(object):
 
-    lot_id_regex: re.Pattern = re.compile(comEnum.RegexCollection.lot_id.value)
+    lot_id_regex = re.compile(comEnum.RegexCollection.lot_id.value)
     lot_id_format: dict = {
         "Grade": 0,
         "PackSize": 1,
@@ -68,10 +68,6 @@ class Lot(object):
 
         self.StartTimeMax = self.DueDate - datetime.timedelta(hours=self.Duration)
         self.StartTimeMin = self.DueDate.replace(day=1, hour=8, minute=0, second=0)
-
-    def _getRmWhObj(self):
-
-
 
     def _get_last_day_of_month(self, due_date: str):
         date_tmp: datetime.datetime = datetime.datetime.strptime(due_date, '%Y%m')

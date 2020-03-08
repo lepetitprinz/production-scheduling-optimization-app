@@ -36,7 +36,7 @@ class Simulator:
         for obj in self._facObjList:
             facObj: simFactoryMgr = obj
             facObj.SetupResumeData()
-            facObj.send_init_event()
+            facObj.sendInitEvent()
 
     def run_simulator(self):
         if len(self._facObjList) < 1:

@@ -137,7 +137,7 @@ class Factory:
         hopper.set_to_location(to_loc=fgi.Id)
         fgi.set_to_location(to_loc=None)
 
-    def send_init_event(self):
+    def sendInitEvent(self):
         """공장 객체 초기화 정보를 DB에 전달하는 메서드"""
         pass
 
@@ -468,7 +468,7 @@ class Factory:
                 for silo in siloObjList:
                     siloObj:objWarehouse.Warehouse = silo
                     siloLotObjList = siloObj.LotObjList
-                    lotObjGradeList = self._getLotObjGrade(siloLotObjList)
+                    # lotObjGradeList = self._getLotObjGrade(siloLotObjList)
 
                     if len(siloObj.LotObjList) == 0:    # Silo에 할당 된 lot이 없으면 할당 처리
                        whObj = self._getSiloWhObj(lotObj.Silo)
@@ -485,14 +485,6 @@ class Factory:
                                siloObj.LotObjList.append(lotObj)    # silo에 할당할 lot을 추가하는 처리
                                siloObj.CurCapa -= lotObj.Qty        # silo에 할당된 양 capa에서 차감하는 처리
 
-    def _getSiloWhObj(self, whId:str):
-
-        for wh in self.WhouseObjList:
-            whObj:objWarehouse.Warehouse = wh
-
-            if whObj.Kind == 'silo' and whObj.Id == whId:
-                return whObj
-
     def GetCurSiloState(self):
 
         siloWhList = []
@@ -504,6 +496,26 @@ class Factory:
                 siloWhList.append(wh)
 
         return siloWhList
+
+    def _getSiloWhObj(self, whId:str):
+
+        for wh in self.WhouseObjList:
+            whObj:objWarehouse.Warehouse = wh
+
+            if whObj.Kind == 'silo' and whObj.Id == whId:
+                return whObj
+
+    def _getLotObjGrade(self, lotObjList):
+        lotObjGradeList = []
+
+        for prodLotObj in lotObjList:
+            lotObj:objLot.Lot = prodLotObj
+
+            if lotObj.Grade not in lotObjGradeList:
+                lotObjGradeList.append(lotObj.Grade)
+
+        return lotObjGradeList
+
 
     # ================================================================================= #
     # Silo -> Packaging
@@ -530,7 +542,6 @@ class Factory:
                     elif packMacObj.Status == 'PROGRESS':   # 해당 machine이 이미 돌아가는 있는 경우 할당 불가
                         continue
 
-
     def _getPackOper(self):
 
         for oper in self.OperList:
@@ -549,16 +560,6 @@ class Factory:
 
         return packMacList
 
-    def _getLotObjGrade(self, lotObjList):
-        lotObjGradeList = []
-
-        for prodLotObj in lotObjList:
-            lotObj:objLot.Lot = prodLotObj
-
-            if lotObj.Grade not in lotObjGradeList:
-                lotObjGradeList.append(lotObj.Grade)
-
-        return lotObjGradeList
 
     # ================================================================================= #
     # Packagin -> FGI
