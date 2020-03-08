@@ -15,6 +15,8 @@ class Warehouse:
         self.Capacity: int = 0          # warehouse 고유 capa
         self.CurCapa: int = 0           # 현재 할당된 재고를 고려한 capa
 
+        self.ToLoc: str = 0
+
     def setup_object(self, arr: pd.DataFrame):
         if self.Kind == "RM":
             self.CurCapa = np.Inf

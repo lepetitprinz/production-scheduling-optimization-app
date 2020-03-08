@@ -23,9 +23,9 @@ class Lot(object):
     def __init__(self, id: str, prodId: str, loc: object):
         self.Id: str = id
         self.ProdId: str = prodId
-        self.Grade: str = ""
-        self.PackSize: str = ""
-        self.PackType: str = ""
+        self.Grade: str = ""        # GRADE_A / GRADE_B / GRADE_C / GRADE_D / GRADE_E/ GRADE_F / GRADE_G / GRADE_H
+        self.PackSize: str = ""     # P2 / P7 / P9
+        self.PackType: str = ""     # WV / FS / BK / SB
 
         self.Region: str = ""
 
@@ -47,7 +47,7 @@ class Lot(object):
         self.Silo = ""
 
 
-        # self.Oper = None
+        self.Oper = simOperMgr.Operation = None
         self.Machine: objMachine.Machine = None
         self.WareHouse: objWarehouse.Warehouse = None
         if type(self.Location) is objMachine.Machine:

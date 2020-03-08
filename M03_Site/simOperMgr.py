@@ -8,7 +8,9 @@ class Operation(object):
         # self._facUtil: facUtility.FacUtility = None  #
         self.ID: str = oper_id
         self.MacObjList: list = []
-        self.StockObj: objStocker.Stocker = None
+
+        self.FromLoc: str = ""
+        self.ToLoc: str = ""
 
         self.FirstEventTime: int = -1
 
