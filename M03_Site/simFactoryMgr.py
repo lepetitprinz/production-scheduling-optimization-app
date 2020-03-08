@@ -29,7 +29,6 @@ class Factory:
         # --- Resource 관련 객체 리스트 ---
         self.OperList: list = []  # OperationMgr 리스트
         self.MachineList: list = []  # Machine 객체 리스트
-        # self.StockList: list = []  # Stocker 객체 리스트
         self.WhouseObjList: list = []  # objWarehouse 객체 리스트
         # self._initWipLotList: list = []  # Lot 초기상태 리스트
         # self._initInvLotList: list = []  # WH에 있던 Lot 초기상태 정보
@@ -44,9 +43,11 @@ class Factory:
         self._utility.setDayHorizon(days=horizon_days)
         self._utility.calcDayEndDate()
 
-        self._buildFactory(silo_qty=4000, nof_silo=10)
+        self._buildFactory(silo_qty=400, nof_silo=10)
 
         self._base_first_event_time()
+
+        self._prodWheelDict = self._setProdWheelDict()
 
         # self._register_new_machine(mac_id="MAC01")
         # self.StockList = self._facUtil.GetStockObjList()
@@ -63,8 +64,8 @@ class Factory:
 
     def _setDmdProdLotSizing(self, demand: pd.DataFrame):
 
-        minLotSize = comUtility.comEnum.LotConfiguration.minSize.value
-        maxLotSize = comUtility.comEnum.LotConfiguration.maxSize.value
+        minLotSize = comUtility.Utility.MinLotSize
+        maxLotSize = comUtility.Utility.MaxLotSize
 
         dmdProdLot = pd.DataFrame(columns=['yyyymm', 'product', 'lotId', 'qty', 'region'])
 
@@ -96,7 +97,7 @@ class Factory:
                 # 나머지 lot 추가 처리
                 dmdProdLot.loc[idx, 'qty'] = remainder
                 dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
-                dmdProdLot.loc[idx, 'product'] = row['product'] + '_' + str(int(quotient)+1)
+                dmdProdLot.loc[idx, 'product'] = row['product'] + '_' + str(quotient+1)
                 dmdProdLot.loc[idx, 'region'] = row['region']
                 idx += 1
 
@@ -131,7 +132,7 @@ class Factory:
         rm: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="RM", kind="RM", return_flag=True)     # RM / WareHouse / silo / hopper
         silo_qty /= nof_silo
         silos: list = []
-        for i in range(1, 1+nof_silo):
+        for i in range(1, 1 + nof_silo):
             silo: objWarehouse.Warehouse = self._register_new_warehouse(wh_id=f"SILO{'%02d' % i}", kind="silo", capacity=silo_qty, return_flag=True)
             silos.append(silo)
         # hopper: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="HOPPER", kind="hopper", return_flag=True)
@@ -398,10 +399,150 @@ class Factory:
         return mac_list
 
     # ================================================================================= #
-    # Lot Sequencing Optimization
+    # Lot Sizing
     # ================================================================================= #
 
-    def getDmdReactorProdGroup(self, gradeGroup:dict, dmdGradeList:list):
+    def _setDmdProdLotSizing(self, demand: pd.DataFrame):
+
+        minLotSize = comUtility.Utility.MinLotSize
+        maxLotSize = comUtility.Utility.MaxLotSize
+
+        dmdProdLot = pd.DataFrame(columns=['yyyymm', 'product', 'lotId', 'qty', 'region'])
+
+        idx = 0
+        for _, row in demand.iterrows():
+            # Lot Sizing
+            if row['qty'] < minLotSize:
+                dmdProdLot.loc[idx, 'qty'] = minLotSize
+                dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
+                dmdProdLot.loc[idx, 'product'] = row['product']
+                dmdProdLot.loc[idx, 'region'] = row['region']
+                idx += 1
+            elif row['qty'] > minLotSize and row['qty'] < maxLotSize:
+                dmdProdLot.loc[idx, 'qty'] = row['qty']
+                dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
+                dmdProdLot.loc[idx, 'product'] = row['product']
+                dmdProdLot.loc[idx, 'region'] = row['region']
+                idx += 1
+            else:
+                quotient = int(row['qty'] // maxLotSize)
+                remainder = row['qty'] % maxLotSize
+                # Maximum Lot 단위 처리
+                for i in range(quotient):
+                    dmdProdLot.loc[idx, 'qty'] = maxLotSize
+                    dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
+                    dmdProdLot.loc[idx, 'product'] = row['product'] + '_' + str(i+1)
+                    dmdProdLot.loc[idx, 'region'] = row['region']
+                    idx += 1
+                # 나머지 lot 추가 처리
+                dmdProdLot.loc[idx, 'qty'] = remainder
+                dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
+                dmdProdLot.loc[idx, 'product'] = row['product'] + '_' + str(quotient+1)
+                dmdProdLot.loc[idx, 'region'] = row['region']
+                idx += 1
+
+        return dmdProdLot
+
+    # ================================================================================= #
+    # Lot Sequencing Optimization
+    # ================================================================================= #
+    # Logic
+    # 1.RM Warehouse 에서 LotObjList 받아오기
+    # 2.Production Cycle 기준으로 Lot Sequencing 최적화(dueDataUom 기준)
+    #   - nan: 고정생산주기가 없는 경우, Grade Sequencing (Production Wheel만 고려해서 산)
+    #   - mon: 월 단위로
+    #          우선순위
+    #           - 월 생산 Capa > 월 수요 총 Capa : Production Wheel 고려)
+    #           - 월 생산 Capa < 월 수요 총 Capa : 납기일 고려)
+    #   - day: 납기일을 최우선 기준으로하여 lot Sequencing (우선순위: 납기일 > prodcution wheel cost)
+    # 3.
+    # ================================================================================= #
+
+    def geOptLotSeqList(self, dmdLotObjList:list):
+        '''
+        - dmdProdLotList: 월 단위의 Demand Product Lot List
+                           ex) [prodLotObj1, prodLotObj2, prodLotObj3, prodLotObj4, ...]
+        - dueDateUom (mon / week / day)
+            1) nan : 생산주기가 없는 경우 Grade 별로 Sequencing 후 각 Grade 별로 Lot을 임의 할당
+            2) mon : 월 단위의 납기 고려하여 Seqeuncing을 진행
+            3) day : 일 단위의 납기 기준의 경우 납기 기준으로
+
+        '''
+
+        dueDateUom = comUtility.Utility.DueDateUom  # 납기 기준 단위: 없음 / 월 / 일
+
+        if dueDateUom == 'nan':
+            optLotSeqList = self._optLotSeqNan(dmdLotObjList=dmdLotObjList)
+
+        elif dueDateUom == 'mon':
+            optLotSeqList = self._optLotSeqMon(dmdLotObjList=dmdLotObjList)
+
+        else:
+            optLotSeqList = self._optLotSeqDay(dmdLotObjList=dmdLotObjList)
+
+        return optLotSeqList
+
+    def _optLotSeqNan(self, dmdLotObjList:list):
+        facStartDate = comUtility.Utility.DayStartDate  # 공장 시작시간
+        prodWheelDict = self._prodWheelDict
+
+
+
+    def _optLotSeqMon(self, dmdLotObjList:list):
+        facStartDate = comUtility.Utility.DayStartDate  # 공장 시작시간
+
+        # 월별 생산 제품 분리
+
+
+        # prodSeqArr = []
+        # # 각 Grade 별 product 초기화
+        # for val in gradeDueSeqDict.values():
+        #     prodSeqArr = prodSeqArr.append[[val[0]]]     # 각 Grade 별 duedate가 가장 작은 값으로 초기화
+        #
+        # for prodSeq in prodSeqArr:
+        #     # prodSeq: [FistProdLotObj]
+        #     candidate = {}
+        #     for prodLotObj in dmdProdLotList:
+        #         if prodLotObj != prodSeq[0]:
+        #             lotObj:objLot.Lot = prodLotObj
+        #             ### 제약조건 반영
+        #             ## 1. 납기 조건
+        #             if True == True:
+        #                 ## 2. 제약 조건
+        #                 if True == True:
+        #                     candidate.update({(prodSeq, lotObj) : prodWheelDict[(prodSeq, lotObj)]})
+
+
+        pass
+    def _optLotSeqDay(self, dmdLotObjList:list):
+
+        facStartDate = comUtility.Utility.DayStartDate  # 공장 시작시간
+        pass
+
+    # 월별 생산 할 lot 분리 처리
+    def _getMonDmdLotDict(self, ):
+        monDmdLotDict = {}
+
+        return monDmdLotDict
+
+    # 월별 생산 Capa / 월별 수요 capa 계산
+    def _calcMonDmdCapa(self):
+
+
+    def GetFirstBestGrade(self):
+
+        prodWheelDict = self._prodWheelDict
+
+        # bestGrade = []
+        bestGrade = 'GRADE_A'   # 임시적
+        # SLOP Optimization 적용 예정
+
+        return bestGrade
+
+    def GetNextBestGrade(self, grade):
+        pass
+
+    def getReactorDmdProdGroup(self, gradeGroup:dict, dmdGradeList:list):
         '''
         gradeGroup: {gradeGroup1 : [GRADE_A, ...],
                     gradeGroup2 : [GRADE_D, ...],
@@ -422,7 +563,7 @@ class Factory:
 
         return dmdReactorProdDict
 
-    def getDmdGradeList(self, dmdProdLotObjList):
+    def getDmdGradeList(self, dmdProdLotObjList:list):
         dmdGradeList = []
 
         for prodLotObj in dmdProdLotObjList:
@@ -436,7 +577,7 @@ class Factory:
         return lotObj.DueDate
 
     def getGradeDueSeq(self, dmdProdLotObjList:list):
-        dmdGradeList = self.getDmdGradeList(dmdProdLotObjList)
+        dmdGradeList = self.getDmdGradeList(dmdProdLotObjList=dmdProdLotObjList)
 
         gradeDueSeqDict = {}
         # 모든 Grade를 Dictionary Key로 setting
@@ -457,64 +598,37 @@ class Factory:
 
         return gradeDueSeqDict
 
-    def getProdWheelCostDict(self, prodWheelDf, costCalStd:str='hour'):
+    def _setProdWheelDict(self):
+        costCalStd = comUtility.Utility.ProdWheelCalStd
+        prodWheel = self._prodWheel
+        appliedProdWheel = {}
 
-        appliedGradeCost = {}
-
-        for i in range(len(prodWheelDf)):
+        for i in range(len(prodWheel)):
             if costCalStd == 'hour':
-                appliedGradeCost[(prodWheelDf.loc[i, 'grade_from'], prodWheelDf.loc[i, 'grade_to'])] = prodWheelDf.loc[i, 'hour']
+                appliedProdWheel[(prodWheel.loc[i, 'grade_from'], prodWheel.loc[i, 'grade_to'])] = prodWheel.loc[i, 'hour']
             elif costCalStd == 'og':
-                appliedGradeCost[(prodWheelDf.loc[i, 'grade_from'], prodWheelDf.loc[i, 'grade_to'])] = prodWheelDf.loc[i, 'og']
+                appliedProdWheel[(prodWheel.loc[i, 'grade_from'], prodWheel.loc[i, 'grade_to'])] = prodWheel.loc[i, 'og']
             else:
                 continue   # hour / og weight 버전 추가
 
-        return appliedGradeCost
+        return appliedProdWheel
 
-    def minCostProdWheelSeq(self, dmdProdLotObjList:list, gradeDueSeqDict:dict, prodWheelDf:dict):
-        '''
-        :param dmdProdLotObjList: [prodLotObj1, prodLotObj2, prodLotObj3, prodLotObj4, ...]
-        :param gradeDueSeqDict: {}
-        :param prodWheelDict: {(grade_X, grade_Y) : Hour / OG Qty / Weighted Cost}
-        :param costCalStd:
-        :return:
-        '''
+    # RM에서 LotObjList를 받아오는 처
+    def _getRmLotObjList(self):
+        rmLotObjList = []
 
-        minCostProdSeqList = []
-        prodWheelDict = self.getProdWheelCostDict(prodWheelDf)
+        for wh in self.WhouseObjList:
+            whObj:objWarehouse.Warehouse = wh
+            if whObj.Kind == 'RM':
+                rmLotObjList = whObj.LotObjList
 
-        prodSeqArr = []
-        # 각 Grade 별 product 초기화
-        for val in gradeDueSeqDict.values():
-            prodSeqArr = prodSeqArr.append[[val[0]]]     # 각 Grade 별 duedate가 가장 작은 값으로 초기화
-
-        for prodSeq in prodSeqArr:
-            # prodSeq: [FistProdLotObj]
-            candidate = {}
-            for prodLotObj in dmdProdLotObjList:
-                if prodLotObj != prodSeq[0]:
-                    lotObj:objLot.Lot = prodLotObj
-                    ### 제약조건 반영
-                    ## 1. 납기 조건
-                    if True == True:
-                        ## 2. 제약 조건
-                        if True == True:
-                            candidate.update({(prodSeq, lotObj) : prodWheelDict[(prodSeq, lotObj)]})
-
-        return minCostProdSeqList
-
-    def getBestSeq(self):
-        pass
-
-
-
-
+        return rmLotObjList
 
     # ================================================================================= #
     # RM -> Reactor
     # ================================================================================= #
 
-    def AssignLotToReactor(self, lotObjList):
+    def AssignLotToReactor(self, lotObjList:list):
 
         reactorOperObj = self._getReactorOper()
 
@@ -556,7 +670,7 @@ class Factory:
             for silo in siloObjList:
                 siloObj:objWarehouse.Warehouse = silo
                 siloLotObjList = silo.LotObjList
-                lotObjGradeList = self._getLotObjGrade(siloLotObjList)
+                lotObjGradeList = self._getLotObjGrade(lotObjList=siloLotObjList)
 
                 # silo에 여러 grade 제품이 들어있는지 확인 - 았으면 에러처리
                 if len(lotObjGradeList) > 1:
@@ -575,7 +689,7 @@ class Factory:
 
         return lotObjList
 
-    def AssignLotToSilo(self, lotObjList):
+    def AssignLotToSilo(self, lotObjList:list):
 
         siloObjList = self.GetCurSiloState()
 
@@ -584,7 +698,7 @@ class Factory:
 
 
             if len(lotObj.Silo) != 0:   # Silo가 존재하는 경우 그 silo에 할당
-                whObj = self._getSiloWhObj(lotObj.Silo)
+                whObj = self._getSiloWhObj(whId=lotObj.Silo)
                 lotObj.WareHouse = whObj
                 lotObj.Machine = None
                 lotObj.Location = whObj
@@ -605,7 +719,7 @@ class Factory:
                     # lotObjGradeList = self._getLotObjGrade(siloLotObjList)
 
                     if len(siloObj.LotObjList) == 0:    # Silo에 할당 된 lot이 없으면 할당 처리
-                       whObj = self._getSiloWhObj(lotObj.Silo)
+                       whObj = self._getSiloWhObj(whId=lotObj.Silo)
                        lotObj.WareHouse = whObj
                        lotObj.Machine = None
                        lotObj.Location = whObj
@@ -639,7 +753,7 @@ class Factory:
             if whObj.Kind == 'silo' and whObj.Id == whId:
                 return whObj
 
-    def _getLotObjGrade(self, lotObjList):
+    def _getLotObjGrade(self, lotObjList:list):
         lotObjGradeList = []
 
         for prodLotObj in lotObjList:
@@ -655,7 +769,7 @@ class Factory:
     # Silo -> Packaging
     # ================================================================================= #
 
-    def AssignLotToPackaging(self, lotObjList):
+    def AssignLotToPackaging(self, lotObjList:list):
         packOperObj = self._getPackOper()
         packMacList = self._getPackMacList()
 
@@ -699,7 +813,7 @@ class Factory:
     # Packagin -> FGI
     # ================================================================================= #
 
-    def AssignLotToFGI(self, lotObjList):
+    def AssignLotToFGI(self, lotObjList:list):
 
         fgiWhObj = self._getFgiWh()
 
@@ -738,6 +852,7 @@ class Factory:
             whObj: objWarehouse.Warehouse = obj
             if whObj.Id == wh_id:
                 return whObj
+
         return None
 
     def _register_new_oper(self, oper_id: str, kind: str, return_flag: bool = False):

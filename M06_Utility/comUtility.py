@@ -24,6 +24,12 @@ class Utility:
     # 날짜 문자열 형식 검사를 위한 정규식
     day_start_time_regex: re.Pattern = re.compile(comEnum.RegexCollection.day_start_time.value)
 
+    # Lot 정보
+    MinLotSize: int = 50
+    MaxLotSize: int = 400
+
+    ProdWheelCalStd: str = 'hour'
+
     @staticmethod
     def setup_object(simul: PE_Simulator):
         Utility._simul = simul
