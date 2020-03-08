@@ -263,17 +263,150 @@ class Factory:
 
         return mac_list
 
-    ################################################
-    # RM -> Reactor
-    ################################################
+    # ================================================================================= #
+    # Lot Sequencing Optimization
+    # ================================================================================= #
 
-    def AssignLotToReactor(self, lotObjList):
+    def getDmdReactorProdGroup(self, gradeGroup:dict, dmdGradeList:list):
+        '''
+        gradeGroup: {gradeGroup1 : [GRADE_A, ...],
+                    gradeGroup2 : [GRADE_D, ...],
+                    ....}
+        dmdGradeList: ['GRADE_A', 'GRADE_B', ...., 'GRADE_G]
+        '''
+        dmdReactorProdDict = {}
+
+        for key in gradeGroup.keys():
+            for grade in dmdGradeList:
+                if grade in gradeGroup[key]:
+                    if key not in dmdReactorProdDict.keys():
+                        dmdReactorProdDict.update({key: [grade]})
+                    else:
+                        if grade not in dmdReactorProdDict[key]:
+                            valList = dmdReactorProdDict[key].append(grade)
+                            dmdReactorProdDict.update({key: valList})
+
+        return dmdReactorProdDict
+
+    def getDmdGradeList(self, dmdProdLotObjList):
+        dmdGradeList = []
+
+        for prodLotObj in dmdProdLotObjList:
+            lotObj:objLot.Lot = prodLotObj
+            if lotObj.Grade not in dmdGradeList:
+                dmdGradeList.append(lotObj.Grade)
+
+        return dmdGradeList
+
+    def getLotDueDate(self, lotObj):
+        return lotObj.DueDate
+
+    def getGradeDueSeq(self, dmdProdLotObjList:list):
+        dmdGradeList = self.getDmdGradeList(dmdProdLotObjList)
+
+        gradeDueSeqDict = {}
+        # 모든 Grade를 Dictionary Key로 setting
+        for dmdGrade in dmdGradeList:
+            gradeDueSeqDict.update({dmdGrade, []})
+
+        # Grade 별 Lot List 생성
+        for prodLotObj in dmdProdLotObjList:
+            lotObj:objLot.Lot = prodLotObj
+            gradeList = gradeDueSeqDict[lotObj.Grade]
+            gradeList.append(lotObj)
+            gradeDueSeqDict.update({lotObj.Grade : gradeList})
+
+        # Grade별 Due date 기준으로 sorting
+        for key, val in gradeDueSeqDict.items():
+            sorted_val = val.sort(key=self.getLotDueDate)
+            gradeDueSeqDict.update({key:sorted_val})
+
+        return gradeDueSeqDict
+
+    def getProdWheelCostDict(self, prodWheelDf, costCalStd:str='hour'):
+
+        appliedGradeCost = {}
+
+        for i in range(len(prodWheelDf)):
+            if costCalStd == 'hour':
+                appliedGradeCost[(prodWheelDf.loc[i, 'grade_from'], prodWheelDf.loc[i, 'grade_to'])] = prodWheelDf.loc[i, 'hour']
+            elif costCalStd == 'og':
+                appliedGradeCost[(prodWheelDf.loc[i, 'grade_from'], prodWheelDf.loc[i, 'grade_to'])] = prodWheelDf.loc[i, 'og']
+            else:
+                continue   # hour / og weight 버전 추가
+
+        return appliedGradeCost
+
+    def minCostProdWheelSeq(self, dmdProdLotObjList:list, gradeDueSeqDict:dict, prodWheelDf:dict):
+        '''
+        :param dmdProdLotObjList: [prodLotObj1, prodLotObj2, prodLotObj3, prodLotObj4, ...]
+        :param gradeDueSeqDict: {}
+        :param prodWheelDict: {(grade_X, grade_Y) : Hour / OG Qty / Weighted Cost}
+        :param costCalStd:
+        :return:
+        '''
+
+        minCostProdSeqList = []
+        prodWheelDict = self.getProdWheelCostDict(prodWheelDf)
+
+        prodSeqArr = []
+        # 각 Grade 별 product 초기화
+        for val in gradeDueSeqDict.values():
+            prodSeqArr = prodSeqArr.append[[val[0]]]     # 각 Grade 별 duedate가 가장 작은 값으로 초기화
+
+        for prodSeq in prodSeqArr:
+            # prodSeq: [FistProdLotObj]
+            candidate = {}
+            for prodLotObj in dmdProdLotObjList:
+                if prodLotObj != prodSeq[0]:
+                    lotObj:objLot.Lot = prodLotObj
+                    ### 제약조건 반영
+                    ## 1. 납기 조건
+                    if True == True:
+                        ## 2. 제약 조건
+                        if True == True:
+                            candidate.update({(prodSeq, lotObj) : prodWheelDict[(prodSeq, lotObj)]})
+
+        return minCostProdSeqList
+
+    def getBestSeq(self):
         pass
 
 
-    ################################################
+
+
+
+    # ================================================================================= #
+    # RM -> Reactor
+    # ================================================================================= #
+
+    def AssignLotToReactor(self, lotObjList):
+
+        reactorOperObj = self._getReactorOper()
+
+        for lot in lotObjList:
+            lotObj:objLot.Lot = lot
+
+            macObj = reactorOperObj.MacObjList[0]
+            lotObj.Machine = macObj
+            lotObj.WareHouse = None
+            lotObj.Location = reactorOperObj
+            lotObj.ToLoc = reactorOperObj.ToLoc
+
+    def _getReactorOper(self):
+
+        for oper in self.OperList:
+            operObj:simOperMgr.Operation = oper
+
+            if operObj.Kind == "REACTOR":
+                return operObj
+
+        print("RACTOR 공정 존재하지 않음")
+        raise AssertionError()
+
+    # ================================================================================= #
     # Reactor -> Silo
-    ################################################
+    # ================================================================================= #
 
     def CheckLotObjSiloGrade(self, lotObjList:list):
         '''
@@ -372,13 +505,11 @@ class Factory:
 
         return siloWhList
 
-
-    ################################################
-    # Silo -> Packacging
-    ################################################
+    # ================================================================================= #
+    # Silo -> Packaging
+    # ================================================================================= #
 
     def AssignLotToPackaging(self, lotObjList):
-
         packOperObj = self._getPackOper()
         packMacList = self._getPackMacList()
 
@@ -398,6 +529,7 @@ class Factory:
 
                     elif packMacObj.Status == 'PROGRESS':   # 해당 machine이 이미 돌아가는 있는 경우 할당 불가
                         continue
+
 
     def _getPackOper(self):
 
@@ -428,11 +560,45 @@ class Factory:
 
         return lotObjGradeList
 
-    # ===================================================================== #
+    # ================================================================================= #
+    # Packagin -> FGI
+    # ================================================================================= #
+
+    def AssignLotToFGI(self, lotObjList):
+
+        fgiWhObj = self._getFgiWh()
+
+        for lot in lotObjList:
+            lotObj:objLot.Lot = lot
+
+            if fgiWhObj.CurCapa > lotObj.Qty:   # 자동창고의 현재 capa 체크
+                lotObj.Oper = None
+                lotObj.Machine = None
+                lotObj.Location = fgiWhObj
+                lotObj.ToLoc = fgiWhObj.ToLoc
+
+                fgiWhObj.LotObjList.append(lotObj)  # 자동창고에 lot 추가
+                fgiWhObj.CurCapa -= lotObj.Qty      # 추가한 lot 수량만큰 현재 창고 capa에서 차감 처리
+
+            else:
+                # ==================================== #
+                # 중합공정 중단 처리 or 강제 출하처리 추가 필요
+                # ==================================== #
+                break    # 자동창고가 Full 인 상태이므로 적재 중
 
 
+    def _getFgiWh(self):
 
-    def _findWhById(self, wh_id: str):
+        for wh in self.WhouseObjList:
+            whObj:objWarehouse.Warehouse = wh
+
+            if whObj.Kind == "FGI":
+                return whObj
+
+        print("FGS warehouse 객체가 없음")
+        raise AssertionError()
+
+    def _finWhById(self, wh_id: str):
         for obj in self.WhouseObjList:
             whObj: objWarehouse.Warehouse = obj
             if whObj.Id == wh_id:
