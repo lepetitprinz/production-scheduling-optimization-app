@@ -39,7 +39,7 @@ class Factory:
     def SetupObject(self, dataMgr: dbDataMgr, dayStartTime: str):
         self._utility.setDayStartTime(value=dayStartTime)
 
-        self._buildFactory(silo_qty=400, nof_silo=10)
+        self._buildFactory(silo_qty=4000, nof_silo=10)
         # self._register_new_machine(mac_id="MAC01")
         # self.StockList = self._facUtil.GetStockObjList()
         # self._register_new_warehouse(wh_id="RM")
@@ -599,7 +599,7 @@ class Factory:
         print("FGS warehouse 객체가 없음")
         raise AssertionError()
 
-    def _finWhById(self, wh_id: str):
+    def _findWhById(self, wh_id: str):
         for obj in self.WhouseObjList:
             whObj: objWarehouse.Warehouse = obj
             if whObj.Id == wh_id:
