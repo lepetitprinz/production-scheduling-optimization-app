@@ -20,11 +20,12 @@ class Operation(object):
 
         self.MacObjList: list = []
         self._lotObjList: list = []
+
         self.StockObj: objStocker.Stocker = None
 
         self.FirstEventTime: datetime.datetime = None
 
-    def setup_object(self):
+    def setupObject(self):
         pass
         # self.set_to_location(to_loc)
 
@@ -37,18 +38,21 @@ class Operation(object):
     def AppendMac(self, tgtMac: objMachine):
         self.MacObjList.append(tgtMac)
 
-    def set_from_location(self, from_locs: list):
+    def SetFromLoc(self, from_locs: list):
         self.FromLocs = from_locs
+
+    def SetToLoc(self, to_loc: object):
+        self.ToLoc = to_loc
 
     def SyncRunningTime(self):
         # to_loc: object
-        self._update_lot_list()
+        self._updateLotList()
         if len(self._lotObjList) == 0:
             self.resume_down_machines()
         else:
             self.lot_leave()
         self.inform_to_previous()
-        self.reset_first_event_time()
+        self.ResetFstEventTime()
 
     def resume_down_machines(self):
         for obj in self.MacObjList:
@@ -66,21 +70,21 @@ class Operation(object):
         from_loc: objWarehouse.Warehouse = from_obj
         if from_loc.FirstEventTime is None:
             if len(from_loc.LotObjList) > 0:
-                from_loc.set_first_event_time(runTime=runTime)
+                from_loc.setFstEventTime(runTime=runTime)
         else:
             if downFlag:
-                from_loc.set_first_event_time(runTime=runTime)
+                from_loc.setFstEventTime(runTime=runTime)
 
     def lot_leave(self):
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
             if macObj.EndTime == comUtility.Utility.runtime:
                 lotObj: objLot.Lot = macObj.lot_leave()
-                available_wh: objWarehouse.Warehouse = self._pick_to_wh(lot=lotObj)
-                print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() "
-                      f">> {(lotObj.Id, lotObj.Lpst, lotObj.ReactDurationFloat, lotObj.PackDuration)}")
-                if available_wh is not None:
-                    available_wh.lot_arrive(from_loc=macObj, lot=lotObj)
+
+                assignWh: objWarehouse.Warehouse = self._getAssignWh(lot=lotObj)
+                print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() >> {lotObj}")
+                if assignWh is not None:
+                    assignWh.lotArrive(from_loc=macObj, lot=lotObj)
 
     def lot_arrive(self, lot: objLot.Lot):
         is_assignable, machines = self.get_assignable_flag(lot=lot)
@@ -91,11 +95,11 @@ class Operation(object):
         machine: objMachine.Machine = self._pick_machine(macList=machines)
         machine.assign_lot(lot=lot)
         machine.RunMachine()
-        self.reset_first_event_time()
+        self.ResetFstEventTime()
         print(f"\t\t{self.__class__.__name__}({self.Id}/{machine.Id}).lot_arrive() >> {machine}")
         return True
 
-    def are_machines_in_break(self, lot: objLot.Lot):
+    def ChkMacInBreak(self, lot: objLot.Lot):
         breaktime_machines: list = []
         break_end_times: list = []
         for obj in self.MacObjList:
@@ -107,48 +111,87 @@ class Operation(object):
         break_end_time = min(break_end_times)
         return breaktime_machines, break_end_time
 
-    def _update_lot_list(self):
+    def _updateLotList(self):
         self._lotObjList = []
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
             if macObj.Lot is not None:
                 self._lotObjList.append(macObj)
 
-    def _pick_to_wh(self, lot: objLot):
-        whs: list = self._find_available_to_wh_list(lot=lot)
-        if len(whs) == 0:
-            return None
-        return whs[0]
+    # 할당 가능한 Warehouse를 찾고 할당하는 처리
+    def _getAssignWh(self, lot: objLot):
+        lotWhKind = lot.ToLoc   # silo or FGI
+        whObjList = self._getWhObjList(whKind=lotWhKind)
 
-    def _find_available_to_wh_list(self, lot: objLot):
-        rsltWhs: list = []
-        lotObj: objLot.Lot = lot
-        for obj in self._factory.WhouseObjList:
-            whObj: objWarehouse.Warehouse = obj
-            if self.ToLoc == whObj.Kind:
-                is_wh_assignable: bool = whObj.get_assignable_flag(lot=lotObj)
-                if is_wh_assignable:
-                    rsltWhs.append(whObj)
-        return rsltWhs
+        # Silo Warehouse 할당 로직
+        if lotWhKind == 'silo':
+
+            # Lot의 Grade 제품이 들어있는 Silo가 존재하는지 검색
+            for silo in whObjList:
+                siloObj:objWarehouse.Warehouse = silo
+                siloLotObjList = siloObj.LotObjList
+                lotObjGradeList = self._getLotObjGrade(lotObjList=siloLotObjList)
+
+                # Silo의 할당 된 lot이 아무것도 없는 경우 통과
+                if len(siloLotObjList) == 0:
+                    continue
+                # Lot의 Grade 제품이 들어있는 Silo가 존재하고 Capa가 충분하면 할당
+                elif lot.Grade == lotObjGradeList[0]:
+                    if lot.Qty < siloObj.CurCapa:   # silo의 capa가 충분한 경우 할당
+                        return siloObj
+                    else:   # silo의 Capa가 충분하지 않은 경우 다른 silo 검색
+                        continue
+                else:   # Lot의 grade와 Silo에 들어있는 Lot의 grade가 다른경우 다른 silo 검색
+                    continue
+
+            # lot의 Grade와 같은 silo가 없거나 있어도 capa가 부족한 경우 -> lot이 없는 silo에 할당
+            for silo in whObjList:
+                siloObj: objWarehouse.Warehouse = silo
+                siloLotObjList = siloObj.LotObjList
+
+                # Silo의 할당 된 lot이 아무것도 없는 경우 할당
+                if len(siloLotObjList) == 0:
+                    return siloObj
+
+        elif lotWhKind == 'FGI':
+            pass
+
+    # Warehouse 종류별 list를 찾는 처리
+    def _getWhObjList(self, whKind:str):
+        whObjList = []
+        for wh in self._factory.WhouseObjList:
+            whObj:objWarehouse.Warehouse = wh
+            if whObj.Kind == whKind:
+                whObjList.append(whObj)
+
+        return whObjList
+
+    def _getLotObjGrade(self, lotObjList:list):
+        lotObjGradeList = []
+
+        for prodLotObj in lotObjList:
+            lotObj:objLot.Lot = prodLotObj
+
+            if lotObj.Grade not in lotObjGradeList:
+                lotObjGradeList.append(lotObj.Grade)
+
+        return lotObjGradeList
 
     def _pick_machine(self, macList: list):
         return macList[0]
 
-    def set_first_event_time(self, runTime: datetime.datetime = None):
+    def SetFstEventTime(self, runTime: datetime.datetime = None):
         self.FirstEventTime = runTime
 
-    def reset_first_event_time(self):
+    def ResetFstEventTime(self):
         mac_end_times: list = [mac.EndTime for mac in self.MacObjList]
         if sum([endTime is None for endTime in mac_end_times]) == len(mac_end_times):
-            self.set_first_event_time()
+            self.SetFstEventTime()
         else:
             mac_end_times = [endTime for endTime in mac_end_times if endTime is not None]
-            self.set_first_event_time(min(mac_end_times))
+            self.SetFstEventTime(min(mac_end_times))
 
-    def set_to_location(self, to_loc: object):
-        self.ToLoc = to_loc
-
-    def _get_available_machines(self, lot: objLot.Lot):
+    def _getAvailableMac(self, lot: objLot.Lot):
         avaliable_machines: list = []
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
@@ -163,5 +206,16 @@ class Operation(object):
         return avaliable_machines
 
     def get_assignable_flag(self, lot: objLot.Lot):
-        available_machines: list = self._get_available_machines(lot=lot)
+        available_machines: list = self._getAvailableMac(lot=lot)
         return len(available_machines) > 0, available_machines
+
+    # def _find_available_to_wh_list(self, lot: objLot):
+    #     rsltWhs: list = []
+    #     lotObj: objLot.Lot = lot
+    #     for obj in self._factory.WhouseObjList:
+    #         whObj: objWarehouse.Warehouse = obj
+    #         if self.ToLoc == whObj.Kind:
+    #             is_wh_assignable: bool = whObj.getAssignableFlag(lot=lotObj)
+    #             if is_wh_assignable:
+    #                 rsltWhs.append(whObj)
+    #     return rsltWhs
