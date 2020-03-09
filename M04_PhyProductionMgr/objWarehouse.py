@@ -45,32 +45,33 @@ class Warehouse:
 
     def SyncRunningTime(self):
         # to_loc: object =
+        least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
         if self.ToLoc == "Sales":
-            self.shipping()
+            self.shipping(lot=least_lpst_lot)
         else:
-            to_oper, available_machines = self._find_available_to_operation()
+            to_oper, available_machines = self._find_available_to_operation(lot=least_lpst_lot)
             if len(available_machines) > 0:
-                self.lot_leave(to_loc=to_oper)
+                self.lot_leave(to_loc=to_oper, lot=least_lpst_lot)
             self.set_first_event_time()
 
-    def shipping(self):
-        least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
-        self._remove_lot(lot=least_lpst_lot, shipping_flag=True)
-        self._update_curr_capa(lot=least_lpst_lot, in_flag=False)
+    def shipping(self, lot: objLot):
+        # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
+        self._remove_lot(lot=lot, shipping_flag=True)
+        self._update_curr_capa(lot=lot, in_flag=False)
         self._rebuild_lpst_lot_dict()
         self.set_first_event_time()
 
-        print(f"\t\t{self.__class__.__name__}({self.Id}).shipping() >> {least_lpst_lot}")
+        print(f"\t\t{self.__class__.__name__}({self.Id}).shipping() >> {lot}")
 
-    def lot_leave(self, to_loc: object):
-        least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
+    def lot_leave(self, to_loc: object, lot: objLot):
+        # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
         current_time: datetime.datetime = comUtility.Utility.DayStartDate
 
-        print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {least_lpst_lot}")
+        print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {lot}")
 
-        to_loc.lot_arrive(least_lpst_lot)
-        self._remove_lot(lot=least_lpst_lot)
-        self._update_curr_capa(lot=least_lpst_lot, in_flag=False)
+        to_loc.lot_arrive(lot)
+        self._remove_lot(lot=lot)
+        self._update_curr_capa(lot=lot, in_flag=False)
         self._rebuild_lpst_lot_dict()
         self.set_first_event_time()
 
@@ -100,14 +101,15 @@ class Warehouse:
         else:
             self.CurCapa += lotObj.Qty
 
-    def _find_available_to_operation(self):
+    def _find_available_to_operation(self, lot: objLot):
         # rsltOper: simOperMgr.Operation = None
         # rsltMachines: list = []
 
         rsltOperList: list = \
             [oper for oper in self._factory.OperList if oper.Kind == self.ToLoc]
         rsltOper: simOperMgr.Operation = rsltOperList[0]
-        is_oper_assignable, available_machines = rsltOper.get_assignable_flag()
+
+        is_oper_assignable, available_machines = rsltOper.get_assignable_flag(lot=lot)
         return rsltOper, available_machines
 
         # if self.Id == "RM":

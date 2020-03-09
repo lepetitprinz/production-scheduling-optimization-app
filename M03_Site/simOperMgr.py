@@ -66,8 +66,9 @@ class Operation(object):
         self.reset_first_event_time()
 
     def lot_arrive(self, lot: objLot.Lot):
-        is_assignable, machines = self.get_assignable_flag()
+        is_assignable, machines = self.get_assignable_flag(lot=lot)
         if not is_assignable:
+            self.MacObjList[0].get_break_end_time
             print(f"\t\t{self.__class__.__name__}({self.Id}).lot_arrive() >> {machines}")
             return False
         machine: objMachine.Machine = self._pick_machine(macList=machines)
@@ -112,15 +113,19 @@ class Operation(object):
     def set_to_location(self, to_loc: object):
         self.ToLoc = to_loc
 
-    def _get_available_machines(self):
+    def _get_available_machines(self, lot: objLot.Lot):
         avaliable_machines: list = []
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
             if macObj.Status == "IDLE":
-                avaliable_machines.append(macObj)
+                is_breakdown, break_end = macObj.chk_breakdown(lot=lot)
+                if not is_breakdown:
+                    avaliable_machines.append(macObj)
+                else:
+                    pass
         return avaliable_machines
 
-    def get_assignable_flag(self):
-        available_machines: list = self._get_available_machines()
+    def get_assignable_flag(self, lot: objLot.Lot):
+        available_machines: list = self._get_available_machines(lot=lot)
         return len(available_machines) > 0, available_machines
 

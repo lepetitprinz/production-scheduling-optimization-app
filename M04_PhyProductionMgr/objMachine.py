@@ -61,11 +61,41 @@ class Machine(object):
         if self.Lot is not None:
             self._set_status("PROC")
 
-    def chk_breakdown(self):
+    def chk_breakdown(self, lot: objLot.Lot):
         is_break: bool = False
+        duration: datetime.timedelta = self._get_lot_proc_time(lot=lot)
+        lot_start_time: datetime.datetime = comUtility.Utility.runtime
+        lot_end_time: datetime.datetime = lot_start_time + duration
+        break_end: datetime.datetime = None
         if self._calendar is None:
             return is_break
-        for breakdown in self._calendar.breakdown_seq
+        for breakdown in self._calendar.breakdown_seq:
+            is_overlapping: bool = self._is_overlapping_to_break(
+                from_to_tuple=breakdown,
+                start_time=lot_start_time, end_time=lot_end_time
+            )
+            if is_overlapping:
+                is_break = True
+                break_end = breakdown[1]
+                break
+        return is_break, break_end
+
+    def get_break_end_time(self):
+        seq: list = self._calendar.breakdown_seq
+        seq_end: list = [tup[1] for tup in seq if tup[1] >= comUtility.Utility.runtime]
+        break_end = min(seq_end)
+        return break_end
+
+    def _is_overlapping_to_break(self, from_to_tuple: tuple,
+                                 start_time: datetime.datetime,
+                                 end_time: datetime.datetime):
+        is_overlapping: bool = self._is_between(from_to_tuple, start_time) or \
+                               self._is_between(from_to_tuple, end_time)
+        return is_overlapping
+
+    def _is_between(self, from_to_tuple: tuple, value: datetime):
+        is_between: bool = from_to_tuple[0] < value < from_to_tuple[1]
+        return is_between
 
     def _set_status(self, status: str):
         self.Status = status
@@ -78,7 +108,7 @@ class Machine(object):
 
     def _get_lot_proc_time(self, lot: objLot):
         duration: datetime.timedelta = \
-            self.Lot.ReactDuration if self._oper.Kind == "REACTOR" else \
-            self.Lot.PackDuration
+            lot.ReactDuration if self._oper.Kind == "REACTOR" else \
+            lot.PackDuration
         return duration
 
