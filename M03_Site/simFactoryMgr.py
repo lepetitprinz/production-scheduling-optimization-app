@@ -40,6 +40,7 @@ class Factory:
         # --- DB 연결 결과 취득 ---
         self._dataMgr: dbDataMgr.DataManager = simul.DataMgr  # DB에서 기준정보를 가지고 있는 객체
         self._prodWheelDf = self._dataMgr.dfProdWheel.copy()
+        self._prodWheelHour = ""
 
         # Configuration 정보
         self._seqOptTimeLimit: int = 0
@@ -54,6 +55,7 @@ class Factory:
         self._buildFactory(silo_qty=silo_qty, nof_silo=nof_silo)
         self._base_first_event_time()
         self._prodWheelDict = self._setProdWheelDict()
+        self._prodWheelHour =
 
         self._seqOptTimeLimit = self._utility.OptTimeLimit
         # self._register_new_machine(mac_id="MAC01")
@@ -66,6 +68,8 @@ class Factory:
         # Warehouse 의 Lot을 배정하는 처리.
         wh_rm: objWarehouse.Warehouse = self._findWhById(wh_id="RM")
         df_demand = self._dataMgr.df_demand.copy()
+
+        # Lot Sizing
         dfDmdLotSizing = self._setDmdProdLotSizing(df_demand)
         wh_rm.setup_resume_data(dfDmdLotSizing)
 
@@ -470,10 +474,10 @@ class Factory:
         prodWheelDict = self._prodWheelDict
 
         # Grade Sequence Optimization using SCOP algorithm
-        gradeSeqOpt = self._seqOptByScop(dmdLotList=dmdLotList)
+        gradeSeqOpt = self.SeqOptByScop(dmdLotList=dmdLotList)
 
         # Grade Sequence 별로 Lot을 grouping해서 List 변환
-        lotSeqOptList = self._getLotSeqOptList(gradeSeqOpt=gradeSeqOpt, dmdLotList=dmdLotList)
+        lotSeqOptList = self.GetLotSeqOptList(gradeSeqOpt=gradeSeqOpt, dmdLotList=dmdLotList)
 
         # RM에 존재하는 lot List를 모두 보낼때까지 실행
         while len(lotSeqOptList) > 0:
@@ -524,7 +528,7 @@ class Factory:
     # ------------------------------------------------------------------------------------------------------ #
     # Grade Sequence Optimization Using SCOP algorithm
     # ------------------------------------------------------------------------------------------------------ #
-    def _seqOptByScop(self, dmdLotList:list):
+    def SeqOptByScop(self, dmdLotList:list):
         prodWheelCostUom = comUtility.Utility.ProdWheelCalStd
         prodWheel = self._prodWheelDf
         dmdLotGradeList = self._getLotGradeList(lotList=dmdLotList)     # 전달받은 Lot List에 해당하는 Grade list 산출
@@ -571,7 +575,7 @@ class Factory:
 
         return oprtSeqGrade
 
-    def _getLotSeqOptList(self, gradeSeqOpt:list, dmdLotList:list):
+    def GetLotSeqOptList(self, gradeSeqOpt:list, dmdLotList:list):
         lotSeqOptList = []
 
         # Grade 별로 Lot Grouping (Group 안에서 lot의 순서는 고려하지 않음)
@@ -805,11 +809,8 @@ class Factory:
                 lotObj.ToLoc = whObj.ToLoc
 
                 # 할당된 silo에 lot을 추가하는 처리
-                for silo in siloObjList:
-                    siloObj: objWarehouse.Warehouse = silo
-                    if lotObj.Silo == siloObj.Id:
-                        siloObj.LotObjList.append(lotObj)   # silo에 할당할 lot을 추가하는 처리
-                        siloObj.CurCapa -= lotObj.Qty       # silo에 할당된 양 capa에서 차감하는 처리
+                whObj.LotObjList.append(lotObj)   # silo에 할당할 lot을 추가하는 처리
+                whObj.CurCapa -= lotObj.Qty       # silo에 할당된 양 capa에서 차감하는 처리
 
             else:   # mapping 할 silo가 없는 경우 새로 할당할 silo를 찾는 처리
                 for silo in siloObjList:
@@ -826,11 +827,8 @@ class Factory:
                        lotObj.ToLoc = whObj.ToLoc
 
                        # 할당된 silo에 lot을 추가하는 처리
-                       for silo in siloObjList:
-                           siloObj: objWarehouse.Warehouse = silo
-                           if lotObj.Silo == siloObj.Id:
-                               siloObj.LotObjList.append(lotObj)    # silo에 할당할 lot을 추가하는 처리
-                               siloObj.CurCapa -= lotObj.Qty        # silo에 할당된 양 capa에서 차감하는 처리
+                       whObj.LotObjList.append(lotObj)    # silo에 할당할 lot을 추가하는 처리
+                       whObj.CurCapa -= lotObj.Qty        # silo에 할당된 양 capa에서 차감하는 처리
 
     def GetCurSiloState(self):
 
