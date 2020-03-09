@@ -8,6 +8,7 @@ from M03_Site import simFactoryMgr, simOperMgr
 from M05_ProductManager import objLot
 from M06_Utility import comUtility
 
+
 class Warehouse:
     def __init__(self, factory: simFactoryMgr, whId: str, kind: str):
         self._factory: simFactoryMgr = factory
@@ -84,7 +85,7 @@ class Warehouse:
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
         current_time: datetime.datetime = comUtility.Utility.DayStartDate
 
-        print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {lot}")
+        print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {(lot.Id, lot.Lpst, lot.ReactDurationFloat, lot.PackDuration)}")
 
         to_loc.lot_arrive(lot)
         self._remove_lot(lot=lot)
@@ -137,6 +138,10 @@ class Warehouse:
         #             rsltOper = operObj
         #             rsltMachines = available_machines
 
+    def truncate_lot_list(self):
+        self.LotObjList.clear()
+        self._factory._lot_obj_list.clear()
+
     def _remove_lot(self, lot: objLot, shipping_flag: bool = False):
         try:
             self.LotObjList.remove(lot)
@@ -146,7 +151,8 @@ class Warehouse:
             raise e
 
     def _get_least_lpst_lot(self):
-        self.assign_random_lpst()
+        # self.assign_random_lpst()
+        self._rebuild_lpst_lot_dict()
         Warning(f"Fix Me !! from {self.__class__}._get_least_lpst_lot !!")
         least_lpst_lot: objLot.Lot = self.LpstLotDict[min(self.LpstLotDict.keys())][0]
         return least_lpst_lot
@@ -202,7 +208,7 @@ class Warehouse:
     # ------------------------------------------------------------------------------------------------------ #
 
     # Reactor Time Constraint
-    def ChkAssignableToReactor(self, lot:objLot.Lot):
+    def ChkAssignableToReactor(self, lot: objLot):
 
         if self.GradeChangeFinishConst == True:
             self._chkGradeChangeFinish(lot=lot)
@@ -212,21 +218,21 @@ class Warehouse:
 
         return True
 
-    def _chkGradeChangeFinish(self, lot:objLot.Lot):
+    def _chkGradeChangeFinish(self, lot: objLot):
         pass
 
-    def _chkGradeGroupChange(self, lot:objLot.Lot):
+    def _chkGradeGroupChange(self, lot: objLot):
         pass
 
     # Bagging Time Constraint
-    def ChkAssignableToBagging(self, lot:objLot.Lot):
+    def ChkAssignableToBagging(self, lot: objLot):
 
         if self.BaggingOperTimeConst == True:
             self._chkBaggingOperTime(lot=lot)
 
         return True
 
-    def _chkBaggingOperTime(self, lot:objLot.Lot):
+    def _chkBaggingOperTime(self, lot: objLot):
         pass
 
 

@@ -7,6 +7,7 @@ from M04_PhyProductionMgr import objMachine, objStocker, objWarehouse
 from M05_ProductManager import objLot
 from M06_Utility import comUtility
 
+
 class Operation(object):
     def __init__(self, factory: simFactoryMgr, oper_id: str, kind: str):
         # self._facUtil: facUtility.FacUtility = None  #
@@ -76,7 +77,8 @@ class Operation(object):
             if macObj.EndTime == comUtility.Utility.runtime:
                 lotObj: objLot.Lot = macObj.lot_leave()
                 available_wh: objWarehouse.Warehouse = self._pick_to_wh(lot=lotObj)
-                print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() >> {lotObj}")
+                print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() "
+                      f">> {(lotObj.Id, lotObj.Lpst, lotObj.ReactDurationFloat, lotObj.PackDuration)}")
                 if available_wh is not None:
                     available_wh.lot_arrive(from_loc=macObj, lot=lotObj)
 
@@ -151,8 +153,11 @@ class Operation(object):
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
             if macObj.Status == "IDLE":
-                is_breakdown, break_end = macObj.chk_breakdown(lot=lot)
-                if not is_breakdown:
+                if macObj.hasCalendar:
+                    is_breakdown, break_end = macObj.chk_breakdown(lot=lot)
+                    if not is_breakdown:
+                        avaliable_machines.append(macObj)
+                else:
                     avaliable_machines.append(macObj)
 
         return avaliable_machines

@@ -14,6 +14,8 @@ class Machine(object):
         self._calendar: comCalMgr.CalendarManager = None
         self.Id: str = mac_id
 
+        self.hasCalendar: bool = False
+
         # PACKAGING MACHINE PROPERTIES
         self.Uom: str = ""          # 25 KG / 750 KG / BULK
         self.PackKind: str = ""     # WV / FS / BK / SB
@@ -26,7 +28,7 @@ class Machine(object):
         # CURRENT PROCESSING LOT
         self.Lot: objLot.Lot = None
 
-    def setup_object(self, status: str, uom: str = "",
+    def setup_object(self, status: str, uom: str = "", need_calendar: bool = False,
                      work_start_hour: int = None, work_end_hour: int = None):
         self.Status = status
 
@@ -34,12 +36,16 @@ class Machine(object):
         self.Uom = uom
 
         # Setup Calendar
-        self._calendar = comCalMgr.CalendarManager()
-        self._calendar.SetupObject(factory=self._factory, machine=self,
-                                   start_date=comUtility.Utility.DayStartDate,
-                                   end_date=comUtility.Utility.DayEndDate,
-                                   start_hour=work_start_hour, end_hour=work_end_hour
-                                   )
+        if need_calendar:
+            self.hasCalendar = True
+            self._calendar = comCalMgr.CalendarManager()
+            self._calendar.SetupObject(factory=self._factory, machine=self,
+                                       start_date=comUtility.Utility.DayStartDate,
+                                       end_date=comUtility.Utility.DayEndDate,
+                                       start_hour=work_start_hour, end_hour=work_end_hour
+                                       )
+        else:
+            self.hasCalendar = False
 
     def assign_lot(self, lot: objLot):
         self.Lot = lot

@@ -12,6 +12,7 @@ from M04_PhyProductionMgr import objWarehouse, objMachine
 from M05_ProductManager import objLot
 from M06_Utility import comUtility
 
+
 class Factory:
     def __init__(self, simul: PE_Simulator, facID: str):
         # --- Factory Standard 관련 속성 ---
@@ -65,13 +66,8 @@ class Factory:
         # self.OperMgrList = self._facUtil.GetOperMgrObjList()
 
     def SetupResumeData(self):
-        # Warehouse 의 Lot을 배정하는 처리.
-        wh_rm: objWarehouse.Warehouse = self._findWhById(wh_id="RM")
-        df_demand = self._dataMgr.df_demand.copy()
-
-        # Lot Sizing
-        dfDmdLotSizing = self._setDmdProdLotSizing(df_demand)
-        wh_rm.setup_resume_data(dfDmdLotSizing)
+        # RM Warehouse 의 Lot을 배정하는 처리.
+        self.setup_rm_wh()
 
         # facID = self.ID
         # totalWipList = []
@@ -89,22 +85,39 @@ class Factory:
         #     # Machine SetupType 셋팅 오류 수정
         #     oper.FixMachineSetupTypeError()
 
+    def setup_rm_wh(self):
+        wh_rm: objWarehouse.Warehouse = self._findWhById(wh_id="RM")
+        df_demand = self._dataMgr.df_demand.copy()
+        # Lot Sizing
+        dfDmdLotSizing = self._setDmdProdLotSizing(df_demand)
+        wh_rm.setup_resume_data(dfDmdLotSizing)
+        wh_rm_lots: list = wh_rm.LotObjList
+        # Grade Sequence Optimization using SCOP algorithm
+        gradeSeqOpt = self.SeqOptByScop(dmdLotList=wh_rm_lots)
+        # Grade Sequence 별로 Lot을 grouping해서 List 변환
+        lotSeqOptList = self.GetLotSeqOptList(gradeSeqOpt=gradeSeqOpt, dmdLotList=wh_rm_lots, dueUom="nan")
+        wh_rm.truncate_lot_list()
+        for obj in lotSeqOptList:
+            lotObj: objLot.Lot = obj
+            wh_rm._registerLotObj(lotObj=lotObj)
+        print("")
+
+
     def _buildFactory(self, silo_qty: float, nof_silo: int = 1):
         reactor: simOperMgr.Operation = self._register_new_oper(oper_id="REACTOR", kind="REACTOR", return_flag=True)
-        self._register_new_machine(mac_id="M1", oper=reactor, uom="",
-                                   work_start_hour=8, work_end_hour=20)
+        self._register_new_machine(mac_id="M1", oper=reactor, uom="")
 
         bagging: simOperMgr.Operation = self._register_new_oper(oper_id="BAGGING", kind="BAGGING", return_flag=True)
-        self._register_new_machine(mac_id="P2", oper=bagging, uom="25 KG",
+        self._register_new_machine(mac_id="P2", oper=bagging, uom="25 KG", need_calendar=True,
                                    work_start_hour=8, work_end_hour=20)
-        self._register_new_machine(mac_id="P7", oper=bagging, uom="750 KG",
+        self._register_new_machine(mac_id="P7", oper=bagging, uom="750 KG", need_calendar=True,
                                    work_start_hour=8, work_end_hour=20)
-        self._register_new_machine(mac_id="P9", oper=bagging, uom="BULK",
+        self._register_new_machine(mac_id="P9", oper=bagging, uom="BULK", need_calendar=True,
                                    work_start_hour=8, work_end_hour=20)
 
         # self.StockList = self._facUtil.GetStockObjList()
         rm: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="RM", kind="RM", return_flag=True)     # RM / WareHouse / silo / hopper
-        rm.assign_random_lpst()
+        # rm.assign_random_lpst()
         silo_qty /= nof_silo
         silos: list = []
         for i in range(1, 1 + nof_silo):
@@ -482,14 +495,12 @@ class Factory:
     # - Grade 최적화 sequence 기준으로 Lot을 grouping하여 sequencing(lpst 필요 없음)
     # ------------------------------------------------------------------------------------------------------ #
     def _optLotSeqNan(self, dmdLotList:list):
-        facStartDate = comUtility.Utility.DayStartDate  # 공장 시작시간
-        prodWheelDict = self._prodWheelDict
 
         # Grade Sequence Optimization using SCOP algorithm
         gradeSeqOpt = self.SeqOptByScop(dmdLotList=dmdLotList)
 
         # Grade Sequence 별로 Lot을 grouping해서 List 변환
-        lotSeqOptList = self.GetLotSeqOptList(gradeSeqOpt=gradeSeqOpt, dmdLotList=dmdLotList)
+        lotSeqOptList = self.GetLotSeqOptList(gradeSeqOpt=gradeSeqOpt, dmdLotList=dmdLotList, dueUom="nan")
 
 
     def _optLotSeqMon(self, dmdLotList:list):
@@ -537,8 +548,7 @@ class Factory:
         dmdLotGradeList = self._getLotGradeList(lotList=dmdLotList)     # 전달받은 Lot List에 해당하는 Grade list 산출
 
         # 주어진 Grade List에 해당하는 Production Wheel Cost만 indexing
-        dmdLotProdWheel = prodWheel[(prodWheel['grade_from'].isin(dmdLotGradeList)) &
-                                    (prodWheel['grade_to'].isin(dmdLotGradeList))]
+        dmdLotProdWheel = prodWheel[(prodWheel['grade_from'].isin(dmdLotGradeList)) & (prodWheel['grade_to'].isin(dmdLotGradeList))]
         dmdLotProdWheel = dmdLotProdWheel.reset_index(drop=True)    # Indexing 후 index reset
 
         # Product Wheel Cost Setting
@@ -594,8 +604,9 @@ class Factory:
                 if lotObj.Grade not in lotByGradeGroupDict.keys():
                     lotByGradeGroupDict[lotObj.Grade] = [lotObj]
                 else:
-                    tempList = lotByGradeGroupDict[lotObj.Grade].append(lotObj)
-                    lotByGradeGroupDict[lotObj.Grade] = tempList
+                    lotByGradeGroupDict[lotObj.Grade].append(lotObj)
+                    # tempList = lotByGradeGroupDict[lotObj.Grade]
+                    # lotByGradeGroupDict[lotObj.Grade] = tempList
 
             # 최적화 한 Grade Sequence 별로 lot List 배열
             for grade in gradeSeqOpt:
@@ -1005,12 +1016,12 @@ class Factory:
         if return_flag:
             return operObj
 
-    def _register_new_machine(self, mac_id: str, oper: simOperMgr, uom="",
+    def _register_new_machine(self, mac_id: str, oper: simOperMgr, uom="", need_calendar: bool = False,
                               work_start_hour: int = None, work_end_hour: int = None
                               ):
 
         macObj: objMachine = objMachine.Machine(factory=self, operation=oper, mac_id=mac_id)
-        macObj.setup_object(status="IDLE", uom=uom,
+        macObj.setup_object(status="IDLE", uom=uom, need_calendar=need_calendar,
                             work_start_hour=work_start_hour, work_end_hour=work_end_hour)
 
         operObj: simOperMgr.Operation = oper
