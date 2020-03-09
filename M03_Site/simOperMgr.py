@@ -19,6 +19,7 @@ class Operation(object):
         self.ToLoc: object = None
 
         self.MacObjList: list = []
+        self._lotObjList: list = []
         self.StockObj: objStocker.Stocker = None
 
         self.FirstEventTime: datetime.datetime = None
@@ -41,18 +42,34 @@ class Operation(object):
 
     def SyncRunningTime(self):
         # to_loc: object
-        self.lot_leave()
+        self._update_lot_list()
+        if len(self._lotObjList) == 0:
+            self.resume_down_machines()
+        else:
+            self.lot_leave()
         self.inform_to_previous()
         self.reset_first_event_time()
 
-    def inform_to_previous(self):
-        for obj in self.FromLocs:
-            self.inform_to(from_obj=obj)
+    def resume_down_machines(self):
+        for obj in self.MacObjList:
+            macObj: objMachine.Machine = obj
+            macObj.power_on()
+            print(f"\t\t{macObj.__class__.__name__} ({macObj.Id}) RESUMED FROM DOWN STATE !")
 
-    def inform_to(self, from_obj: object):
+    def inform_to_previous(self, runTime: datetime.datetime = None):
+        if runTime is None:
+            runTime = comUtility.Utility.runtime
+        for obj in self.FromLocs:
+            self.inform_to(from_obj=obj, runTime=runTime)
+
+    def inform_to(self, from_obj: objWarehouse.Warehouse, runTime: datetime.datetime, downFlag: bool = False):
         from_loc: objWarehouse.Warehouse = from_obj
-        if from_loc.FirstEventTime is None and len(from_loc.LotObjList) > 0:
-            from_loc.set_first_event_time(runTime=comUtility.Utility.runtime)
+        if from_loc.FirstEventTime is None:
+            if len(from_loc.LotObjList) > 0:
+                from_loc.set_first_event_time(runTime=runTime)
+        else:
+            if downFlag:
+                from_loc.set_first_event_time(runTime=runTime)
 
     def lot_leave(self):
         for obj in self.MacObjList:
@@ -63,13 +80,12 @@ class Operation(object):
                 print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() >> {lotObj}")
                 if available_wh is not None:
                     available_wh.lot_arrive(from_loc=macObj, lot=lotObj)
-        self.reset_first_event_time()
 
     def lot_arrive(self, lot: objLot.Lot):
         is_assignable, machines = self.get_assignable_flag(lot=lot)
         if not is_assignable:
-            self.MacObjList[0].get_break_end_time
-            print(f"\t\t{self.__class__.__name__}({self.Id}).lot_arrive() >> {machines}")
+
+            print(f"\t\t{self.__class__.__name__}({self.Id}).lot_arrive() >> <{'No Machines Available'}> / {machines}")
             return False
         machine: objMachine.Machine = self._pick_machine(macList=machines)
         machine.assign_lot(lot=lot)
@@ -78,6 +94,24 @@ class Operation(object):
         print(f"\t\t{self.__class__.__name__}({self.Id}/{machine.Id}).lot_arrive() >> {machine}")
         return True
 
+    def are_machines_in_break(self, lot: objLot.Lot):
+        breaktime_machines: list = []
+        break_end_times: list = []
+        for obj in self.MacObjList:
+            macObj: objMachine.Machine = obj
+            is_breakdown, break_end = macObj.chk_breakdown(lot=lot)
+            if is_breakdown:
+                breaktime_machines.append(macObj)
+                break_end_times.append(break_end)
+        break_end_time = min(break_end_times)
+        return breaktime_machines, break_end_time
+
+    def _update_lot_list(self):
+        self._lotObjList = []
+        for obj in self.MacObjList:
+            macObj: objMachine.Machine = obj
+            if macObj.Lot is not None:
+                self._lotObjList.append(macObj)
 
     def _pick_to_wh(self, lot: objLot):
         whs: list = self._find_available_to_wh_list(lot=lot)
@@ -91,7 +125,7 @@ class Operation(object):
         for obj in self._factory.WhouseObjList:
             whObj: objWarehouse.Warehouse = obj
             if self.ToLoc == whObj.Kind:
-                is_wh_assignable = whObj.get_assignable_flag(lot=lotObj)
+                is_wh_assignable: bool = whObj.get_assignable_flag(lot=lotObj)
                 if is_wh_assignable:
                     rsltWhs.append(whObj)
         return rsltWhs
@@ -121,11 +155,8 @@ class Operation(object):
                 is_breakdown, break_end = macObj.chk_breakdown(lot=lot)
                 if not is_breakdown:
                     avaliable_machines.append(macObj)
-                else:
-                    pass
         return avaliable_machines
 
     def get_assignable_flag(self, lot: objLot.Lot):
         available_machines: list = self._get_available_machines(lot=lot)
         return len(available_machines) > 0, available_machines
-

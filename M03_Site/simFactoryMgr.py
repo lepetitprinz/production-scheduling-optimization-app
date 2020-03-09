@@ -55,7 +55,7 @@ class Factory:
         self._buildFactory(silo_qty=silo_qty, nof_silo=nof_silo)
         self._base_first_event_time()
         self._prodWheelDict = self._setProdWheelDict()
-        self._prodWheelHour =
+        self._prodWheelHour = None
 
         self._seqOptTimeLimit = self._utility.OptTimeLimit
         # self._register_new_machine(mac_id="MAC01")

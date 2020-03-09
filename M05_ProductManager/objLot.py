@@ -95,8 +95,9 @@ class Lot(object):
             tmp_rslt: float = self.Qty/dict_prod_yield[grade_adj]
         else:
             tmp_rslt: float = self.Qty/dict_prod_yield[grade]
-        rslt = datetime.timedelta(hours=tmp_rslt)
-        return rslt, tmp_rslt
+        rslt = datetime.timedelta(hours=tmp_rslt, microseconds=0)
+        rslt_chp = comUtility.Utility.chop_microsecond(rslt)
+        return rslt_chp, tmp_rslt
 
     def _get_react_duration(self, grade: str):
 
@@ -109,8 +110,9 @@ class Lot(object):
                 ""
             )
         tmp_rslt: float = self.Qty/dict_prod_yield[grade]
-        rslt = datetime.timedelta(hours=tmp_rslt)
-        return rslt, tmp_rslt
+        rslt = datetime.timedelta(hours=tmp_rslt, microseconds=0)
+        rslt_chp = comUtility.Utility.chop_microsecond(rslt)
+        return rslt_chp, tmp_rslt
 
     def _get_attr_from_id(self, id: str, attr: str):
         # if not self._chk_id_format(id):
