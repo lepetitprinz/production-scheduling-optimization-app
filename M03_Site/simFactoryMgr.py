@@ -114,25 +114,25 @@ class Factory:
         fgi: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="FGI", kind="FGI", capacity=43000, return_flag=True)
 
         rm.set_to_location(to_loc=reactor.Id)
-        reactor.set_from_location(from_locs=[rm])
-        reactor.set_to_location(to_loc=silos[0].Kind)
+        reactor.SetFromLoc(from_locs=[rm])
+        reactor.SetToLoc(to_loc=silos[0].Kind)
         for silo in silos:
             silo.set_to_location(to_loc=bagging.Id)
         # hopper.set_to_location(to_loc=fgi.Id)
-        bagging.set_from_location(from_locs=silos)
-        bagging.set_to_location(to_loc=fgi.Id)
+        bagging.SetFromLoc(from_locs=silos)
+        bagging.SetToLoc(to_loc=fgi.Id)
         fgi.set_to_location(to_loc="Sales")     # Ternminal Status
 
     def _base_first_event_time(self):
         for obj in self.OperList:
             operObj: simOperMgr.Operation = obj
-            operObj.reset_first_event_time()
+            operObj.ResetFstEventTime()
         for obj in self.WhouseObjList:
             whObj: objWarehouse.Warehouse = obj
             if whObj.Id == "RM":
-                whObj.set_first_event_time(runTime=self._utility.DayStartDate)
+                whObj.setFstEventTime(runTime=self._utility.DayStartDate)
             else:
-                whObj.set_first_event_time()
+                whObj.setFstEventTime()
 
     def sendInitEvent(self):
         """공장 객체 초기화 정보를 DB에 전달하는 메서드"""
@@ -999,7 +999,7 @@ class Factory:
     def _register_new_oper(self, oper_id: str, kind: str, return_flag: bool = False):
 
         operObj: simOperMgr.Operation = simOperMgr.Operation(factory=self, oper_id=oper_id, kind=kind)
-        operObj.setup_object()
+        operObj.setupObject()
         self.OperList.append(operObj)
 
         if return_flag:

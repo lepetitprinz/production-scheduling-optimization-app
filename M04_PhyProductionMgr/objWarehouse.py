@@ -58,25 +58,25 @@ class Warehouse:
         if self.ToLoc == "Sales":
             self.shipping(lot=least_lpst_lot)
         else:
-            to_oper, available_machines = self._find_available_to_operation(lot=least_lpst_lot)
+            to_oper, available_machines = self._findAvailableOper(lot=least_lpst_lot)
             if len(available_machines) > 0:
                 self.lot_leave(to_loc=to_oper, lot=least_lpst_lot)
-                self.set_first_event_time()
+                self.setFstEventTime()
             if len(available_machines) == 0:
                 # is_in_break, break_end_time = to_oper.are_machines_in_break(lot=least_lpst_lot)
                 # if len(is_in_break)
                 print(f"\t\t{to_oper.__class__.__name__}({to_oper.Id}) No Machines Avaiable. Waiting for Processing...")
-                to_oper.reset_first_event_time()
+                to_oper.ResetFstEventTime()
                 to_oper.inform_to(from_obj=self, runTime=to_oper.FirstEventTime, downFlag=True)
                 # to_oper.set_first_event_time()
                 # self.set_first_event_time(break_end_time)
 
     def shipping(self, lot: objLot):
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
-        self._remove_lot(lot=lot, shipping_flag=True)
-        self._update_curr_capa(lot=lot, in_flag=False)
+        self._removeLot(lot=lot, shipping_flag=True)
+        self._updateCurrCapa(lot=lot, in_flag=False)
         self._rebuild_lpst_lot_dict()
-        self.set_first_event_time()
+        self.setFstEventTime()
 
         print(f"\t\t{self.__class__.__name__}({self.Id}).shipping() >> {lot}")
 
@@ -87,30 +87,30 @@ class Warehouse:
         print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {lot}")
 
         to_loc.lot_arrive(lot)
-        self._remove_lot(lot=lot)
-        self._update_curr_capa(lot=lot, in_flag=False)
+        self._removeLot(lot=lot)
+        self._updateCurrCapa(lot=lot, in_flag=False)
         self._rebuild_lpst_lot_dict()
-        self.set_first_event_time()
+        self.setFstEventTime()
 
-    def lot_arrive(self, from_loc: object, lot: objLot):
+    def lotArrive(self, from_loc: object, lot: objLot):
         lotObj: objLot.Lot = lot
         print(f"\t\t{self.__class__.__name__}({self.Id}).lot_arrive() >> {lotObj}")
         self._registerLotObj(lotObj=lotObj)
-        self._update_curr_capa(lot=lotObj, in_flag=True)
+        self._updateCurrCapa(lot=lotObj, in_flag=True)
         self._rebuild_lpst_lot_dict()
-        self.set_first_event_time(comUtility.Utility.runtime)
+        self.setFstEventTime(comUtility.Utility.runtime)
 
-    def get_assignable_flag(self, lot: objLot):
-        is_assignable: bool = False
+    def getAssignableFlag(self, lot: objLot):
+        isAssignable = False
         lotObj: objLot.Lot = lot
         if self.CurCapa >= lotObj.Qty:
-            is_assignable = True
-        return is_assignable
+            isAssignable = True
+        return isAssignable
 
-    def reset_cur_capa(self):
+    def resetCurCapa(self):
         self.CurCapa = int(self.Capacity)
 
-    def _update_curr_capa(self, lot: objLot, in_flag: bool):
+    def _updateCurrCapa(self, lot: objLot, in_flag: bool):
         rslt: float = 0.0
         lotObj: objLot.Lot = lot
         if in_flag:
@@ -118,7 +118,7 @@ class Warehouse:
         else:
             self.CurCapa += lotObj.Qty
 
-    def _find_available_to_operation(self, lot: objLot):
+    def _findAvailableOper(self, lot: objLot):
         # rsltOper: simOperMgr.Operation = None
         # rsltMachines: list = []
 
@@ -137,11 +137,11 @@ class Warehouse:
         #             rsltOper = operObj
         #             rsltMachines = available_machines
 
-    def _remove_lot(self, lot: objLot, shipping_flag: bool = False):
+    def _removeLot(self, lot: objLot, shipping_flag: bool = False):
         try:
             self.LotObjList.remove(lot)
             if shipping_flag:
-                self._factory._remove_lot(lot=lot)
+                self._factory._removeLot(lot=lot)
         except ValueError as e:
             raise e
 
@@ -186,7 +186,7 @@ class Warehouse:
         self.LotObjList.append(lotObj)
         self._factory._register_lot_to(lot_obj=lotObj, to="self")
 
-    def set_first_event_time(self, runTime: datetime.datetime = None):
+    def setFstEventTime(self, runTime: datetime.datetime = None):
         self.FirstEventTime = runTime
 
     def assign_random_lpst(self):
