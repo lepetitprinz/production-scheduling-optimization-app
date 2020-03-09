@@ -22,8 +22,18 @@ class Warehouse:
 
         self.FirstEventTime: datetime.datetime = None
 
+        # Time Constraint
+        self.GradeChangeFinishConst: bool = False
+        self.GradeGroupChangeConst: bool = False
+        self.BaggingOperTimeConst: bool = False
+
     def setup_object(self, capacity: float = None):
         self._setCapacity(capacity=capacity)
+
+        # Time Constraint Configuration Setting
+        self.GradeChangeFinishConst = comUtility.Utility.GradeChangeFinishConst
+        self.GradeGroupChangeConst = comUtility.Utility.GradeGroupChangeConst
+        self.BaggingOperTimeConst = comUtility.Utility.BaggingOperTimeConst
 
     def setup_resume_data(self, lotObjArr: pd.DataFrame):
         for idx, row in lotObjArr.iterrows():
@@ -176,6 +186,42 @@ class Warehouse:
             lotObj: objLot.Lot = obj
             lotObj.Lpst = self.LotObjList.index(lotObj)
         self._rebuild_lpst_lot_dict()
+
+    # ------------------------------------------------------------------------------------------------------ #
+    # Time Constraint
+    # - Reactor (중합)
+    # - Bagging (포장)
+    # ------------------------------------------------------------------------------------------------------ #
+
+    # Reactor Time Constraint
+    def ChkAssignableToReactor(self, lot:objLot.Lot):
+
+        if self.GradeChangeFinishConst == True:
+            self._chkGradeChangeFinish(lot=lot)
+
+        if self.GradeGroupChangeConst == True:
+            self._chkGradeGroupChange(lot=lot)
+
+        return True
+
+    def _chkGradeChangeFinish(self, lot:objLot.Lot):
+        pass
+
+    def _chkGradeGroupChange(self, lot:objLot.Lot):
+        pass
+
+    # Bagging Time Constraint
+    def ChkAssignableToBagging(self, lot:objLot.Lot):
+
+        if self.BaggingOperTimeConst == True:
+            self._chkBaggingOperTime(lot=lot)
+
+        return True
+
+    def _chkBaggingOperTime(self, lot:objLot.Lot):
+        pass
+
+
 
 def test():
     pass

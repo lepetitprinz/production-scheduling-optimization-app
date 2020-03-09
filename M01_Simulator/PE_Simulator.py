@@ -45,7 +45,8 @@ class Simulator:
     def run_simulator(self):
         if len(self._facObjList) < 1:
             # Factory가 없는 경우?
-            return
+            print("Factory 객체 없음")
+            raise AssertionError()
         elif len(self._facObjList) == 1:
             self._run_single_factory()
         else:
@@ -56,8 +57,9 @@ class Simulator:
         # 머신 깨우기
         facObj.wake_up_machine()
         # Lot 할당
-        facObj.AssignLot()
+        # facObj.AssignLot()
 
+        # Factor 초기 시작시간 셋팅
         self._util.set_runtime(runtime=self._util.DayStartDate)
 
         facObj.run_factory()

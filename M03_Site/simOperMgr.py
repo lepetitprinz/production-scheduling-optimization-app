@@ -7,7 +7,6 @@ from M04_PhyProductionMgr import objMachine, objStocker, objWarehouse
 from M05_ProductManager import objLot
 from M06_Utility import comUtility
 
-
 class Operation(object):
     def __init__(self, factory: simFactoryMgr, oper_id: str, kind: str):
         # self._facUtil: facUtility.FacUtility = None  #
@@ -121,8 +120,7 @@ class Operation(object):
                 is_breakdown, break_end = macObj.chk_breakdown(lot=lot)
                 if not is_breakdown:
                     avaliable_machines.append(macObj)
-                else:
-                    pass
+
         return avaliable_machines
 
     def get_assignable_flag(self, lot: objLot.Lot):

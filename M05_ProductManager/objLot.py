@@ -10,7 +10,6 @@ from M03_Site import simOperMgr
 from M04_PhyProductionMgr import objMachine, objWarehouse
 from M06_Utility import comEnum, comUtility
 
-
 class Lot(object):
 
     lot_id_regex = re.compile(comEnum.RegexCollection.lot_id.value)
@@ -53,7 +52,6 @@ class Lot(object):
         self.Machine: objMachine.Machine = None
         self.WareHouse: objWarehouse.Warehouse = None
 
-
     def setup_object(self, due_date: str, qty: float, region: str):
 
         self.Grade = self._get_attr_from_id(id=self.Id, attr="Grade")
@@ -81,7 +79,6 @@ class Lot(object):
         return date_tmp
 
     def _get_pack_duration(self, grade: str):
-
         dataMgr: dbDataMgr.DataManager = comUtility.Utility.get_data_manager()
         dict_prod_yield: dict = dataMgr._get_dict_prod_yield()
         dict_prod_yield: dict = dict_prod_yield['package']
@@ -89,9 +86,7 @@ class Lot(object):
         if grade not in dict_prod_yield.keys():
             grade_adj: str = grade[:grade.find("_", grade.find("_") + 1)]
             if grade_adj not in dict_prod_yield.keys():
-                raise Exception(
-                    ""
-                )
+                raise Exception("")
             tmp_rslt: float = self.Qty/dict_prod_yield[grade_adj]
         else:
             tmp_rslt: float = self.Qty/dict_prod_yield[grade]
@@ -105,9 +100,7 @@ class Lot(object):
         dict_prod_yield: dict = dict_prod_yield['reactor']
         rslt: datetime.timedelta = datetime.timedelta(hours=0)
         if grade not in dict_prod_yield.keys():
-            raise Exception(
-                ""
-            )
+            raise Exception("")
         tmp_rslt: float = self.Qty/dict_prod_yield[grade]
         rslt = datetime.timedelta(hours=tmp_rslt)
         return rslt, tmp_rslt
@@ -131,10 +124,8 @@ class Lot(object):
             matches = True
         return matches
 
-
 def test():
     pass
-
 
 if __name__ == '__main__':
     test()

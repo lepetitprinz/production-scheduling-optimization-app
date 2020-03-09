@@ -27,15 +27,20 @@ class Utility:
     # =========================================== #
     # Cofiguration 정보
     # =========================================== #
-    ## Capacity
+    # Capacity
     MinLotSize: int = 50    # Lot Minimum Capacity
     MaxLotSize: int = 400   # Lot Maximum Capacity
 
-    ## Production Wheel 관련
+    # Production Wheel 관련
     ProdWheelCalStd: str = 'hour'
 
-    ## Lot Sequencing Optimization (SCOP algorithm)
+    # Lot Sequencing Optimization (SCOP algorithm)
     OptTimeLimit = 1
+
+    # Time Constraint Cofiguration
+    GradeChangeFinishConst: bool = False    # Configuration DB화 필요
+    GradeGroupChangeConst: bool = False     # Configuration DB화 필요
+    BaggingOperTimeConst: bool = False      # Configuration DB화 필요
 
     @staticmethod
     def setup_object(simul: PE_Simulator):

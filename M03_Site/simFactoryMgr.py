@@ -142,7 +142,7 @@ class Factory:
         print(f"\n\nFactory {self.ID} is Running.")
 
         endFlag: bool = False
-        end_date: datetime.datetime = self._utility.DayEndDate
+        end_date: datetime.datetime = self._utility.DayEndDate  # 공장 가동의 종료시간
         loopCnt: int = 0
         while not endFlag:
             # OperTAT, Machine, Transporter, Warehouse 에서 이벤트 처리 대상을 찾기
