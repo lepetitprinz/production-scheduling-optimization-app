@@ -1,11 +1,4 @@
-
 *.xml
 .idea/workspace.xml
+*.pyc
 .idea/workspace.xml
-*.xml
-*.csv
-*.xml
-*.pyc
-*.xml
-*.xml
-*.pyc
