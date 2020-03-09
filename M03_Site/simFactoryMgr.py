@@ -88,12 +88,16 @@ class Factory:
 
     def _buildFactory(self, silo_qty: float, nof_silo: int = 1):
         reactor: simOperMgr.Operation = self._register_new_oper(oper_id="REACTOR", kind="REACTOR", return_flag=True)
-        self._register_new_machine(mac_id="M1", oper=reactor)
+        self._register_new_machine(mac_id="M1", oper=reactor, uom="",
+                                   work_start_hour=8, work_end_hour=20)
 
         bagging: simOperMgr.Operation = self._register_new_oper(oper_id="BAGGING", kind="BAGGING", return_flag=True)
-        self._register_new_machine(mac_id="P2", oper=bagging, uom="25 KG")
-        self._register_new_machine(mac_id="P7", oper=bagging, uom="750 KG")
-        self._register_new_machine(mac_id="P9", oper=bagging, uom="BULK")
+        self._register_new_machine(mac_id="P2", oper=bagging, uom="25 KG",
+                                   work_start_hour=8, work_end_hour=20)
+        self._register_new_machine(mac_id="P7", oper=bagging, uom="750 KG",
+                                   work_start_hour=8, work_end_hour=20)
+        self._register_new_machine(mac_id="P9", oper=bagging, uom="BULK",
+                                   work_start_hour=8, work_end_hour=20)
 
         # self.StockList = self._facUtil.GetStockObjList()
         rm: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="RM", kind="RM", return_flag=True)     # RM / WareHouse / silo / hopper
@@ -176,6 +180,7 @@ class Factory:
 
             tgtCnt = len(tgtArr)
             for obj in tgtArr:
+                print(f"\t{obj.__class__.__name__}.{obj.Id}")
                 obj.SyncRunningTime()
 
             print("")
@@ -929,10 +934,13 @@ class Factory:
         if return_flag:
             return operObj
 
-    def _register_new_machine(self, mac_id: str, oper: simOperMgr, uom=""):
+    def _register_new_machine(self, mac_id: str, oper: simOperMgr, uom="",
+                              work_start_hour: int = None, work_end_hour: int = None
+                              ):
 
         macObj: objMachine = objMachine.Machine(factory=self, operation=oper, mac_id=mac_id)
-        macObj.setup_object(status="IDLE", uom=uom)
+        macObj.setup_object(status="IDLE", uom=uom,
+                            work_start_hour=work_start_hour, work_end_hour=work_end_hour)
 
         operObj: simOperMgr.Operation = oper
         operObj.MacObjList.append(macObj)

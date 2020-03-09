@@ -60,6 +60,7 @@ class Operation(object):
             if macObj.EndTime == comUtility.Utility.runtime:
                 lotObj: objLot.Lot = macObj.lot_leave()
                 available_wh: objWarehouse.Warehouse = self._pick_to_wh(lot=lotObj)
+                print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() >> {lotObj}")
                 if available_wh is not None:
                     available_wh.lot_arrive(from_loc=macObj, lot=lotObj)
         self.reset_first_event_time()
@@ -67,12 +68,15 @@ class Operation(object):
     def lot_arrive(self, lot: objLot.Lot):
         is_assignable, machines = self.get_assignable_flag()
         if not is_assignable:
+            print(f"\t\t{self.__class__.__name__}({self.Id}).lot_arrive() >> {machines}")
             return False
         machine: objMachine.Machine = self._pick_machine(macList=machines)
         machine.assign_lot(lot=lot)
         machine.RunMachine()
         self.reset_first_event_time()
+        print(f"\t\t{self.__class__.__name__}({self.Id}/{machine.Id}).lot_arrive() >> {machine}")
         return True
+
 
     def _pick_to_wh(self, lot: objLot):
         whs: list = self._find_available_to_wh_list(lot=lot)

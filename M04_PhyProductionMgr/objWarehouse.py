@@ -56,22 +56,29 @@ class Warehouse:
     def shipping(self):
         least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
         self._remove_lot(lot=least_lpst_lot, shipping_flag=True)
+        self._update_curr_capa(lot=least_lpst_lot, in_flag=False)
         self._rebuild_lpst_lot_dict()
         self.set_first_event_time()
+
+        print(f"\t\t{self.__class__.__name__}({self.Id}).shipping() >> {least_lpst_lot}")
 
     def lot_leave(self, to_loc: object):
         least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
         current_time: datetime.datetime = comUtility.Utility.DayStartDate
 
+        print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {least_lpst_lot}")
+
         to_loc.lot_arrive(least_lpst_lot)
         self._remove_lot(lot=least_lpst_lot)
+        self._update_curr_capa(lot=least_lpst_lot, in_flag=False)
         self._rebuild_lpst_lot_dict()
         self.set_first_event_time()
 
     def lot_arrive(self, from_loc: object, lot: objLot):
         lotObj: objLot.Lot = lot
+        print(f"\t\t{self.__class__.__name__}({self.Id}).lot_arrive() >> {lotObj}")
         self._registerLotObj(lotObj=lotObj)
-        self._update_curr_capa(lot=lotObj)
+        self._update_curr_capa(lot=lotObj, in_flag=True)
         self._rebuild_lpst_lot_dict()
         self.set_first_event_time(comUtility.Utility.runtime)
 
@@ -82,10 +89,16 @@ class Warehouse:
             is_assignable = True
         return is_assignable
 
-    def _update_curr_capa(self, lot: objLot):
+    def reset_cur_capa(self):
+        self.CurCapa = int(self.Capacity)
+
+    def _update_curr_capa(self, lot: objLot, in_flag: bool):
         rslt: float = 0.0
         lotObj: objLot.Lot = lot
-        self.CurCapa -= lotObj.Qty
+        if in_flag:
+            self.CurCapa -= lotObj.Qty
+        else:
+            self.CurCapa += lotObj.Qty
 
     def _find_available_to_operation(self):
         # rsltOper: simOperMgr.Operation = None
