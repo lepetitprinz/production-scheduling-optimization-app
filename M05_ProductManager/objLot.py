@@ -59,13 +59,11 @@ class Lot(object):
         self.Grade = self._get_attr_from_id(id=self.Id, attr="Grade")
         self.PackSize = self._get_attr_from_id(id=self.Id, attr="PackSize")
         self.PackType = self._get_attr_from_id(id=self.Id, attr="PackType").split("_")[0]
-
         self.Region = region
-
-        self.DueDate = self._get_last_day_of_month(due_date=due_date)
-
         self.Qty = qty
 
+        # Time 관련 속성 setting
+        self.DueDate = self._get_last_day_of_month(due_date=due_date)
         self.PackDuration, self.PackDurationFloat = self._get_pack_duration(grade=self.Id)
         self.ReactDuration, self.ReactDurationFloat = self._get_react_duration(grade=self.Grade)
         self.Duration = math.ceil(self.PackDurationFloat + self.ReactDurationFloat)

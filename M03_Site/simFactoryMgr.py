@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
 import datetime
+import calendar
 import openpyxl
 from scop import Model, Alldiff, Quadratic
 
@@ -38,7 +39,8 @@ class Factory:
 
         # --- DB 연결 결과 취득 ---
         self._dataMgr: dbDataMgr.DataManager = simul.DataMgr  # DB에서 기준정보를 가지고 있는 객체
-        self._prodWheelDf = self._dataMgr.dfProdWheel
+        self._prodWheelDf = self._dataMgr.dfProdWheel.copy()
+        self._prodWheelHour = ""
 
         # Configuration 정보
         self._seqOptTimeLimit: int = 0
@@ -53,6 +55,7 @@ class Factory:
         self._buildFactory(silo_qty=silo_qty, nof_silo=nof_silo)
         self._base_first_event_time()
         self._prodWheelDict = self._setProdWheelDict()
+        self._prodWheelHour =
 
         self._seqOptTimeLimit = self._utility.OptTimeLimit
         # self._register_new_machine(mac_id="MAC01")
@@ -64,7 +67,9 @@ class Factory:
     def SetupResumeData(self):
         # Warehouse 의 Lot을 배정하는 처리.
         wh_rm: objWarehouse.Warehouse = self._findWhById(wh_id="RM")
-        df_demand = self._dataMgr.df_demand
+        df_demand = self._dataMgr.df_demand.copy()
+
+        # Lot Sizing
         dfDmdLotSizing = self._setDmdProdLotSizing(df_demand)
         wh_rm.setup_resume_data(dfDmdLotSizing)
 
@@ -428,13 +433,14 @@ class Factory:
     # Logic
     # 1.RM Warehouse 에서 LotObjList 받아오기
     # 2.Production Cycle 기준으로 Lot Sequencing 최적화(dueDataUom 기준)
-    #   - nan: 고정생산주기가 없는 경우, Grade Sequencing (Production Wheel만 고려해서 산)
+    #   - nan: 고정생산주기가 없는 경우, Grade Sequencing (Production Wheel만 고려)
     #   - mon: 월 단위의 납기인 경
     #          우선순위
     #           - 월 생산 Capa > 월 수요 총 Capa : Production Wheel 고려)
     #           - 월 생산 Capa < 월 수요 총 Capa : Demand Priority(내수/수출) 고려)
     #   - day: 납기일을 최우선 기준으로하여 lot Sequencing (우선순위: Demand Priority > 납기일 > prodcution wheel cost)
-    # 3.
+    # 3.SCOP algorithms을 이용하여 Grade Sequence Optimization
+    # 4.
     # ============================================================================================================== #
 
     def geOptLotSeqList(self, dmdLotList:list):
@@ -447,44 +453,54 @@ class Factory:
             3) day : 일 단위의 납기 기준의 경우 납기 기준으로
 
         '''
-
         dueDateUom = comUtility.Utility.DueDateUom  # 납기 기준 단위: 없음 / 월 / 일
 
         if dueDateUom == 'nan':
             optLotSeqList = self._optLotSeqNan(dmdLotList=dmdLotList)
-
         elif dueDateUom == 'mon':
             optLotSeqList = self._optLotSeqMon(dmdLotList=dmdLotList)
-
         else:
             optLotSeqList = self._optLotSeqDay(dmdLotList=dmdLotList)
 
         return optLotSeqList
 
+    # ------------------------------------------------------------------------------------------------------ #
+    # Due Date 기준 별 Lot Sequencing
+    # - Grade 최적화 sequence 기준으로 Lot을 grouping하여 sequencing(lpst 필요 없음)
+    # -
+    # ------------------------------------------------------------------------------------------------------ #
     def _optLotSeqNan(self, dmdLotList:list):
         facStartDate = comUtility.Utility.DayStartDate  # 공장 시작시간
         prodWheelDict = self._prodWheelDict
 
-        # Sequence Optimization using SCOP algorithm
-        seqOptGrade = self._seqOptByScop(dmdLotList=dmdLotList)
+        # Grade Sequence Optimization using SCOP algorithm
+        gradeSeqOpt = self.SeqOptByScop(dmdLotList=dmdLotList)
 
+        # Grade Sequence 별로 Lot을 grouping해서 List 변환
+        lotSeqOptList = self.GetLotSeqOptList(gradeSeqOpt=gradeSeqOpt, dmdLotList=dmdLotList)
 
+        # RM에 존재하는 lot List를 모두 보낼때까지 실행
+        while len(lotSeqOptList) > 0:
+            for lot in lotSeqOptList:
+                lotObj:objLot.Lot = lot
+
+                # Time 제약
+
+                # Capa 제약
 
     def _optLotSeqMon(self, dmdLotList:list):
         facStartDate = comUtility.Utility.DayStartDate  # 공장 시작시간
 
         # 월별 생산 제품 분리
-        monDmdLotDict = self._getMonDmdLotDict()
-
-
-
-
+        monDmdLotDict = self._getMonDmdLotDict(dmdLotList=dmdLotList)
 
         # 월 단위로 Lot Sequencing
         for val in monDmdLotDict.values():
-            raise Warning(
-                f"Make Me ! {self.__class__}.optLotSeqMon() !"
-            )
+            pass
+
+            # raise Warning(
+            #     f"Make Me ! {self.__class__}.optLotSeqMon() !"
+            # )
 
         # prodSeqArr = []
         # # 각 Grade 별 product 초기화
@@ -504,15 +520,15 @@ class Factory:
         #                 if True == True:
         #                     candidate.update({(prodSeq, lotObj) : prodWheelDict[(prodSeq, lotObj)]})
         pass
+
     def _optLotSeqDay(self, dmdLotList:list):
         facStartDate = comUtility.Utility.DayStartDate  # 공장 시작시간
         pass
 
-    # ---------------------- #
-    # slop cost optimization
-    # ---------------------- #
-
-    def _seqOptByScop(self, dmdLotList:list):
+    # ------------------------------------------------------------------------------------------------------ #
+    # Grade Sequence Optimization Using SCOP algorithm
+    # ------------------------------------------------------------------------------------------------------ #
+    def SeqOptByScop(self, dmdLotList:list):
         prodWheelCostUom = comUtility.Utility.ProdWheelCalStd
         prodWheel = self._prodWheelDf
         dmdLotGradeList = self._getLotGradeList(lotList=dmdLotList)     # 전달받은 Lot List에 해당하는 Grade list 산출
@@ -559,6 +575,25 @@ class Factory:
 
         return oprtSeqGrade
 
+    def GetLotSeqOptList(self, gradeSeqOpt:list, dmdLotList:list):
+        lotSeqOptList = []
+
+        # Grade 별로 Lot Grouping (Group 안에서 lot의 순서는 고려하지 않음)
+        lotByGradeGroupDict = {}
+        for lot in dmdLotList:
+            lotObj:objLot.Lot = lot
+            if lotObj.Grade not in lotByGradeGroupDict.keys():
+                lotByGradeGroupDict[lotObj.Grade] = [lotObj]
+            else:
+                tempList = lotByGradeGroupDict[lotObj.Grade].append(lotObj)
+                lotByGradeGroupDict[lotObj.Grade] = tempList
+
+        # 최적화 한 Grade Sequence 별로 lot List 배열
+        for grade in gradeSeqOpt:
+            lotSeqOptList.extend(lotByGradeGroupDict[grade])
+
+        return lotSeqOptList
+
     def _getLotGradeList(self, lotList:list):
         lotGradeList = []
 
@@ -569,37 +604,46 @@ class Factory:
 
         return lotGradeList
 
-    def _getFstBestGrade(self):
-        prodWheelDict = self._prodWheelDict
-
-        # bestGrade = []
-        bestGrade = 'GRADE_A'   # 임시적
-        # SLOP Optimization 적용 예정
-
-        return bestGrade
-
     # 월별 생산 할 lot 분리 처리
-    def _getMonDmdLotDict(self, ):
+    def _getMonDmdLotDict(self, dmdLotList:list):
         monDmdLotDict = {}
+        dmdLotDf = self._dataMgr.df_demand.copy()
+        months = dmdLotDf['yyyymm'].unique().tolist()
+
+        for month in months:
+            for lot in dmdLotList:
+                lotObj:objLot.Lot = lot
+                if lotObj.DueDate == self._getLastDayOfMon(dueDate=month):
+                    if month not in monDmdLotDict.keys():
+                        monDmdLotDict[month] = [lotObj]
+                    else:
+                        tempList = monDmdLotDict[month].append(lotObj)
+                        monDmdLotDict[month] = tempList
 
         return monDmdLotDict
+
+    def _getLastDayOfMon(self, dueDate: str):
+        dateTemp: datetime.datetime = datetime.datetime.strptime(dueDate, '%Y%m')
+        last_day, month_len = calendar.monthrange(year=dateTemp.year, month=dateTemp.month)
+        lastDayOfMon = dateTemp.replace(day=month_len, hour=23, minute=59, second=59)
+        return lastDayOfMon
+
 
     # 월별 생산 Capa / 월별 수요 capa 계산
     def _calcMonDmdCapa(self):
         pass
 
-    def GetFirstBestGrade(self):
+    # ============================================================================================================== #
+    # Capacity 제약 Module
+    # - Silo Warehouse
+    # - FGI Warehouse
+    # ============================================================================================================== #
 
-        prodWheelDict = self._prodWheelDict
 
-        # bestGrade = []
-        bestGrade = 'GRADE_A'   # 임시적
-        # SLOP Optimization 적용 예정
+    # ============================================================================================================== #
+    # Time 제약 Module
+    # ============================================================================================================== #
 
-        return bestGrade
-
-    def GetNextBestGrade(self, grade):
-        pass
 
     def getReactorDmdProdGroup(self, gradeGroup:dict, dmdGradeList:list):
         '''
@@ -660,7 +704,7 @@ class Factory:
     def _setProdWheelDict(self):
         costCalStd = comUtility.Utility.ProdWheelCalStd
         # prodWheel = self._prodWheel
-        prodWheel = self._dataMgr.dfProdWheel
+        prodWheel = self._dataMgr.dfProdWheel.copy()
         appliedProdWheel = {}
 
         for i in range(len(prodWheel)):
@@ -765,11 +809,8 @@ class Factory:
                 lotObj.ToLoc = whObj.ToLoc
 
                 # 할당된 silo에 lot을 추가하는 처리
-                for silo in siloObjList:
-                    siloObj: objWarehouse.Warehouse = silo
-                    if lotObj.Silo == siloObj.Id:
-                        siloObj.LotObjList.append(lotObj)   # silo에 할당할 lot을 추가하는 처리
-                        siloObj.CurCapa -= lotObj.Qty       # silo에 할당된 양 capa에서 차감하는 처리
+                whObj.LotObjList.append(lotObj)   # silo에 할당할 lot을 추가하는 처리
+                whObj.CurCapa -= lotObj.Qty       # silo에 할당된 양 capa에서 차감하는 처리
 
             else:   # mapping 할 silo가 없는 경우 새로 할당할 silo를 찾는 처리
                 for silo in siloObjList:
@@ -786,11 +827,8 @@ class Factory:
                        lotObj.ToLoc = whObj.ToLoc
 
                        # 할당된 silo에 lot을 추가하는 처리
-                       for silo in siloObjList:
-                           siloObj: objWarehouse.Warehouse = silo
-                           if lotObj.Silo == siloObj.Id:
-                               siloObj.LotObjList.append(lotObj)    # silo에 할당할 lot을 추가하는 처리
-                               siloObj.CurCapa -= lotObj.Qty        # silo에 할당된 양 capa에서 차감하는 처리
+                       whObj.LotObjList.append(lotObj)    # silo에 할당할 lot을 추가하는 처리
+                       whObj.CurCapa -= lotObj.Qty        # silo에 할당된 양 capa에서 차감하는 처리
 
     def GetCurSiloState(self):
 
