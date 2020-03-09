@@ -52,7 +52,7 @@ class Factory:
         self._utility.calcDayEndDate()
 
         self._startTime = self._utility.DayStartDate
-        self._buildFactory(silo_qty=silo_qty, nof_silo=nof_silo)
+        self._buildFactory(silo_qty=silo_qty, nof_silo=nof_silo)    # Factory 기본 Configuration 정보 Setting
         self._base_first_event_time()
         self._prodWheelDict = self._setProdWheelDict(costCalStd=self._utility.ProdWheelCalStd)
         self._prodWheelHour = self._setProdWheelDict(costCalStd='hour')
@@ -676,7 +676,6 @@ class Factory:
 
     # 월별 생산 Capa / 월별 수요 capa 계산
     def _calcMonDmdCapa(self):
-
 
         pass
 

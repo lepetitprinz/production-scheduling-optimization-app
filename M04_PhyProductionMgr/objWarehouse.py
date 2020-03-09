@@ -8,7 +8,6 @@ from M03_Site import simFactoryMgr, simOperMgr
 from M05_ProductManager import objLot
 from M06_Utility import comUtility
 
-
 class Warehouse:
     def __init__(self, factory: simFactoryMgr, whId: str, kind: str):
         self._factory: simFactoryMgr = factory
