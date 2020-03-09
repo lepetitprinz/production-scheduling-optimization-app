@@ -47,6 +47,12 @@ class Utility:
         Utility._simul = simul
 
     @staticmethod
+    def chop_microsecond(date_value: datetime.datetime):
+        date_value = date_value - datetime.timedelta(microseconds=date_value.microseconds)
+        date_value = date_value + datetime.timedelta(seconds=1)
+        return date_value
+
+    @staticmethod
     def setDayStartDate(year: int, month: int, day: int, hour: int = None, min: int = None, second: int = None):
 
         if hour is None or min is None or second is None:

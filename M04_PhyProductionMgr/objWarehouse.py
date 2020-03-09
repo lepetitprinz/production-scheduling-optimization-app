@@ -61,7 +61,15 @@ class Warehouse:
             to_oper, available_machines = self._find_available_to_operation(lot=least_lpst_lot)
             if len(available_machines) > 0:
                 self.lot_leave(to_loc=to_oper, lot=least_lpst_lot)
-            self.set_first_event_time()
+                self.set_first_event_time()
+            if len(available_machines) == 0:
+                # is_in_break, break_end_time = to_oper.are_machines_in_break(lot=least_lpst_lot)
+                # if len(is_in_break)
+                print(f"\t\t{to_oper.__class__.__name__}({to_oper.Id}) No Machines Avaiable. Waiting for Processing...")
+                to_oper.reset_first_event_time()
+                to_oper.inform_to(from_obj=self, runTime=to_oper.FirstEventTime, downFlag=True)
+                # to_oper.set_first_event_time()
+                # self.set_first_event_time(break_end_time)
 
     def shipping(self, lot: objLot):
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()

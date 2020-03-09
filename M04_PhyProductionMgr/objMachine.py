@@ -19,7 +19,7 @@ class Machine(object):
         self.PackKind: str = ""     # WV / FS / BK / SB
 
         # STATUS
-        self.Status: str = "IDLE"   # IDLE / PROC
+        self.Status: str = "IDLE"   # IDLE / PROC / DOWN
         self.StartTime: datetime.datetime = None
         self.EndTime: datetime.datetime = None
 
@@ -86,11 +86,28 @@ class Machine(object):
         break_end = min(seq_end)
         return break_end
 
+    def power_on(self):
+        if self.Status != "DOWN":
+            pass
+        else:
+            if self.Lot is None:
+                self.Status = "IDLE"
+                self.StartTime = None
+                self.EndTime = None
+
     def _is_overlapping_to_break(self, from_to_tuple: tuple,
                                  start_time: datetime.datetime,
                                  end_time: datetime.datetime):
         is_overlapping: bool = self._is_between(from_to_tuple, start_time) or \
                                self._is_between(from_to_tuple, end_time)
+        if is_overlapping:
+            self.StartTime = from_to_tuple[0]
+            self.EndTime = from_to_tuple[1]
+            self.Status = "DOWN"
+        # else:
+        #     self.StartTime = None
+        #     self.EndTime = None
+        #     self.Status = "IDLE"
         return is_overlapping
 
     def _is_between(self, from_to_tuple: tuple, value: datetime):
