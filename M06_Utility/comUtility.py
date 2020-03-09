@@ -9,7 +9,6 @@ from M02_DataManager import dbDataMgr
 from M06_Utility import comEnum
 from M01_Simulator import PE_Simulator
 
-
 class Utility:
 
     project_dir: str = os.getcwd()
@@ -20,15 +19,23 @@ class Utility:
     DayHorizon: datetime.timedelta = datetime.timedelta(days=60)
     MonthMaxDays: dict = {}
     runtime: datetime.datetime = None
+    DueDateUom: str = 'nan'     # 고정생산주기(납기기준): nan / mon / day
 
     # 날짜 문자열 형식 검사를 위한 정규식
-    day_start_time_regex: re.Pattern = re.compile(comEnum.RegexCollection.day_start_time.value)
+    day_start_time_regex = re.compile(comEnum.RegexCollection.day_start_time.value)
 
-    # Lot 정보
-    MinLotSize: int = 50
-    MaxLotSize: int = 400
+    # =========================================== #
+    # Cofiguration 정보
+    # =========================================== #
+    ## Capacity
+    MinLotSize: int = 50    # Lot Minimum Capacity
+    MaxLotSize: int = 400   # Lot Maximum Capacity
 
+    ## Production Wheel 관련
     ProdWheelCalStd: str = 'hour'
+
+    ## Lot Sequencing Optimization (SCOP algorithm)
+    OptTimeLimit = 1
 
     @staticmethod
     def setup_object(simul: PE_Simulator):
