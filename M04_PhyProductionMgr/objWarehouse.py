@@ -127,7 +127,7 @@ class Warehouse:
             [oper for oper in self._factory.OperList if oper.Kind == self.ToLoc]
         rsltOper: simOperMgr.Operation = rsltOperList[0]
 
-        is_oper_assignable, available_machines = rsltOper.get_assignable_flag(lot=lot)
+        is_oper_assignable, available_machines = rsltOper.GetAssignableFlag(lot=lot)
         return rsltOper, available_machines
 
         # if self.Id == "RM":
@@ -143,7 +143,7 @@ class Warehouse:
         self.LotObjList.clear()
         self._factory._lot_obj_list.clear()
 
-    def _remove_lot(self, lot: objLot, shipping_flag: bool = False):
+    def _removeLot(self, lot: objLot, shipping_flag: bool = False):
         try:
             self.LotObjList.remove(lot)
             if shipping_flag:
@@ -235,7 +235,6 @@ class Warehouse:
 
     def _chkBaggingOperTime(self, lot: objLot):
         pass
-
 
 
 def test():

@@ -50,7 +50,7 @@ class Operation(object):
         if len(self._lotObjList) == 0:
             self.resume_down_machines()
         else:
-            self.lot_leave()
+            self.lotLeave()
         self.inform_to_previous()
         self.ResetFstEventTime()
 
@@ -75,28 +75,33 @@ class Operation(object):
             if downFlag:
                 from_loc.setFstEventTime(runTime=runTime)
 
-    def lot_leave(self):
+    def lotLeave(self):
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
             if macObj.EndTime == comUtility.Utility.runtime:
                 lotObj: objLot.Lot = macObj.lot_leave()
 
+                # Machine에 있는 lot을 다음 warehouse에 할당하는 처리
                 assignWh: objWarehouse.Warehouse = self._getAssignWh(lot=lotObj)
                 print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() >> {lotObj}")
-                if assignWh is not None:
+                # 할당 가능한 warehouse가 있는 경우 lot을 그 warehouse로 보내는 처리
+                if assignWh != None:
                     assignWh.lotArrive(from_loc=macObj, lot=lotObj)
+                else:
+                    print("할당 가능한 Warehouse가 현재 없음")
 
-    def lot_arrive(self, lot: objLot.Lot):
-        is_assignable, machines = self.get_assignable_flag(lot=lot)
+    def lotArrive(self, lot: objLot.Lot):
+        is_assignable, machines = self.GetAssignableFlag(lot=lot)
         if not is_assignable:
 
             print(f"\t\t{self.__class__.__name__}({self.Id}).lot_arrive() >> <{'No Machines Available'}> / {machines}")
             return False
-        machine: objMachine.Machine = self._pick_machine(macList=machines)
+        machine: objMachine.Machine = self._assignMac(macList=machines)
         machine.assign_lot(lot=lot)
         machine.RunMachine()
         self.ResetFstEventTime()
         print(f"\t\t{self.__class__.__name__}({self.Id}/{machine.Id}).lot_arrive() >> {machine}")
+
         return True
 
     def ChkMacInBreak(self, lot: objLot.Lot):
@@ -153,8 +158,14 @@ class Operation(object):
                 if len(siloLotObjList) == 0:
                     return siloObj
 
+            return None
+
         elif lotWhKind == 'FGI':
-            pass
+            fgiObj:objWarehouse.Warehouse = whObjList[0]    # FGI warehouse
+            if lot.Qty < fgiObj.CurCapa:
+                return fgiObj
+            else:
+                return None
 
     # Warehouse 종류별 list를 찾는 처리
     def _getWhObjList(self, whKind:str):
@@ -177,37 +188,37 @@ class Operation(object):
 
         return lotObjGradeList
 
-    def _pick_machine(self, macList: list):
+    def _assignMac(self, macList: list):
         return macList[0]
 
     def SetFstEventTime(self, runTime: datetime.datetime = None):
         self.FirstEventTime = runTime
 
     def ResetFstEventTime(self):
-        mac_end_times: list = [mac.EndTime for mac in self.MacObjList]
-        if sum([endTime is None for endTime in mac_end_times]) == len(mac_end_times):
+        macEndTimes: list = [mac.EndTime for mac in self.MacObjList]
+        if sum([endTime is None for endTime in macEndTimes]) == len(macEndTimes):
             self.SetFstEventTime()
         else:
-            mac_end_times = [endTime for endTime in mac_end_times if endTime is not None]
-            self.SetFstEventTime(min(mac_end_times))
+            macEndTimes = [endTime for endTime in macEndTimes if endTime is not None]
+            self.SetFstEventTime(min(macEndTimes))
 
     def _getAvailableMac(self, lot: objLot.Lot):
-        avaliable_machines: list = []
+        availableMacs: list = []
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
             if macObj.Status == "IDLE":
                 if macObj.hasCalendar:
                     is_breakdown, break_end = macObj.chk_breakdown(lot=lot)
                     if not is_breakdown:
-                        avaliable_machines.append(macObj)
+                        availableMacs.append(macObj)
                 else:
-                    avaliable_machines.append(macObj)
+                    availableMacs.append(macObj)
 
-        return avaliable_machines
+        return availableMacs
 
-    def get_assignable_flag(self, lot: objLot.Lot):
-        available_machines: list = self._getAvailableMac(lot=lot)
-        return len(available_machines) > 0, available_machines
+    def GetAssignableFlag(self, lot: objLot.Lot):
+        availableMacs: list = self._getAvailableMac(lot=lot)
+        return len(availableMacs) > 0, availableMacs
 
     # def _find_available_to_wh_list(self, lot: objLot):
     #     rsltWhs: list = []
