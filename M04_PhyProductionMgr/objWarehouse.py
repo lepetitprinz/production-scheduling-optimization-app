@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 import datetime
+from scop import Model, Alldiff, Quadratic
 
 from M03_Site import simFactoryMgr, simOperMgr
 from M05_ProductManager import objLot
@@ -28,8 +29,10 @@ class Warehouse:
         self.GradeGroupChangeConst: bool = False
         self.BaggingOperTimeConst: bool = False
 
+        # Lot Sequence Optimization 관련
         self.BeforeLotList: list = []
         self._prodWheelHour:dict = {}
+        self._seqOptTimeLimit: int = 0
 
     def setup_object(self, capacity: float = None):
         self._setCapacity(capacity=capacity)
@@ -95,19 +98,164 @@ class Warehouse:
         for lot in self.LotObjList:
             self._shipping(lot=lot)
 
+
     def lot_leave(self, to_loc: simOperMgr, lot: objLot):
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
         current_time: datetime.datetime = Utility.DayStartDate
 
         print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {(lot.Id, lot.Lpst, lot.ReactDuration, lot.PackDuration)}")
 
-
-
         to_loc.lotArrive(lot)
-        self._removeLot(lot=lot)
-        self._updateCurrCapa(lot=lot, in_flag=False)
-        # self._rebuild_lpst_lot_dict()
-        self.setFstEventTime()
+        self._removeLot(lot=lot)    # Lot이 warehouse에서 빠져 나온 후 lot 제외 처리
+        self._updateCurrCapa(lot=lot, in_flag=False) # Warehouse의 이용가능 Capa update 처리
+
+        # ======================================================================================= #
+        # RM Lot Re-Sequencing
+        # RM Warehouse에서 Lot leave 처리가 일어난 경우, 항상 Grade Sequence Change 확인
+        # Grade Sequence Change가 발생한 경우, Grade Sequence re-optimization
+        # ======================================================================================= #
+        if self.Kind == "RM":
+            # Grade Sequence Change 확인
+            bfLotLeaveGradeSeq = self._getGradeSeqList(self.BeforeLotList)
+            afLotLeaveGradeSeq = self._getGradeSeqList(self.LotObjList)
+
+            # Grade Sequence Change가 일어나지 않는 경우
+            if (bfLotLeaveGradeSeq == afLotLeaveGradeSeq) or (bfLotLeaveGradeSeq[1:] == afLotLeaveGradeSeq):
+                self.setFstEventTime()
+            # Grade Sequence Change가 일어난 경우 Grade Sequence re-Optimization
+            else:
+                # Grade Sequence Optimization using SCOP algorithm
+                # Grade Sequence 별로 Lot을 그룹화해서 List 변환
+                lotSeqOptList = self.SeqOptByScop(self.LotObjList)
+
+                # re-optimization 한 Lot List를 RM warehouse에 재할당
+                self.LotObjList = lotSeqOptList
+
+                self.setFstEventTime()
+        else:
+            # self._rebuild_lpst_lot_dict()
+            self.setFstEventTime()
+
+    # ------------------------------------------------------------------------------------------------------ #
+    # Grade Sequence Optimization Using SCOP algorithm
+    # ------------------------------------------------------------------------------------------------------ #
+    def SeqOptByScop(self, lotObjList: list, dueUom:str = "nan"):
+        prodWheelCostUom = Utility.ProdWheelCalStd
+        prodWheel = Utility.ProdWheelDf.copy()
+        dmdLotGradeList = self._getGradeList(lotList=lotObjList)  # 전달받은 Lot List에 해당하는 Grade list 산출
+
+        # 주어진 Grade List에 해당하는 Production Wheel Cost만 indexing
+        dmdLotProdWheel = prodWheel[
+            (prodWheel['grade_from'].isin(dmdLotGradeList)) & (prodWheel['grade_to'].isin(dmdLotGradeList))]
+        dmdLotProdWheel = dmdLotProdWheel.reset_index(drop=True)  # Indexing 후 index reset
+
+        # Product Wheel Cost Setting
+        dmdLotProdWheel = dmdLotProdWheel.loc[:, ['grade_from', 'grade_to', prodWheelCostUom]]
+
+        costList = []
+        gradeLen = len(dmdLotGradeList)
+        for i in range(gradeLen):
+            tempCost = []
+            for j in range(gradeLen):
+                tempCost.append(dmdLotProdWheel.loc[gradeLen * i + j, prodWheelCostUom])
+            costList.append(tempCost)
+
+        # SCOP Modeling
+        model = Model()
+        varList = model.addVariables(dmdLotGradeList, range(gradeLen))
+
+        cstr = Alldiff("AD", varList, "inf")
+        model.addConstraint(cstr)
+
+        obj = Quadratic('obj')
+        for i in range(gradeLen):
+            for j in range(gradeLen):
+                if i != j:  # 동일한 거리는 처리하지 않음
+                    for k in range(gradeLen):
+                        if k == gradeLen - 1:  # 마지막을 0으로 처리하고 시작을 1부터 시작
+                            ell = 0
+                        else:
+                            ell = k + 1
+                        obj.addTerms(costList[i][j], varList[i], k, varList[j], ell)
+
+        model.addConstraint(obj)
+        model.Params.TimeLimit = self._seqOptTimeLimit  # 최적화 시간제약
+        sol, violated = model.optimize()
+        optSeqSol = sorted(sol.items(), key=lambda x: int(x[1]))
+        oprtSeqGrade = [x[0] for x in optSeqSol]
+
+        lotSeqOptList = self.GetLotSeqOptList(gradeSeqOpt=oprtSeqGrade, dmdLotList=lotObjList, dueUom=dueUom)
+
+        return lotSeqOptList
+
+    # --------------------------------------------------------- #
+    # Grade Sequence Optimization에 Lot List를 Mapping하여 분배
+    # : Due Uom - nan/mon  같은 Grade 제품 간의 구분 안함
+    # : Due Uom - day 같은 Grade에서 due data 기준으로 순서 고려
+    # --------------------------------------------------------- #
+    def GetLotSeqOptList(self, gradeSeqOpt:list, dmdLotList:list, dueUom:str):
+        lotSeqOptList = []
+
+        if (dueUom == 'nan') or (dueUom == 'mon'):
+            # Grade 별로 Lot Grouping (Group 안에서 lot의 순서는 고려하지 않음)
+            lotByGradeGroupDict = {}
+            for lot in dmdLotList:
+                lotObj:objLot.Lot = lot
+                if lotObj.Grade not in lotByGradeGroupDict.keys():
+                    lotByGradeGroupDict[lotObj.Grade] = [lotObj]
+                else:
+                    lotByGradeGroupDict[lotObj.Grade].append(lotObj)
+                    # tempList = lotByGradeGroupDict[lotObj.Grade]
+                    # lotByGradeGroupDict[lotObj.Grade] = tempList
+
+            # 최적화 한 Grade Sequence 별로 lot List 배열
+            for grade in gradeSeqOpt:
+                LotListByGrade = lotByGradeGroupDict[grade]
+                # Packaging Type 최적화
+                packTypeSeqOptList = self._getPackSizeSeqOptList(lotObjList=LotListByGrade)
+                lotSeqOptList.extend(packTypeSeqOptList)
+
+            # Lot Sequence 순서로 lpst 할당
+            lpst = 1
+            for lot in lotSeqOptList:
+                lotObj:objLot.Lot = lot
+                lotObj.Lpst = lpst
+                lpst += 1
+
+        # Due Date가 일 단위 일때 처리
+        else:
+            return None
+
+        return lotSeqOptList
+
+    def _getPackSizeSeqOptList(self, lotObjList:list):
+        pass
+
+    def _getGradeSeqList(self, lotList:list):
+        gradeSeqList = []
+
+        for lot in lotList:
+            lotObj:objLot.Lot = lot
+            if len(gradeSeqList) == 0:
+                gradeSeqList.append(lotObj.Grade)
+            else:
+                if gradeSeqList[-1] != lotObj.Grade:
+                    gradeSeqList.append(lotObj.Grade)
+
+        return gradeSeqList
+
+    def _getGradeList(self, lotList:list):
+        lotGradeList = []
+
+        for lot in lotList:
+            lotObj:objLot.Lot = lot
+            if len(lotGradeList) == 0:
+                lotGradeList.append(lotObj.Grade)
+            else:
+                if lotGradeList[-1] != lotObj.Grade:
+                    lotGradeList.append(lotObj.Grade)
+
+        return lotGradeList
 
     def lotArrive(self, from_loc: object, lot: objLot):
         lotObj: objLot.Lot = lot
@@ -262,7 +410,6 @@ class Warehouse:
 
 def test():
     pass
-
 
 if __name__ == '__main__':
     test()

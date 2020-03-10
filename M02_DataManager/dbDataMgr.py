@@ -38,9 +38,9 @@ class DataManager:
         self.df_prod_yield = self._conMgr.loadData(data_name="prod_yield")
 
         self._preprocessing()
-
         self._build_dict_prod_yield()
 
+        comUtility.Utility.ProdWheelDf = self.dfProdWheel.copy()
         # comUtility.Utility.SetRootPath(rootPath=self._conMgr.RootPath)
         # comUtility.Utility.SetConfPath(confPath=self._conMgr.conf_path)
 

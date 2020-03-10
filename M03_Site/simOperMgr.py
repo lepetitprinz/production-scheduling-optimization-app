@@ -58,7 +58,7 @@ class Operation(object):
     def resume_down_machines(self):
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
-            macBreakEnd: datetime.datetime = macObj.get_break_end_time()
+            macBreakEnd: datetime.datetime = macObj.getMacStopEndTime()
             if macBreakEnd == comUtility.Utility.runtime:
                 macObj.power_on()
                 print(f"\t\t{macObj.__class__.__name__} ({macObj.Id}) RESUMED FROM DOWN STATE !")
@@ -82,7 +82,7 @@ class Operation(object):
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
             if macObj.EndTime == comUtility.Utility.runtime:
-                lotObj: objLot.Lot = macObj.lot_leave(actual_leave_flag=False)
+                lotObj: objLot.Lot = macObj.lotLeave(actual_leave_flag=False)
 
                 # Machine에 있는 lot을 다음 warehouse에 할당하는 처리
                 assignWh: objWarehouse.Warehouse = self._getAssignWh(lot=lotObj)
@@ -91,10 +91,9 @@ class Operation(object):
                 if assignWh != None:
                     print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() >> {(lotObj.Id, lotObj.Lpst, lotObj.ReactDuration, lotObj.PackDuration)}")
                     assignWh.lotArrive(from_loc=macObj, lot=lotObj)
-                    macObj.lot_leave()
+                    macObj.lotLeave()
                 else:
                     print("{} Lot 할당 가능한 Warehouse가 현재 없음".format(lotObj.Id))
-
 
     def lotArrive(self, lot: objLot.Lot):
         is_assignable, machines = self.GetAssignableFlag(lot=lot)
@@ -103,12 +102,7 @@ class Operation(object):
             return False
         lot.ToLoc = self.ToLoc
         machine: objMachine.Machine = self._assignMac(macList=machines)
-        if self.Kind == 'REACTOR':
-            start_time = comUtility.Utility.runtime + datetime.timedelta(hours=12)
-            machine.assign_lot(lot=lot, start_time=start_time)
-        elif self.Kind == 'BAGGING':
-            start_time = None
-            machine.assign_lot(lot=lot, start_time=start_time)
+        machine.assignLotToMac(lot=lot)
 
         machine.RunMachine()
         self.ResetFstEventTime()
@@ -124,7 +118,7 @@ class Operation(object):
             # is_breakdown, break_end = macObj.chk_breakdown(lot=lot)
             if macObj.Status is "DOWN":
                 breaktime_machines.append(macObj)
-                break_end_times.append(break_end)
+                break_end_times.append(break_end_times)
         break_end_time = min(break_end_times)
         return breaktime_machines, break_end_time
 
@@ -215,8 +209,8 @@ class Operation(object):
                 macEndTimes.append(macObj.EndTime)
             elif macObj.hasCalendar:
                 if not init_flag:
-                    if macObj.get_break_end_time() != comUtility.Utility.runtime:
-                        macEndTimes.append(macObj.get_break_end_time())
+                    if macObj.getMacStopEndTime() != comUtility.Utility.runtime:
+                        macEndTimes.append(macObj.getMacStopEndTime())
         if len(macEndTimes) > 0:
             newFstEventTime = min(macEndTimes)
         self.SetFstEventTime(newFstEventTime)
@@ -262,6 +256,8 @@ class Operation(object):
 
     # ==============================================================================================#
     # 시간제약 반영
+    # - Machine 비가용 계획 반영 (완료)
+    # - Reactor Machine Grade Change Cost(Hour) 반영 (완료)
     # ==============================================================================================#
     def GetAssignableFlag(self, lot: objLot.Lot):
         availableMacList: list = self._getAvailableMac(lot=lot)
