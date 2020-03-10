@@ -8,9 +8,6 @@ import argparse
 import enum
 import cx_Oracle
 
-import M06_Utility
-
-
 class ConnectionManager(object):
     # 환경 설정
     os.environ["NLS_LANG"] = ".AL32UTF8"
@@ -120,10 +117,11 @@ class ConnectionManager(object):
 
         return False
 
-    def load_data(self):
+    def loadData(self):
         raise Exception(
-            f"Make Me !! from {self.__class__.load_data}"
+            f"Make Me !! from {self.__class__.loadData}"
         )
+
 
     def _getConnection(self):
         try:

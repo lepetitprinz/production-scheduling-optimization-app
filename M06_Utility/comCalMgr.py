@@ -25,7 +25,7 @@ class CalendarManager(object):
 
         self._machine: objMachine.Machine = None
 
-        self.breakdown_seq: list = None
+        self.macStopSeq: list = None
 
     def SetupObject(self, factory: simFactoryMgr, machine: objMachine,
                     start_date: datetime.datetime, end_date: datetime.datetime,
@@ -60,7 +60,7 @@ class CalendarManager(object):
             breakdown_seq.append(breaktime)
             tmp_from_date = tmp_from_date + datetime.timedelta(days=1)
 
-        self.breakdown_seq = breakdown_seq
+        self.macStopSeq = breakdown_seq
 
         if return_flag:
             return breakdown_seq

@@ -32,7 +32,9 @@ class Utility:
     MaxLotSize: int = 400   # Lot Maximum Capacity
 
     # Production Wheel 관련
+    ProdWheelDf = None
     ProdWheelCalStd: str = 'hour'
+    ProdWheelHour: dict = {}
 
     # Lot Sequencing Optimization (SCOP algorithm)
     OptTimeLimit = 1

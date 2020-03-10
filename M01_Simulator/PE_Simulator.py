@@ -64,9 +64,6 @@ class Simulator:
 
         # Factory 가동 시작
         facObj.run_factory()
-        
-        # Factory 가동 종료 후 Scheduling 결과 저장 처리
-
 
     def _run_multi_factory(self):
         pass
@@ -84,38 +81,7 @@ class Simulator:
         )
         self._facObjList.append(facObj)
 
+    def SaveSimulData(self):
 
-
-    # def getMinProdWheelCost(self, dmdReactorProdDict:dict, gradeCostDict:dict, costCalStandard:str = 'hour'):
-    #
-    #     '''
-    #     dmdReactorProdDict : {gradeGroup1: [GRADE_A, ...],
-    #                           gradeGroup2 : [GRADE_D, ...]}
-    #     gradeCostDict : {(GRADE_A, GRADE_B) : [Hour, OG_Qty],
-    #                      (GRADE_A, GRADE_C) : [Hour, OG_Qty],
-    #                      ...}
-    #     costCalStandard : hour or ogQty
-    #     '''
-    #
-    #     appliedGradeCost = {}
-    #
-    #     if costCalStandard == 'hour':
-    #         for key, val in gradeCostDict.items():
-    #             appliedGradeCost.update({key, val[0]})
-    #     else:
-    #         for key, val in gradeCostDict.items():
-    #             appliedGradeCost.update({key, val[1]})
-    #
-    #     gradeGroupSeq = []
-    #     gradeSeq = []
-    #
-    #     for val in dmdReactorProdDict.values():
-    #         gradeGroupSeq.append(list(permutations(val, len(val))))
-    #
-    #     # Make production schedule sequence
-    #     for group1 in gradeGroupSeq[0]:
-    #         group1 = list(group1)
-    #         for group2 in gradeGroupSeq[1]:
-    #             group2 = list(group2)
-    #             seq = np.append(group1, group2)
-    #             gradeSeq.append(seq)
+        self.DataMgr.SaveEngConfig()
+        pass

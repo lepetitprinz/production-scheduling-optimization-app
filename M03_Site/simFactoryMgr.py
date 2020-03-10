@@ -41,10 +41,10 @@ class Factory:
         # --- DB 연결 결과 취득 ---
         self._dataMgr: dbDataMgr.DataManager = simul.DataMgr  # DB에서 기준정보를 가지고 있는 객체
         self._prodWheelDf = self._dataMgr.dfProdWheel.copy()
-        self._prodWheelHour = ""
+        self.ProdWheelHour = ""
 
         # Configuration 정보
-        self._seqOptTimeLimit: int = 0
+        self._seqOptTimeLimit: int = 1
 
     def SetupObject(self, dayStartTime: str, year: int, month: int, day: int, horizon_days: int, silo_qty: int, nof_silo: int = 1):
         self._utility.setDayStartTime(value=dayStartTime)
@@ -56,7 +56,9 @@ class Factory:
         self._buildFactory(silo_qty=silo_qty, nof_silo=nof_silo)    # Factory 기본 Configuration 정보 Setting
         self._base_first_event_time()
         self._prodWheelDict = self._setProdWheelDict(costCalStd=self._utility.ProdWheelCalStd)
-        self._prodWheelHour = self._setProdWheelDict(costCalStd='hour')
+        self.ProdWheelHour = self._setProdWheelDict(costCalStd='hour')
+
+        self._utility.ProdWheelHour = self.ProdWheelHour.copy()
 
         self._seqOptTimeLimit = self._utility.OptTimeLimit
         # self._register_new_machine(mac_id="MAC01")
@@ -67,7 +69,7 @@ class Factory:
 
     def SetupResumeData(self):
         # RM Warehouse 의 Lot을 배정하는 처리.
-        self.setup_rm_wh()
+        self.setupRmWh()
 
         # facID = self.ID
         # totalWipList = []
@@ -85,30 +87,32 @@ class Factory:
         #     # Machine SetupType 셋팅 오류 수정
         #     oper.FixMachineSetupTypeError()
 
-    def setup_rm_wh(self):
-        wh_rm: objWarehouse.Warehouse = self._findWhById(wh_id="RM")
-        df_demand = self._dataMgr.df_demand.copy()
+    def setupRmWh(self):
+        rmWh: objWarehouse.Warehouse = self._findWhById(wh_id="RM")
+        demand = self._dataMgr.df_demand.copy()
 
         # Lot Sizing
-        dfDmdLotSizing = self._setDmdProdLotSizing(df_demand)
-        wh_rm.setup_resume_data(dfDmdLotSizing)
-        wh_rm_lots: list = wh_rm.LotObjList
+        dfDmdLotSizing = self._setDmdProdLotSizing(demand)
+        rmWh.setup_resume_data(dfDmdLotSizing)
+        rmWhLotList: list = rmWh.LotObjList
 
         # Grade Sequence Optimization using SCOP algorithm
-        gradeSeqOpt = self.SeqOptByScop(dmdLotList=wh_rm_lots)
-
-        # Grade Sequence 별로 Lot을 그룹화해서 List 변환
-        lotSeqOptList = self.GetLotSeqOptList(gradeSeqOpt=gradeSeqOpt, dmdLotList=wh_rm_lots, dueUom="nan")
-
-        wh_rm.truncate_lot_list()   # 기존 RM Warehouse에 있는 Lot List 삭제
+        rmWh.truncate_lot_list()   # 기존 RM Warehouse에 있는 Lot List 삭제
+        lotSeqOptList = rmWh.SeqOptByScop(lotObjList=rmWhLotList, dueUom='nan')
 
         # RM warehouse에 최적화 한 lot Sequence 등록
         for obj in lotSeqOptList:
             lotObj: objLot.Lot = obj
             # for Debugging
             # lotObj.reduce_duration(by=10)
-            wh_rm._registerLotObj(lotObj=lotObj)
-        print("")
+            rmWh._registerLotObj(lotObj=lotObj)
+
+        # # Grade Sequence Optimization using SCOP algorithm
+        # gradeSeqOpt = self.SeqOptByScop(dmdLotList=rmWhLotList)
+        #
+        # # Grade Sequence 별로 Lot을 그룹화해서 List 변환
+        # lotSeqOptList = self.GetLotSeqOptList(gradeSeqOpt=gradeSeqOpt, dmdLotList=rmWhLotList, dueUom="nan")
+        # rmWh.truncate_lot_list()   # 기존 RM Warehouse에 있는 Lot List 삭제
 
     def _buildFactory(self, silo_qty: float, nof_silo: int = 1):
         reactor: simOperMgr.Operation = self._register_new_oper(oper_id="REACTOR", kind="REACTOR", return_flag=True)
@@ -511,7 +515,7 @@ class Factory:
     def _optLotSeqNan(self, dmdLotList:list):
 
         # Grade Sequence Optimization using SCOP algorithm
-        gradeSeqOpt = self.SeqOptByScop(dmdLotList=dmdLotList)
+        # gradeSeqOpt = self.SeqOptByScop(dmdLotList=dmdLotList)
 
         # Grade Sequence 별로 Lot을 grouping해서 List 변환
         lotSeqOptList = self.GetLotSeqOptList(gradeSeqOpt=gradeSeqOpt, dmdLotList=dmdLotList, dueUom="nan")
@@ -638,6 +642,13 @@ class Factory:
 
         return lotSeqOptList
 
+    # --------------------------------------------------------- #
+    # Packaging Type Sequence Optimization
+    # : Due Uom - nan/mon  같은 Grade 제품 간의 구분 안함
+    # : Due Uom - day 같은 Grade에서 due data 기준으로 순서 고려
+    # --------------------------------------------------------- #
+
+    # Warehouse에서 Check
     # ------------------------------------------------------------------------------------------------------ #
     # Grade Sequence Change Check 모둘
     # ------------------------------------------------------------------------------------------------------ #
@@ -647,38 +658,41 @@ class Factory:
     # - Lot Leave 이전 Grade Sequence에서 첫번째 Grade 제외한  Grade Sequence와 Lot Leave 이후 Grade Sequence가 다른 경우
     #   : Grade Sequence Change 발생
     # ------------------------------------------------------------------------------------------------------ #
-    def ChkGradeSeqChange(self, beforeLotList, afterLotList):
-        beforeGradeSeq = []
-        afterGradeSeq = []
-
-        for bfLot in beforeLotList:
-            bfLotObj:objLot.Lot = bfLot
-            if len(beforeGradeSeq) == 0:
-                beforeGradeSeq.append(bfLotObj.Grade)
-            else:
-                if beforeGradeSeq[-1] != bfLotObj.Grade:
-                    beforeGradeSeq.append(bfLotObj.Grade)
-
-        for afLot in afterLotList:
-            afLotObj:objLot.Lot = afLot
-            if len(afterGradeSeq) == 0:
-                afterGradeSeq.append(afLotObj.Grade)
-            else:
-                if afterGradeSeq[-1] != afLotObj.Grade:
-                    afterGradeSeq.append(afLotObj.Grade)
-
-        if (beforeGradeSeq == afterGradeSeq) or (beforeGradeSeq[1:] == afterGradeSeq):
-            return False    # Grade Sequence Change 없음
-        else:
-            return True     # Grade Sequence Change 발생
-
+    # def ChkGradeSeqChange(self, beforeLotList, afterLotList):
+    #     beforeGradeSeq = []
+    #     afterGradeSeq = []
+    #
+    #     for bfLot in beforeLotList:
+    #         bfLotObj:objLot.Lot = bfLot
+    #         if len(beforeGradeSeq) == 0:
+    #             beforeGradeSeq.append(bfLotObj.Grade)
+    #         else:
+    #             if beforeGradeSeq[-1] != bfLotObj.Grade:
+    #                 beforeGradeSeq.append(bfLotObj.Grade)
+    #
+    #     for afLot in afterLotList:
+    #         afLotObj:objLot.Lot = afLot
+    #         if len(afterGradeSeq) == 0:
+    #             afterGradeSeq.append(afLotObj.Grade)
+    #         else:
+    #             if afterGradeSeq[-1] != afLotObj.Grade:
+    #                 afterGradeSeq.append(afLotObj.Grade)
+    #
+    #     if (beforeGradeSeq == afterGradeSeq) or (beforeGradeSeq[1:] == afterGradeSeq):
+    #         return False    # Grade Sequence Change 없음
+    #     else:
+    #         return True     # Grade Sequence Change 발생
+    #
     def _getLotGradeList(self, lotList:list):
         lotGradeList = []
 
         for lot in lotList:
             lotObj:objLot.Lot = lot
-            if lotObj.Grade not in lotGradeList:
+            if len(lotGradeList) == 0:
                 lotGradeList.append(lotObj.Grade)
+            else:
+                if lotGradeList[-1] != lotObj.Grade:
+                    lotGradeList.append(lotObj.Grade)
 
         return lotGradeList
 
