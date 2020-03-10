@@ -6,7 +6,7 @@ import datetime
 
 from M03_Site import simFactoryMgr, simOperMgr
 from M05_ProductManager import objLot
-from M06_Utility import comUtility
+from M06_Utility.comUtility import Utility
 
 
 class Warehouse:
@@ -29,14 +29,17 @@ class Warehouse:
         self.BaggingOperTimeConst: bool = False
 
         self.BeforeLotList: list = []
+        self._prodWheelHour:dict = {}
 
     def setup_object(self, capacity: float = None):
         self._setCapacity(capacity=capacity)
 
         # Time Constraint Configuration Setting
-        self.GradeChangeFinishConst = comUtility.Utility.GradeChangeFinishConst
-        self.GradeGroupChangeConst = comUtility.Utility.GradeGroupChangeConst
-        self.BaggingOperTimeConst = comUtility.Utility.BaggingOperTimeConst
+        self.GradeChangeFinishConst = Utility.GradeChangeFinishConst
+        self.GradeGroupChangeConst = Utility.GradeGroupChangeConst
+        self.BaggingOperTimeConst = Utility.BaggingOperTimeConst
+
+        self._prodWheelHour = Utility.ProdWheelHour
 
     def setup_resume_data(self, lotObjArr: pd.DataFrame):
         for idx, row in lotObjArr.iterrows():
@@ -93,7 +96,7 @@ class Warehouse:
 
     def lot_leave(self, to_loc: simOperMgr, lot: objLot):
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
-        current_time: datetime.datetime = comUtility.Utility.DayStartDate
+        current_time: datetime.datetime = Utility.DayStartDate
 
         print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {(lot.Id, lot.Lpst, lot.ReactDuration, lot.PackDuration)}")
 
@@ -110,7 +113,7 @@ class Warehouse:
         self._registerLotObj(lotObj=lotObj)
         self._updateCurrCapa(lot=lotObj, in_flag=True)
         # self._rebuild_lpst_lot_dict()
-        self.setFstEventTime(comUtility.Utility.runtime)
+        self.setFstEventTime(Utility.runtime)
 
     def getAssignableFlag(self, lot: objLot):
         isAssignable = False
@@ -121,7 +124,6 @@ class Warehouse:
 
     def resetCurCapa(self):
         self.CurCapa = int(self.Capacity)
-
 
     def _pickAvailableLot(self, rule: str = "FIRST"):
         if rule == "FIRST":

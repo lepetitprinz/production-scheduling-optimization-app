@@ -41,7 +41,7 @@ class Factory:
         # --- DB 연결 결과 취득 ---
         self._dataMgr: dbDataMgr.DataManager = simul.DataMgr  # DB에서 기준정보를 가지고 있는 객체
         self._prodWheelDf = self._dataMgr.dfProdWheel.copy()
-        self._prodWheelHour = ""
+        self.ProdWheelHour = ""
 
         # Configuration 정보
         self._seqOptTimeLimit: int = 0
@@ -56,7 +56,9 @@ class Factory:
         self._buildFactory(silo_qty=silo_qty, nof_silo=nof_silo)    # Factory 기본 Configuration 정보 Setting
         self._base_first_event_time()
         self._prodWheelDict = self._setProdWheelDict(costCalStd=self._utility.ProdWheelCalStd)
-        self._prodWheelHour = self._setProdWheelDict(costCalStd='hour')
+        self.ProdWheelHour = self._setProdWheelDict(costCalStd='hour')
+
+        self._utility.ProdWheelHour = self.ProdWheelHour.copy()
 
         self._seqOptTimeLimit = self._utility.OptTimeLimit
         # self._register_new_machine(mac_id="MAC01")

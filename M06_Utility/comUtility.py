@@ -33,6 +33,7 @@ class Utility:
 
     # Production Wheel 관련
     ProdWheelCalStd: str = 'hour'
+    ProdWheelHour: dict = {}
 
     # Lot Sequencing Optimization (SCOP algorithm)
     OptTimeLimit = 1
