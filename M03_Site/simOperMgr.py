@@ -16,6 +16,7 @@ class Operation(object):
         self._factory: simFactoryMgr.Factory = factory
 
         self.FromLocs: list = []
+        self.FromLoc: object = None
         self.ToLoc: object = None
 
         self.MacObjList: list = []
@@ -38,8 +39,11 @@ class Operation(object):
     def AppendMac(self, tgtMac: objMachine):
         self.MacObjList.append(tgtMac)
 
-    def SetFromLoc(self, from_locs: list):
+    def SetFromLocs(self, from_locs: list):
         self.FromLocs = from_locs
+
+    def SetFromLoc(self, from_loc: object):
+        self.FromLoc = from_loc
 
     def SetToLoc(self, to_loc: object):
         self.ToLoc = to_loc
@@ -53,7 +57,7 @@ class Operation(object):
         else:
             self.lotLeave()
         self.ResetFstEventTime()
-        self.inform_to_previous(runTime=self.FirstEventTime)
+        # self.inform_to_previous(runTime=self.FirstEventTime)
 
     def resume_down_machines(self):
         for obj in self.MacObjList:
@@ -62,12 +66,16 @@ class Operation(object):
             if macBreakEnd == comUtility.Utility.runtime:
                 macObj.power_on()
                 print(f"\t\t{macObj.__class__.__name__} ({macObj.Id}) RESUMED FROM DOWN STATE !")
+        self.inform_to_previous()
 
     def inform_to_previous(self, runTime: datetime.datetime = None):
         if runTime is None:
             runTime = comUtility.Utility.runtime
-        for obj in self.FromLocs:
-            self.inform_to(from_obj=obj, runTime=runTime)
+        for obj in self._factory.WhouseObjList:
+            whObj: objWarehouse.Warehouse = obj
+            if self.FromLoc == whObj.Kind:
+
+                self.inform_to(from_obj=whObj, runTime=runTime)
 
     def inform_to(self, from_obj: objWarehouse.Warehouse, runTime: datetime.datetime, downFlag: bool = False):
         from_loc: objWarehouse.Warehouse = from_obj
@@ -76,7 +84,14 @@ class Operation(object):
                 from_loc.setFstEventTime(runTime=runTime)
         else:
             if downFlag:
-                from_loc.setFstEventTime(runTime=runTime)
+                from_loc.setFstEventTime(runTime=runTime, init_flag=True)
+            else:
+                if runTime < from_loc.FirstEventTime:
+                    from_loc.setFstEventTime(runTime=runTime)
+                # if runTime <= from_loc.FirstEventTime:
+                #     from_loc.setFstEventTime(runTime=runTime)
+            # if runTime <= from_loc.FirstEventTime:
+            #     from_loc.setFstEventTime(runTime=runTime)
 
     def lotLeave(self):
         for obj in self.MacObjList:
@@ -91,10 +106,10 @@ class Operation(object):
                 if assignWh != None:
                     print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() >> {(lotObj.Id, lotObj.Lpst, lotObj.ReactDuration, lotObj.PackDuration)}")
                     assignWh.lotArrive(from_loc=macObj, lot=lotObj)
+                    self.inform_to_previous(runTime=macObj.EndTime)
                     macObj.lot_leave()
                 else:
                     print("{} Lot 할당 가능한 Warehouse가 현재 없음".format(lotObj.Id))
-
 
     def lotArrive(self, lot: objLot.Lot):
         is_assignable, machines = self.GetAssignableFlag(lot=lot)
@@ -104,7 +119,8 @@ class Operation(object):
         lot.ToLoc = self.ToLoc
         machine: objMachine.Machine = self._assignMac(macList=machines)
         if self.Kind == 'REACTOR':
-            start_time = comUtility.Utility.runtime + datetime.timedelta(hours=12)
+            # start_time = comUtility.Utility.runtime + datetime.timedelta(hours=12)
+            start_time = None
             machine.assign_lot(lot=lot, start_time=start_time)
         elif self.Kind == 'BAGGING':
             start_time = None
@@ -112,7 +128,7 @@ class Operation(object):
 
         machine.RunMachine()
         self.ResetFstEventTime()
-        print(f"\t\t{self.__class__.__name__}({self.Id}/{machine.Id}).lot_arrive() >> {machine}")
+        print(f"\t\t{self.__class__.__name__}({self.Id}/{machine.Id}).lot_arrive() >> {lot.Id, lot.Lpst, lot.ReactDuration, lot.PackDuration}")
 
         return True
 
@@ -292,7 +308,7 @@ class Operation(object):
                         if (not isUnavailable) & (macObj.Id == lot.PackSize):
                             availableMacs.append(macObj)
                     else:
-                        if macObj.PackKind == lot.PackType:
+                        if macObj.Id == lot.PackSize:
                             availableMacs.append(macObj)
 
         return availableMacs

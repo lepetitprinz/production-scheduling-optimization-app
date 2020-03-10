@@ -68,11 +68,12 @@ class Warehouse:
             to_oper, available_machines = self._findAvailableNextOper(lot=lotObj)
             if len(available_machines) > 0:
                 self.lot_leave(to_loc=to_oper, lot=lotObj)
-                self.setFstEventTime()
+                # self.setFstEventTime()
             if len(available_machines) == 0:
                 # is_in_break, break_end_time = to_oper.are_machines_in_break(lot=least_lpst_lot)
                 # if len(is_in_break)
-                print(f"\t\t{to_oper.__class__.__name__}({to_oper.Id}) No Machines Avaiable. Waiting for Processing...")
+                print(f"\t\t{to_oper.__class__.__name__}({to_oper.Id}) No Machines Avaiable. Waiting for Processing...\n"
+                      f"\t\t{lotObj.Id, lotObj.Lpst, lotObj.ReactDuration, lotObj.PackDuration}>> ")
                 to_oper.ResetFstEventTime()
                 to_oper.inform_to(from_obj=self, runTime=to_oper.FirstEventTime, downFlag=True)
                 # to_oper.set_first_event_time()
@@ -84,7 +85,7 @@ class Warehouse:
         self._removeLot(lot=lot, shipping_flag=True)
         self._updateCurrCapa(lot=lot, in_flag=False)
         # self._rebuild_lpst_lot_dict()
-        self.setFstEventTime()
+        self.setFstEventTime(init_flag=True)
 
         print(f"\t\t{self.__class__.__name__}({self.Id}).shipping() >> {lot}")
 
@@ -98,18 +99,17 @@ class Warehouse:
 
         print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {(lot.Id, lot.Lpst, lot.ReactDuration, lot.PackDuration)}")
 
-
-
         to_loc.lotArrive(lot)
         self._removeLot(lot=lot)
         self._updateCurrCapa(lot=lot, in_flag=False)
         # self._rebuild_lpst_lot_dict()
-        self.setFstEventTime()
+        self.setFstEventTime(init_flag=True)
 
     def lotArrive(self, from_loc: object, lot: objLot):
         lotObj: objLot.Lot = lot
         lotObj.ToLoc = self.ToLoc
-        print(f"\t\t{self.__class__.__name__}({self.Id}).lot_arrive() >> {lotObj}")
+        print(f"\t\t{self.__class__.__name__}({self.Id}).lot_arrive() "
+              f">> {lotObj.Id, lotObj.Lpst, lotObj.ReactDuration, lotObj.PackDuration}")
         self._registerLotObj(lotObj=lotObj)
         self._updateCurrCapa(lot=lotObj, in_flag=True)
         # self._rebuild_lpst_lot_dict()
@@ -214,7 +214,9 @@ class Warehouse:
         self.LotObjList.append(lotObj)
         self._factory._register_lot_to(lot_obj=lotObj, to="self")
 
-    def setFstEventTime(self, runTime: datetime.datetime = None):
+    def setFstEventTime(self, runTime: datetime.datetime = None, init_flag: bool = False):
+        if not init_flag:
+            runTime = comUtility.Utility.runtime
         self.FirstEventTime = runTime
 
     # def assign_random_lpst(self):
