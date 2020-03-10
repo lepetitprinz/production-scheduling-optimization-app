@@ -47,11 +47,13 @@ class Machine(object):
         else:
             self.hasCalendar = False
 
-    def assign_lot(self, lot: objLot):
+    def assign_lot(self, lot: objLot, start_time: datetime.datetime = None):
         self.Lot = lot
-        self._set_start_time(comUtility.Utility.runtime)
+        if start_time is None:
+            start_time = comUtility.Utility.runtime
+        self._set_start_time(start_time=start_time)
         self.Lot.set_location(location=self)
-        if self._oper.Kind == "REACTOR":
+        if self.Oper.Kind == "REACTOR":
             self.Lot.ReactIn = comUtility.Utility.runtime
         else:
             self.Lot.BaggingIn = comUtility.Utility.runtime
@@ -62,7 +64,7 @@ class Machine(object):
     def lot_leave(self, actual_leave_flag: bool = True):
         leaving_lot: objLot.Lot = self.Lot
         if actual_leave_flag:
-            if self._oper.Kind == "REACTOR":
+            if self.Oper.Kind == "REACTOR":
                 leaving_lot.ReactOut = comUtility.Utility.runtime
             else:
                 leaving_lot.BaggingOut = comUtility.Utility.runtime

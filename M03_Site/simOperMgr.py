@@ -48,7 +48,7 @@ class Operation(object):
         # to_loc: object
         self._updateLotList()
         if len(self._lotObjList) == 0:
-            breaktime_machines, break_end_time = self.ChkMacInBreak()
+            # breaktime_machines, break_end_time = self.ChkMacInBreak()
             self.resume_down_machines()
         else:
             self.lotLeave()
@@ -58,8 +58,10 @@ class Operation(object):
     def resume_down_machines(self):
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
-            macObj.power_on()
-            print(f"\t\t{macObj.__class__.__name__} ({macObj.Id}) RESUMED FROM DOWN STATE !")
+            macBreakEnd: datetime.datetime = macObj.get_break_end_time()
+            if macBreakEnd == comUtility.Utility.runtime:
+                macObj.power_on()
+                print(f"\t\t{macObj.__class__.__name__} ({macObj.Id}) RESUMED FROM DOWN STATE !")
 
     def inform_to_previous(self, runTime: datetime.datetime = None):
         if runTime is None:
@@ -101,7 +103,13 @@ class Operation(object):
             return False
         lot.ToLoc = self.ToLoc
         machine: objMachine.Machine = self._assignMac(macList=machines)
-        machine.assign_lot(lot=lot)
+        if self.Kind == 'REACTOR':
+            start_time = comUtility.Utility.runtime + datetime.timedelta(hours=12)
+            machine.assign_lot(lot=lot, start_time=start_time)
+        elif self.Kind == 'BAGGING':
+            start_time = None
+            machine.assign_lot(lot=lot, start_time=start_time)
+
         machine.RunMachine()
         self.ResetFstEventTime()
         print(f"\t\t{self.__class__.__name__}({self.Id}/{machine.Id}).lot_arrive() >> {machine}")
@@ -198,7 +206,7 @@ class Operation(object):
     def SetFstEventTime(self, runTime: datetime.datetime = None):
         self.FirstEventTime = runTime
 
-    def ResetFstEventTime(self):
+    def ResetFstEventTime(self, init_flag: bool = False):
         macEndTimes: list = []
         newFstEventTime: datetime.datetime = None
         for obj in self.MacObjList:
@@ -206,10 +214,12 @@ class Operation(object):
             if macObj.EndTime is not None:
                 macEndTimes.append(macObj.EndTime)
             elif macObj.hasCalendar:
-                macEndTimes.append(macObj.get_break_end_time())
+                if not init_flag:
+                    if macObj.get_break_end_time() != comUtility.Utility.runtime:
+                        macEndTimes.append(macObj.get_break_end_time())
         if len(macEndTimes) > 0:
             newFstEventTime = min(macEndTimes)
-        return newFstEventTime
+        self.SetFstEventTime(newFstEventTime)
         # macEndTimes: list = [
         #     mac.EndTime
         #     for mac in self.MacObjList
@@ -217,7 +227,7 @@ class Operation(object):
         # macEndTimes = [endTime if endTime is not None else
         #                self.get_earliest_down_end()
         #                for endTime in macEndTimes]
-        self.SetFstEventTime(min(macEndTimes))
+        # self.SetFstEventTime(min(macEndTimes))
         # if sum([endTime is None for endTime in macEndTimes]) == len(macEndTimes):
         #     self.SetFstEventTime()
         # else:
@@ -279,7 +289,7 @@ class Operation(object):
                 if macObj.Status == "IDLE":     # Machine이 IDLE 상태일때 이용가능
                     if macObj.hasCalendar:      # Machine의 가용계획 check
                         isUnavailable, _ = macObj.chkMacAvailable(lot=lot)
-                        if (not isUnavailable) & (macObj.PackKind == lot.PackType):
+                        if (not isUnavailable) & (macObj.Id == lot.PackSize):
                             availableMacs.append(macObj)
                     else:
                         if macObj.PackKind == lot.PackType:

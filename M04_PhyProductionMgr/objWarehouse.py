@@ -98,6 +98,8 @@ class Warehouse:
 
         print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {(lot.Id, lot.Lpst, lot.ReactDuration, lot.PackDuration)}")
 
+
+
         to_loc.lotArrive(lot)
         self._removeLot(lot=lot)
         self._updateCurrCapa(lot=lot, in_flag=False)

@@ -143,7 +143,7 @@ class Factory:
     def _base_first_event_time(self):
         for obj in self.OperList:
             operObj: simOperMgr.Operation = obj
-            operObj.ResetFstEventTime()
+            operObj.ResetFstEventTime(init_flag=True)
         for obj in self.WhouseObjList:
             whObj: objWarehouse.Warehouse = obj
             if whObj.Id == "RM":
