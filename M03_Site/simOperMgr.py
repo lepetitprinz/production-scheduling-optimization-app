@@ -97,7 +97,6 @@ class Operation(object):
         if not is_assignable:
             print(f"\t\t{self.__class__.__name__}({self.Id}).lot_arrive() >> <{'No Machines Available'}> / {machines}")
             return False
-            
         lot.ToLoc = self.ToLoc
         machine: objMachine.Machine = self._assignMac(macList=machines)
         machine.assign_lot(lot=lot)

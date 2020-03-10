@@ -30,7 +30,7 @@ class Lot(object):
 
         self.Region: str = ""
 
-        self.Duration: int = 0.0
+        self.Duration: int = 0
         self.PackDuration: datetime.timedelta = datetime.timedelta(hours=0)
         self.PackDurationFloat: float = 0.0
         self.ReactDuration: datetime.timedelta = datetime.timedelta(hours=0)
@@ -43,7 +43,7 @@ class Lot(object):
         self.Qty: float = 0.0
 
         self.Location: object = loc
-        self.ToLoc: str = None
+        self.ToLoc: str = ''
 
         # Silo 관련 속성
         self.Silo = ""

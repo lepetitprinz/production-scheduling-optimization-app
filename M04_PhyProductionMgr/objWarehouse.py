@@ -57,10 +57,12 @@ class Warehouse:
 
     def SyncRunningTime(self):
         # to_loc: object =
+
         # lotObj: objLot.Lot = self._get_least_lpst_lot()
         lotObj: objLot.Lot = self._pick_lot()
         if self.ToLoc == "Sales":
             self.shipping()
+
         else:
             to_oper, available_machines = self._findAvailableOper(lot=lotObj)
             if len(available_machines) > 0:
