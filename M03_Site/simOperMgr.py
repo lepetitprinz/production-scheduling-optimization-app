@@ -51,8 +51,8 @@ class Operation(object):
             self.resume_down_machines()
         else:
             self.lot_leave()
-        self.inform_to_previous()
         self.ResetFstEventTime()
+        self.inform_to_previous(runTime=self.FirstEventTime)
 
     def resume_down_machines(self):
         for obj in self.MacObjList:
@@ -79,19 +79,23 @@ class Operation(object):
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
             if macObj.EndTime == comUtility.Utility.runtime:
-                lotObj: objLot.Lot = macObj.lot_leave()
+                lotObj: objLot.Lot = macObj.lot_leave(actual_leave_flag=False)
 
                 assignWh: objWarehouse.Warehouse = self._getAssignWh(lot=lotObj)
-                print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() >> {lotObj}")
                 if assignWh is not None:
+                    print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() >> {(lotObj.Id, lotObj.Lpst, lotObj.ReactDuration, lotObj.PackDuration)}")
                     assignWh.lotArrive(from_loc=macObj, lot=lotObj)
+                    macObj.lot_leave()
+                else:
+                    pass
+                    # print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() >> {(lot.Id, lot.Lpst, lot.ReactDuration, lot.PackDuration)}")
 
     def lot_arrive(self, lot: objLot.Lot):
         is_assignable, machines = self.get_assignable_flag(lot=lot)
         if not is_assignable:
-
             print(f"\t\t{self.__class__.__name__}({self.Id}).lot_arrive() >> <{'No Machines Available'}> / {machines}")
             return False
+        lot.ToLoc = self.ToLoc
         machine: objMachine.Machine = self._pick_machine(macList=machines)
         machine.assign_lot(lot=lot)
         machine.RunMachine()
@@ -116,7 +120,7 @@ class Operation(object):
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
             if macObj.Lot is not None:
-                self._lotObjList.append(macObj)
+                self._lotObjList.append(macObj.Lot)
 
     # 할당 가능한 Warehouse를 찾고 할당하는 처리
     def _getAssignWh(self, lot: objLot):

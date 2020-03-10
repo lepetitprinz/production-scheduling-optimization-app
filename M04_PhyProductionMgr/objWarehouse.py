@@ -28,6 +28,8 @@ class Warehouse:
         self.GradeGroupChangeConst: bool = False
         self.BaggingOperTimeConst: bool = False
 
+        self.BeforeLotList: list = []
+
     def setup_object(self, capacity: float = None):
         self._setCapacity(capacity=capacity)
 
@@ -55,13 +57,14 @@ class Warehouse:
 
     def SyncRunningTime(self):
         # to_loc: object =
-        least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
+        # lotObj: objLot.Lot = self._get_least_lpst_lot()
+        lotObj: objLot.Lot = self._pick_lot()
         if self.ToLoc == "Sales":
-            self.shipping(lot=least_lpst_lot)
+            self.shipping(lot=lotObj)
         else:
-            to_oper, available_machines = self._findAvailableOper(lot=least_lpst_lot)
+            to_oper, available_machines = self._findAvailableOper(lot=lotObj)
             if len(available_machines) > 0:
-                self.lot_leave(to_loc=to_oper, lot=least_lpst_lot)
+                self.lot_leave(to_loc=to_oper, lot=lotObj)
                 self.setFstEventTime()
             if len(available_machines) == 0:
                 # is_in_break, break_end_time = to_oper.are_machines_in_break(lot=least_lpst_lot)
@@ -74,31 +77,32 @@ class Warehouse:
 
     def shipping(self, lot: objLot):
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
-        self._removeLot(lot=lot, shipping_flag=True)
+        self._remove_lot(lot=lot, shipping_flag=True)
         self._updateCurrCapa(lot=lot, in_flag=False)
-        self._rebuild_lpst_lot_dict()
+        # self._rebuild_lpst_lot_dict()
         self.setFstEventTime()
 
         print(f"\t\t{self.__class__.__name__}({self.Id}).shipping() >> {lot}")
 
-    def lot_leave(self, to_loc: object, lot: objLot):
+    def lot_leave(self, to_loc: simOperMgr, lot: objLot):
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
         current_time: datetime.datetime = comUtility.Utility.DayStartDate
 
-        print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {(lot.Id, lot.Lpst, lot.ReactDurationFloat, lot.PackDuration)}")
+        print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {(lot.Id, lot.Lpst, lot.ReactDuration, lot.PackDuration)}")
 
         to_loc.lot_arrive(lot)
-        self._removeLot(lot=lot)
+        self._remove_lot(lot=lot)
         self._updateCurrCapa(lot=lot, in_flag=False)
-        self._rebuild_lpst_lot_dict()
+        # self._rebuild_lpst_lot_dict()
         self.setFstEventTime()
 
     def lotArrive(self, from_loc: object, lot: objLot):
         lotObj: objLot.Lot = lot
+        lotObj.ToLoc = self.ToLoc
         print(f"\t\t{self.__class__.__name__}({self.Id}).lot_arrive() >> {lotObj}")
         self._registerLotObj(lotObj=lotObj)
         self._updateCurrCapa(lot=lotObj, in_flag=True)
-        self._rebuild_lpst_lot_dict()
+        # self._rebuild_lpst_lot_dict()
         self.setFstEventTime(comUtility.Utility.runtime)
 
     def getAssignableFlag(self, lot: objLot):
@@ -110,6 +114,11 @@ class Warehouse:
 
     def resetCurCapa(self):
         self.CurCapa = int(self.Capacity)
+
+    def _pick_lot(self, rule: str = "FIRST"):
+        if rule == "FIRST":
+            first_lot: objLot.Lot = self.LotObjList[0]
+            return first_lot
 
     def _updateCurrCapa(self, lot: objLot, in_flag: bool):
         rslt: float = 0.0
@@ -145,6 +154,7 @@ class Warehouse:
 
     def _remove_lot(self, lot: objLot, shipping_flag: bool = False):
         try:
+            self.BeforeLotList = self.LotObjList
             self.LotObjList.remove(lot)
             if shipping_flag:
                 self._factory._removeLot(lot=lot)
@@ -196,11 +206,11 @@ class Warehouse:
     def setFstEventTime(self, runTime: datetime.datetime = None):
         self.FirstEventTime = runTime
 
-    def assign_random_lpst(self):
-        for obj in self.LotObjList:
-            lotObj: objLot.Lot = obj
-            lotObj.Lpst = self.LotObjList.index(lotObj)
-        self._rebuild_lpst_lot_dict()
+    # def assign_random_lpst(self):
+    #     for obj in self.LotObjList:
+    #         lotObj: objLot.Lot = obj
+    #         lotObj.Lpst = self.LotObjList.index(lotObj)
+    #     self._rebuild_lpst_lot_dict()
 
     # ------------------------------------------------------------------------------------------------------ #
     # Time Constraint

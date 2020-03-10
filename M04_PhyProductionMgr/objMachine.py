@@ -55,12 +55,13 @@ class Machine(object):
         endTime = self.StartTime + duration
         self._set_end_time(end_time=endTime)
 
-    def lot_leave(self):
+    def lot_leave(self, actual_leave_flag: bool = True):
         leaving_lot: objLot.Lot = self.Lot
-        self.Lot = None
-        self._set_start_time()
-        self._set_end_time()
-        self._set_status(status="IDLE")
+        if actual_leave_flag:
+            self.Lot = None
+            self._set_start_time()
+            self._set_end_time()
+            self._set_status(status="IDLE")
         return leaving_lot
 
     def RunMachine(self):
