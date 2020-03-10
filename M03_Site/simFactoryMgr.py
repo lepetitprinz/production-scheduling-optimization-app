@@ -611,6 +611,14 @@ class Factory:
             # 최적화 한 Grade Sequence 별로 lot List 배열
             for grade in gradeSeqOpt:
                 lotSeqOptList.extend(lotByGradeGroupDict[grade])
+
+            # Lot Sequence 순서로 lpst 할당
+            lpst = 1
+            for lot in lotSeqOptList:
+                lotObj:objLot.Lot = lot
+                lotObj.Lpst = lpst
+                lpst += 1
+
         else:
             pass
 
