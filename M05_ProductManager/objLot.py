@@ -40,6 +40,12 @@ class Lot(object):
         self.StartTimeMin: datetime.datetime = None
         self.StartTimeMax: datetime.datetime = None
 
+        # History
+        self.ReactIn: datetime.datetime = None
+        self.ReactOut: datetime.datetime = None
+        self.BaggingIn: datetime.datetime = None
+        self.BaggingOut: datetime.datetime = None
+
         self.Qty: float = 0.0
 
         self.Location: object = loc
@@ -71,6 +77,13 @@ class Lot(object):
 
     def set_location(self, location: str):
         self.Location = location
+
+    def set_attr(self, attr: str, value: object):
+        if not self._does_attr_exist(attr=attr):
+            raise AttributeError(
+                f"{self.__class__.__name__} Object Does not have Attribute called {attr} !"
+            )
+        self.__setattr__(name=attr, value=value)
 
     def _get_last_day_of_month(self, due_date: str):
         date_tmp: datetime.datetime = datetime.datetime.strptime(due_date, '%Y%m')
@@ -125,6 +138,10 @@ class Lot(object):
         if Lot.lot_id_regex.match(id) is not None:
             matches = True
         return matches
+
+    def _does_attr_exist(self, attr: str):
+        does_attr_exists: bool = attr in self.__dict__.keys()
+        return does_attr_exists
 
 def test():
     pass

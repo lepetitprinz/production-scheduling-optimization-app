@@ -47,10 +47,16 @@ class Machine(object):
         else:
             self.hasCalendar = False
 
-    def assign_lot(self, lot: objLot):
+    def assign_lot(self, lot: objLot, start_time: datetime.datetime = None):
         self.Lot = lot
-        self._set_start_time(comUtility.Utility.runtime)
+        if start_time is None:
+            start_time = comUtility.Utility.runtime
+        self._set_start_time(start_time=start_time)
         self.Lot.set_location(location=self)
+        if self.Oper.Kind == "REACTOR":
+            self.Lot.ReactIn = comUtility.Utility.runtime
+        else:
+            self.Lot.BaggingIn = comUtility.Utility.runtime
         duration: datetime.timedelta = self._get_lot_proc_time(lot=lot)
         endTime = self.StartTime + duration
         self._set_end_time(end_time=endTime)
@@ -58,6 +64,10 @@ class Machine(object):
     def lot_leave(self, actual_leave_flag: bool = True):
         leaving_lot: objLot.Lot = self.Lot
         if actual_leave_flag:
+            if self.Oper.Kind == "REACTOR":
+                leaving_lot.ReactOut = comUtility.Utility.runtime
+            else:
+                leaving_lot.BaggingOut = comUtility.Utility.runtime
             self.Lot = None
             self._set_start_time()
             self._set_end_time()
@@ -98,9 +108,26 @@ class Machine(object):
             pass
         else:
             if self.Lot is None:
-                self.Status = "IDLE"
-                self.StartTime = None
-                self.EndTime = None
+                self._set_status("IDLE")
+                self._set_start_time(start_time=None)
+                self._set_end_time(end_time=None)
+
+    def power_off(self):
+        downtime: tuple = self.get_current_downtime()
+        self._set_status(status="DOWN")
+        self._set_start_time(start_time=downtime[0])
+        self._set_end_time(end_time=downtime[1])
+
+    def get_current_downtime(self):
+        downtime: tuple = None
+        for downtime in self._calendar.breakdown_seq:
+            is_between = self._is_between(
+                from_to_tuple=downtime,
+                value=comUtility.Utility.runtime
+            )
+            if is_between:
+                return downtime
+        return downtime
 
     def _is_overlapping_to_break(self, from_to_tuple: tuple,
                                  start_time: datetime.datetime,
@@ -108,14 +135,7 @@ class Machine(object):
         is_overlapping: bool = self._is_between(from_to_tuple, start_time) or \
                                self._is_between(from_to_tuple, end_time) or \
                                self._is_including(from_to_tuple, start=start_time, end=end_time)
-        # if is_overlapping:
-        #     self.StartTime = from_to_tuple[0]
-        #     self.EndTime = from_to_tuple[1]
-        #     self.Status = "DOWN"
-        # else:
-        #     self.StartTime = None
-        #     self.EndTime = None
-        #     self.Status = "IDLE"
+
         return is_overlapping
 
     def _is_including(self, from_to_tuple: tuple, start: datetime, end: datetime):

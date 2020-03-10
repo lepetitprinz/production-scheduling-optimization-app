@@ -66,8 +66,9 @@ class Warehouse:
             self.shipping()
 
         else:
+
             # 선택한 Lot에 대해 할당 가능한 Operation - Machine을 찾는 처리
-            to_oper, available_machines = self._findAvailableOper(lot=lotObj)
+            to_oper, available_machines = self._findAvailableNextOper(lot=lotObj)
             if len(available_machines) > 0:
                 self.lot_leave(to_loc=to_oper, lot=lotObj)
                 self.setFstEventTime()
@@ -99,6 +100,8 @@ class Warehouse:
         current_time: datetime.datetime = Utility.DayStartDate
 
         print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {(lot.Id, lot.Lpst, lot.ReactDuration, lot.PackDuration)}")
+
+
 
         to_loc.lotArrive(lot)
         self._removeLot(lot=lot)
@@ -138,7 +141,7 @@ class Warehouse:
         else:
             self.CurCapa += lotObj.Qty
 
-    def _findAvailableOper(self, lot: objLot):
+    def _findAvailableNextOper(self, lot: objLot):
         # rsltOper: simOperMgr.Operation = None
         # rsltMachines: list = []
 
@@ -164,7 +167,7 @@ class Warehouse:
 
     def _removeLot(self, lot: objLot, shipping_flag: bool = False):
         try:
-            self.BeforeLotList = self.LotObjList
+            self.BeforeLotList = self.LotObjList.copy()
             self.LotObjList.remove(lot)
             if shipping_flag:
                 self._factory._remove_lot(lot=lot)
