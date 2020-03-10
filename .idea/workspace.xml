@@ -4,13 +4,6 @@
     <list default="true" id="0bb223df-5121-46b6-809a-0a698978ca23" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/production_schedule.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/production_schedule.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/M03_Site/simFactoryMgr.py" beforeDir="false" afterPath="$PROJECT_DIR$/M03_Site/simFactoryMgr.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/M03_Site/simOperMgr.py" beforeDir="false" afterPath="$PROJECT_DIR$/M03_Site/simOperMgr.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/M04_PhyProductionMgr/objMachine.py" beforeDir="false" afterPath="$PROJECT_DIR$/M04_PhyProductionMgr/objMachine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/M04_PhyProductionMgr/objWarehouse.py" beforeDir="false" afterPath="$PROJECT_DIR$/M04_PhyProductionMgr/objWarehouse.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scop_input.txt" beforeDir="false" afterPath="$PROJECT_DIR$/scop_input.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scop_out.txt" beforeDir="false" afterPath="$PROJECT_DIR$/scop_out.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
