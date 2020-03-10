@@ -9,7 +9,6 @@ from M03_Site import simFactoryMgr, simOperMgr
 from M05_ProductManager import objLot
 from M06_Utility.comUtility import Utility
 
-
 class Warehouse:
     def __init__(self, factory: simFactoryMgr, whId: str, kind: str):
         self._factory: simFactoryMgr = factory
@@ -232,7 +231,7 @@ class Warehouse:
         return lotSeqOptList
 
     def _getPackSizeSeqOptList(self, lotObjList:list):
-        pass
+        return lotObjList
 
     def _getGradeSeqList(self, lotList:list):
         gradeSeqList = []
@@ -252,11 +251,8 @@ class Warehouse:
 
         for lot in lotList:
             lotObj:objLot.Lot = lot
-            if len(lotGradeList) == 0:
+            if lotObj.Grade not in lotGradeList:
                 lotGradeList.append(lotObj.Grade)
-            else:
-                if lotGradeList[-1] != lotObj.Grade:
-                    lotGradeList.append(lotObj.Grade)
 
         return lotGradeList
 
@@ -370,7 +366,7 @@ class Warehouse:
 
     def setFstEventTime(self, runTime: datetime.datetime = None, init_flag: bool = False):
         if not init_flag:
-            runTime = comUtility.Utility.runtime
+            runTime = Utility.runtime
         self.FirstEventTime = runTime
 
     # def assign_random_lpst(self):

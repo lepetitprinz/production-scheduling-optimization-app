@@ -97,8 +97,8 @@ class Factory:
         rmWhLotList: list = rmWh.LotObjList
 
         # Grade Sequence Optimization using SCOP algorithm
-        rmWh.truncate_lot_list()   # 기존 RM Warehouse에 있는 Lot List 삭제
         lotSeqOptList = rmWh.SeqOptByScop(lotObjList=rmWhLotList, dueUom='nan')
+        rmWh.truncate_lot_list()   # 기존 RM Warehouse에 있는 Lot List 삭제
 
         # RM warehouse에 최적화 한 lot Sequence 등록
         for obj in lotSeqOptList:

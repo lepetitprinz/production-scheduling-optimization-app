@@ -107,7 +107,7 @@ class Operation(object):
                     print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() >> {(lotObj.Id, lotObj.Lpst, lotObj.ReactDuration, lotObj.PackDuration)}")
                     assignWh.lotArrive(from_loc=macObj, lot=lotObj)
                     self.inform_to_previous(runTime=macObj.EndTime)
-                    macObj.lot_leave()
+                    macObj.lotLeave()
                 else:
                     print("{} Lot 할당 가능한 Warehouse가 현재 없음".format(lotObj.Id))
 

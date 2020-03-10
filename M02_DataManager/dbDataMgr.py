@@ -33,9 +33,9 @@ class DataManager:
         elif self._source == "file":
             self._setup_file_connection()
 
-        self.df_demand = self._conMgr.loadData(data_name="demand")
-        self.dfProdWheel = self._conMgr.loadData(data_name="prod_wheel")
-        self.df_prod_yield = self._conMgr.loadData(data_name="prod_yield")
+        self.df_demand = self._conMgr.load_data(data_name="demand")
+        self.dfProdWheel = self._conMgr.load_data(data_name="prod_wheel")
+        self.df_prod_yield = self._conMgr.load_data(data_name="prod_yield")
 
         self._preprocessing()
         self._build_dict_prod_yield()
