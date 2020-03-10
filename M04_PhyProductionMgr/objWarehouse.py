@@ -64,7 +64,7 @@ class Warehouse:
             self.shipping()
 
         else:
-            to_oper, available_machines = self._findAvailableOper(lot=lotObj)
+            to_oper, available_machines = self._findAvailableNextOper(lot=lotObj)
             if len(available_machines) > 0:
                 self.lot_leave(to_loc=to_oper, lot=lotObj)
                 self.setFstEventTime()
@@ -134,7 +134,7 @@ class Warehouse:
         else:
             self.CurCapa += lotObj.Qty
 
-    def _findAvailableOper(self, lot: objLot):
+    def _findAvailableNextOper(self, lot: objLot):
         # rsltOper: simOperMgr.Operation = None
         # rsltMachines: list = []
 
@@ -159,7 +159,7 @@ class Warehouse:
 
     def _removeLot(self, lot: objLot, shipping_flag: bool = False):
         try:
-            self.BeforeLotList = self.LotObjList
+            self.BeforeLotList = self.LotObjList.copy()
             self.LotObjList.remove(lot)
             if shipping_flag:
                 self._factory._remove_lot(lot=lot)

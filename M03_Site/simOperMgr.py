@@ -48,6 +48,7 @@ class Operation(object):
         # to_loc: object
         self._updateLotList()
         if len(self._lotObjList) == 0:
+            breaktime_machines, break_end_time = self.ChkMacInBreak()
             self.resume_down_machines()
         else:
             self.lotLeave()
@@ -106,13 +107,13 @@ class Operation(object):
 
         return True
 
-    def ChkMacInBreak(self, lot: objLot.Lot):
+    def ChkMacInBreak(self):
         breaktime_machines: list = []
         break_end_times: list = []
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
-            is_breakdown, break_end = macObj.chk_breakdown(lot=lot)
-            if is_breakdown:
+            # is_breakdown, break_end = macObj.chk_breakdown(lot=lot)
+            if macObj.Status is "DOWN":
                 breaktime_machines.append(macObj)
                 break_end_times.append(break_end)
         break_end_time = min(break_end_times)
@@ -197,17 +198,62 @@ class Operation(object):
         self.FirstEventTime = runTime
 
     def ResetFstEventTime(self):
-        macEndTimes: list = [mac.EndTime for mac in self.MacObjList]
-        if sum([endTime is None for endTime in macEndTimes]) == len(macEndTimes):
-            self.SetFstEventTime()
-        else:
-            macEndTimes = [endTime for endTime in macEndTimes if endTime is not None]
-            self.SetFstEventTime(min(macEndTimes))
+        macEndTimes: list = []
+        newFstEventTime: datetime.datetime = None
+        for obj in self.MacObjList:
+            macObj: objMachine.Machine = obj
+            if macObj.EndTime is not None:
+                macEndTimes.append(macObj.EndTime)
+            elif macObj.hasCalendar:
+                macEndTimes.append(macObj.get_break_end_time())
+        if len(macEndTimes) > 0:
+            newFstEventTime = min(macEndTimes)
+        return newFstEventTime
+        # macEndTimes: list = [
+        #     mac.EndTime
+        #     for mac in self.MacObjList
+        # ]
+        # macEndTimes = [endTime if endTime is not None else
+        #                self.get_earliest_down_end()
+        #                for endTime in macEndTimes]
+        self.SetFstEventTime(min(macEndTimes))
+        # if sum([endTime is None for endTime in macEndTimes]) == len(macEndTimes):
+        #     self.SetFstEventTime()
+        # else:
+        #     # next_downtime_end: datetime.datetime = \
+        #     #     comUtility.Utility.runtime + datetime.timedelta(days=0)
+        #     macEndTimes = [endTime if endTime is not None else
+        #                    self._get_earliest_down_end()
+        #                    for endTime in macEndTimes]
+        #     self.SetFstEventTime(min(macEndTimes))
+
+    def get_earliest_down_end(self):
+        down_ends: list = []
+        earliest_down_end: datetime.datetime = None
+        for obj in self.MacObjList:
+            macObj: objMachine.Machine = obj
+            if macObj.hasCalendar:
+                macDown: tuple = macObj.get_current_downtime()
+                macDownEnd: datetime.datetime = macDown[1]
+                down_ends.append(macDownEnd)
+        if len(down_ends) > 0:
+            earliest_down_end = min(down_ends)
+        return earliest_down_end
+
+    def _has_down_time(self):
+        has_down_time: bool = False
+        for obj in self.MacObjList:
+            macObj: objMachine.Machine = obj
+            if macObj.hasCalendar:
+                has_down_time = True
+                return has_down_time
+        return has_down_time
 
     def _getAvailableMac(self, lot: objLot.Lot):
         availableMacs: list = []
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
+            availableMacsDbg: list = []
             if macObj.Status == "IDLE":
                 if macObj.hasCalendar:
                     is_breakdown, break_end = macObj.chk_breakdown(lot=lot)
