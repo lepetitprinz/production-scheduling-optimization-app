@@ -60,7 +60,7 @@ class Warehouse:
         # lotObj: objLot.Lot = self._get_least_lpst_lot()
         lotObj: objLot.Lot = self._pick_lot()
         if self.ToLoc == "Sales":
-            self.shipping(lot=lotObj)
+            self.shipping()
         else:
             to_oper, available_machines = self._findAvailableOper(lot=lotObj)
             if len(available_machines) > 0:
@@ -75,14 +75,18 @@ class Warehouse:
                 # to_oper.set_first_event_time()
                 # self.set_first_event_time(break_end_time)
 
-    def shipping(self, lot: objLot):
+    def _shipping(self, lot: objLot):
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
-        self._remove_lot(lot=lot, shipping_flag=True)
+        self._removeLot(lot=lot, shipping_flag=True)
         self._updateCurrCapa(lot=lot, in_flag=False)
         # self._rebuild_lpst_lot_dict()
         self.setFstEventTime()
 
         print(f"\t\t{self.__class__.__name__}({self.Id}).shipping() >> {lot}")
+
+    def shipping(self):
+        for lot in self.LotObjList:
+            self._shipping(lot=lot)
 
     def lot_leave(self, to_loc: simOperMgr, lot: objLot):
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
@@ -90,8 +94,8 @@ class Warehouse:
 
         print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {(lot.Id, lot.Lpst, lot.ReactDuration, lot.PackDuration)}")
 
-        to_loc.lot_arrive(lot)
-        self._remove_lot(lot=lot)
+        to_loc.lotArrive(lot)
+        self._removeLot(lot=lot)
         self._updateCurrCapa(lot=lot, in_flag=False)
         # self._rebuild_lpst_lot_dict()
         self.setFstEventTime()
@@ -147,7 +151,6 @@ class Warehouse:
         #             rsltOper = operObj
         #             rsltMachines = available_machines
 
-
     def truncate_lot_list(self):
         self.LotObjList.clear()
         self._factory._lot_obj_list.clear()
@@ -157,7 +160,7 @@ class Warehouse:
             self.BeforeLotList = self.LotObjList
             self.LotObjList.remove(lot)
             if shipping_flag:
-                self._factory._removeLot(lot=lot)
+                self._factory._remove_lot(lot=lot)
         except ValueError as e:
             raise e
 

@@ -5,7 +5,6 @@
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/production_schedule.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/production_schedule.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/M03_Site/simOperMgr.py" beforeDir="false" afterPath="$PROJECT_DIR$/M03_Site/simOperMgr.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/M04_PhyProductionMgr/objMachine.py" beforeDir="false" afterPath="$PROJECT_DIR$/M04_PhyProductionMgr/objMachine.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/M04_PhyProductionMgr/objWarehouse.py" beforeDir="false" afterPath="$PROJECT_DIR$/M04_PhyProductionMgr/objWarehouse.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/scop_input.txt" beforeDir="false" afterPath="$PROJECT_DIR$/scop_input.txt" afterDir="false" />
@@ -133,50 +132,50 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="63" y="74" key="#Notifications/0.0.1536.824@0.0.1536.824" timestamp="1583494037997" />
-    <state x="380" y="344" width="488" height="301" key="#xdebugger.evaluate" timestamp="1583800437251">
+    <state x="5" y="65" width="581" height="513" key="#xdebugger.evaluate" timestamp="1583806374429">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="380" y="344" width="488" height="301" key="#xdebugger.evaluate/0.0.1536.824@0.0.1536.824" timestamp="1583800437251" />
+    <state x="5" y="65" width="581" height="513" key="#xdebugger.evaluate/0.0.1536.824@0.0.1536.824" timestamp="1583806374429" />
     <state x="56" y="0" key="CommitChangelistDialog2" timestamp="1583494003838">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="56" y="0" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1583494003838" />
-    <state width="1534" height="440" key="DebuggerActiveHint" timestamp="1583801192129">
+    <state width="1534" height="440" key="DebuggerActiveHint" timestamp="1583806418664">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1534" height="440" key="DebuggerActiveHint/0.0.1536.824@0.0.1536.824" timestamp="1583801192129" />
-    <state width="604" height="768" key="GridCell.Tab.0.bottom" timestamp="1583802535255">
+    <state width="1534" height="440" key="DebuggerActiveHint/0.0.1536.824@0.0.1536.824" timestamp="1583806418664" />
+    <state width="604" height="768" key="GridCell.Tab.0.bottom" timestamp="1583806388394">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="604" height="768" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1583802535255" />
-    <state width="604" height="768" key="GridCell.Tab.0.center" timestamp="1583802535255">
+    <state width="604" height="768" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1583806388394" />
+    <state width="604" height="768" key="GridCell.Tab.0.center" timestamp="1583806388393">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="604" height="768" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1583802535255" />
-    <state width="604" height="768" key="GridCell.Tab.0.left" timestamp="1583802535255">
+    <state width="604" height="768" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1583806388393" />
+    <state width="604" height="768" key="GridCell.Tab.0.left" timestamp="1583806388393">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="604" height="768" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1583802535255" />
-    <state width="604" height="768" key="GridCell.Tab.0.right" timestamp="1583802535255">
+    <state width="604" height="768" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1583806388393" />
+    <state width="604" height="768" key="GridCell.Tab.0.right" timestamp="1583806388394">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="604" height="768" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1583802535255" />
-    <state width="604" height="768" key="GridCell.Tab.1.bottom" timestamp="1583802533798">
+    <state width="604" height="768" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1583806388394" />
+    <state width="604" height="768" key="GridCell.Tab.1.bottom" timestamp="1583806379360">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="604" height="768" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1583802533798" />
-    <state width="604" height="768" key="GridCell.Tab.1.center" timestamp="1583802533798">
+    <state width="604" height="768" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1583806379360" />
+    <state width="604" height="768" key="GridCell.Tab.1.center" timestamp="1583806379360">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="604" height="768" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1583802533798" />
-    <state width="604" height="768" key="GridCell.Tab.1.left" timestamp="1583802533798">
+    <state width="604" height="768" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1583806379360" />
+    <state width="604" height="768" key="GridCell.Tab.1.left" timestamp="1583806379359">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="604" height="768" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1583802533798" />
-    <state width="604" height="768" key="GridCell.Tab.1.right" timestamp="1583802533798">
+    <state width="604" height="768" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1583806379359" />
+    <state width="604" height="768" key="GridCell.Tab.1.right" timestamp="1583806379360">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="604" height="768" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1583802533798" />
+    <state width="604" height="768" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1583806379360" />
     <state x="2381" y="162" key="SettingsEditor" timestamp="1583713306160">
       <screen x="1920" y="0" width="1920" height="1040" />
     </state>
@@ -190,10 +189,10 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="476" height="415" key="XDebugger.FullValuePopup/0.0.1536.824@0.0.1536.824" timestamp="1583800379181" />
-    <state x="94" y="100" width="744" height="630" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1583801859636">
+    <state x="94" y="100" width="744" height="630" maximized="true" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1583802914606">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="94" y="100" width="744" height="630" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.0.1536.824@0.0.1536.824" timestamp="1583801859636" />
+    <state x="94" y="100" width="744" height="630" maximized="true" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.0.1536.824@0.0.1536.824" timestamp="1583802914606" />
     <state x="273" y="333" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1583493974126">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -229,12 +228,30 @@
           <line>7</line>
           <option name="timeStamp" value="8" />
         </line-breakpoint>
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <condition expression="self.Id == &quot;BAGGING&quot;" language="Python" />
+          <url>file://$PROJECT_DIR$/M03_Site/simOperMgr.py</url>
+          <line>48</line>
+          <option name="timeStamp" value="65" />
+        </line-breakpoint>
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <condition expression="self.Id == &quot;SILO01&quot;" language="Python" />
+          <url>file://$PROJECT_DIR$/M04_PhyProductionMgr/objWarehouse.py</url>
+          <line>142</line>
+          <option name="timeStamp" value="67" />
+        </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/M03_Site/simFactoryMgr.py</url>
-          <line>197</line>
-          <option name="timeStamp" value="63" />
+          <condition expression="self.Id == &quot;SILO10&quot;" language="Python" />
+          <url>file://$PROJECT_DIR$/M04_PhyProductionMgr/objWarehouse.py</url>
+          <line>60</line>
+          <option name="timeStamp" value="70" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
+    <watches-manager>
+      <configuration name="PythonConfigurationType">
+        <watch expression="comUtility.Utility.runtime" language="Python" />
+      </configuration>
+    </watches-manager>
   </component>
 </project>

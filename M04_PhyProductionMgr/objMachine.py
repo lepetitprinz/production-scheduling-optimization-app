@@ -106,16 +106,21 @@ class Machine(object):
                                  start_time: datetime.datetime,
                                  end_time: datetime.datetime):
         is_overlapping: bool = self._is_between(from_to_tuple, start_time) or \
-                               self._is_between(from_to_tuple, end_time)
-        if is_overlapping:
-            self.StartTime = from_to_tuple[0]
-            self.EndTime = from_to_tuple[1]
-            self.Status = "DOWN"
+                               self._is_between(from_to_tuple, end_time) or \
+                               self._is_including(from_to_tuple, start=start_time, end=end_time)
+        # if is_overlapping:
+        #     self.StartTime = from_to_tuple[0]
+        #     self.EndTime = from_to_tuple[1]
+        #     self.Status = "DOWN"
         # else:
         #     self.StartTime = None
         #     self.EndTime = None
         #     self.Status = "IDLE"
         return is_overlapping
+
+    def _is_including(self, from_to_tuple: tuple, start: datetime, end: datetime):
+        is_including: bool = start <= from_to_tuple[0] and from_to_tuple[1] <= end
+        return is_including
 
     def _is_between(self, from_to_tuple: tuple, value: datetime):
         is_between: bool = from_to_tuple[0] < value < from_to_tuple[1]
