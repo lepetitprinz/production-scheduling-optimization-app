@@ -56,14 +56,14 @@ class Warehouse:
         self.ToLoc = to_loc
 
     def SyncRunningTime(self):
-        # to_loc: object =
+        lotObj: objLot.Lot = self._pickAvailableLot()
 
-        # lotObj: objLot.Lot = self._get_least_lpst_lot()
-        lotObj: objLot.Lot = self._pick_lot()
+        # 최종 생산완료 된 경우 출하 처리
         if self.ToLoc == "Sales":
             self.shipping()
 
         else:
+            # 선택한 Lot에 대해 할당 가능한 Operation - Machine을 찾는 처리
             to_oper, available_machines = self._findAvailableOper(lot=lotObj)
             if len(available_machines) > 0:
                 self.lot_leave(to_loc=to_oper, lot=lotObj)
@@ -79,6 +79,7 @@ class Warehouse:
 
     def _shipping(self, lot: objLot):
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
+
         self._removeLot(lot=lot, shipping_flag=True)
         self._updateCurrCapa(lot=lot, in_flag=False)
         # self._rebuild_lpst_lot_dict()
@@ -121,7 +122,8 @@ class Warehouse:
     def resetCurCapa(self):
         self.CurCapa = int(self.Capacity)
 
-    def _pick_lot(self, rule: str = "FIRST"):
+
+    def _pickAvailableLot(self, rule: str = "FIRST"):
         if rule == "FIRST":
             first_lot: objLot.Lot = self.LotObjList[0]
             return first_lot
@@ -138,12 +140,13 @@ class Warehouse:
         # rsltOper: simOperMgr.Operation = None
         # rsltMachines: list = []
 
-        rsltOperList: list = \
+        targetOperList: list = \
             [oper for oper in self._factory.OperList if oper.Kind == self.ToLoc]
-        rsltOper: simOperMgr.Operation = rsltOperList[0]
+        targetOper: simOperMgr.Operation = targetOperList[0]    # targetOper : reactor / bagging
 
-        is_oper_assignable, available_machines = rsltOper.GetAssignableFlag(lot=lot)
-        return rsltOper, available_machines
+        # Target으로 하는 공정에 대해애서 가능한 machine들을 찾는 처리
+        is_oper_assignable, available_machines = targetOper.GetAssignableFlag(lot=lot)
+        return targetOper, available_machines
 
         # if self.Id == "RM":
         #     for obj in self._factory.OperList:

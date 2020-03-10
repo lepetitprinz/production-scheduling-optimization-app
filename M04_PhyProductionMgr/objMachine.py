@@ -10,7 +10,7 @@ from M06_Utility import comUtility, comCalMgr
 class Machine(object):
     def __init__(self, factory: simFactoryMgr, operation: simOperMgr, mac_id: str):
         self._factory: simFactoryMgr = factory
-        self._oper: simOperMgr.Operation = operation
+        self.Oper: simOperMgr.Operation = operation
         self._calendar: comCalMgr.CalendarManager = None
         self.Id: str = mac_id
 
@@ -68,7 +68,7 @@ class Machine(object):
         if self.Lot is not None:
             self._set_status("PROC")
 
-    def chk_breakdown(self, lot: objLot.Lot):
+    def chkMacAvailable(self, lot: objLot.Lot):
         is_break: bool = False
         duration: datetime.timedelta = self._get_lot_proc_time(lot=lot)
         lot_start_time: datetime.datetime = comUtility.Utility.runtime
@@ -137,7 +137,7 @@ class Machine(object):
 
     def _get_lot_proc_time(self, lot: objLot):
         duration: datetime.timedelta = \
-            lot.ReactDuration if self._oper.Kind == "REACTOR" else \
+            lot.ReactDuration if self.Oper.Kind == "REACTOR" else \
             lot.PackDuration
         return duration
 

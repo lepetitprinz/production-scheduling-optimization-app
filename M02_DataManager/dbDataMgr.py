@@ -2,6 +2,7 @@
 
 import datetime
 import pandas as pd
+import time
 
 from M02_DataManager import dbConMgr, fileConMgr
 from M06_Utility import comUtility
@@ -41,6 +42,10 @@ class DataManager:
         # comUtility.Utility.SetRootPath(rootPath=self._conMgr.RootPath)
         # comUtility.Utility.SetConfPath(confPath=self._conMgr.conf_path)
 
+    def CloseDataMgr(self):
+        self._conMgr.CloseConnection()
+        self.__init__()
+
     def build_demand_max_days_by_month(self):
         yyyy_mm_list: list = []
         for _, row in self.df_demand.iterrows():
@@ -77,7 +82,6 @@ class DataManager:
                     )
 
     def _preprocessing(self):
-
         # Changing dtypes
         self._change_column_dtype(df_name="df_demand", col_name="yyyymm", dtype="str")
         self._change_column_dtype(df_name="df_demand", col_name="qty", dtype="float")
@@ -117,3 +121,77 @@ class DataManager:
     def _chk_exists(self, attr: str):
         existence: bool = attr in self.__dict__.keys()
         return existence
+
+    # ============================================================================================================== #
+    # Data -> DB Upload 모듈
+    # ============================================================================================================== #
+    def UpdateSchedHourRslt(self, schedHourRsltArr: list):
+        '''
+        Send Production Schedule Hourly Result Array to DB.
+        '''
+        strTemplate: str = """ insert into TB_FS_QTY_HH_DATA(
+                                    FS_VRSN_ID, PLANT_NAME, LINE_NAME, PLAN_CODE, SALE_MAN, PRODUCT, CUSTOMER, 
+                                    LOT_NO, DATE_FROM, DATE_TO, DATE_FROM_TEXT, DATE_TO_TEXT, COLOR, DURATION, DELETE_KEY
+                               )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15) """
+
+        totLen = len(schedHourRsltArr)
+        flag = False
+        errCnt = 0
+        sqlDel = ""
+        errCode = 0
+        while flag == False:
+            flag, errCode = self._conMgr.BatchQuery(sqlTemplate=strTemplate, dataArr=schedHourRsltArr, sqlDel=sqlDel)
+            if flag == True:
+                if errCnt > 0:
+                    print("success - [재전송]")
+                else:
+                    print("success")
+                errCnt = 0
+                break
+            else:
+                errCnt += 1
+                print("fail")
+                # self._sendDataErrorProc(errCnt=errCnt, fnName="UpdateUnpegStatus")
+
+        return flag, errCode
+
+    def UpdateSchedDailyRslt(self, schedDailyRsltArr: list):
+        '''
+        Send Production Schedule Daily Result Array to DB.
+        '''
+        strTemplate: str = """ insert into TB_FS_QTY_DD_DATA(
+                                    FS_VRSN_ID, PLANT_NAME, LINE_NAME, MATRL_CD, MATRL_DESCR, PROD_DATE, DAILY_QTY, 
+                                    DAILY_DURATION, DEMAND_TYPE, DELETE_KEY)
+                               )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10)"""
+
+        totLen = len(schedDailyRsltArr)
+        flag = False
+        errCnt = 0
+        sqlDel = ""
+        errCode = 0
+        while flag == False:
+            flag, errCode = self._conMgr.BatchQuery(sqlTemplate=strTemplate, dataArr=schedDailyRsltArr, sqlDel=sqlDel)
+            if flag == True:
+                if errCnt > 0:
+                    print("success - [재전송]")
+                else:
+                    print("success")
+                errCnt = 0
+                break
+            else:
+                errCnt += 1
+                print("fail")
+                # self._sendDataErrorProc(errCnt=errCnt, fnName="UpdateUnpegStatus")
+
+        return flag, errCode
+
+    def _sendDataErrorProc(self, errCnt:int, fnName:str):
+        if errCnt < 11:
+            time.sleep(1)
+        elif errCnt < 21:
+            time.sleep(2)
+        elif errCnt < 31:
+            time.sleep(4)
+        else:
+            self.CloseDataMgr()
+            assert errCnt < 31, "[DataManager.{}] Send Machine history to DB failed. stop program.".format(fnName)

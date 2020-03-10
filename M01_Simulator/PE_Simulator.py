@@ -64,6 +64,9 @@ class Simulator:
 
         # Factory 가동 시작
         facObj.run_factory()
+        
+        # Factory 가동 종료 후 Scheduling 결과 저장 처리
+
 
     def _run_multi_factory(self):
         pass

@@ -12,7 +12,7 @@ class Operation(object):
     def __init__(self, factory: simFactoryMgr, oper_id: str, kind: str):
         # self._facUtil: facUtility.FacUtility = None  #
         self.Id: str = oper_id
-        self.Kind: str = kind
+        self.Kind: str = kind   # reactor / bagging
         self._factory: simFactoryMgr.Factory = factory
 
         self.FromLocs: list = []
@@ -90,7 +90,8 @@ class Operation(object):
                     assignWh.lotArrive(from_loc=macObj, lot=lotObj)
                     macObj.lot_leave()
                 else:
-                    print("할당 가능한 Warehouse가 현재 없음")
+                    print("{} Lot 할당 가능한 Warehouse가 현재 없음".format(lotObj.Id))
+
 
     def lotArrive(self, lot: objLot.Lot):
         is_assignable, machines = self.GetAssignableFlag(lot=lot)
@@ -111,7 +112,7 @@ class Operation(object):
         break_end_times: list = []
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
-            is_breakdown, break_end = macObj.chk_breakdown(lot=lot)
+            is_breakdown, break_end = macObj.chkMacAvailable(lot=lot)
             if is_breakdown:
                 breaktime_machines.append(macObj)
                 break_end_times.append(break_end)
@@ -204,23 +205,42 @@ class Operation(object):
             macEndTimes = [endTime for endTime in macEndTimes if endTime is not None]
             self.SetFstEventTime(min(macEndTimes))
 
+    # ==============================================================================================#
+    # 시간제약 반영
+    # ==============================================================================================#
+    def GetAssignableFlag(self, lot: objLot.Lot):
+        availableMacList: list = self._getAvailableMac(lot=lot)
+        return len(availableMacList) > 0, availableMacList
+
+    # 공정에서 할당 가능한 machine을 찾는 처리
     def _getAvailableMac(self, lot: objLot.Lot):
         availableMacs: list = []
+
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
-            if macObj.Status == "IDLE":
-                if macObj.hasCalendar:
-                    is_breakdown, break_end = macObj.chk_breakdown(lot=lot)
-                    if not is_breakdown:
+            ## Reactor와 Bagging 공정을 구분하여 판단
+            # Reactor의 경우 단일 machine이므로 machine의 상태만 판단
+            if macObj.Oper.Kind == "REACTOR":
+                if macObj.Status == "IDLE":     # Machine이 IDLE 상태일때 이용가능
+                    if macObj.hasCalendar:      # Machine의 가용계획 check
+                        isUnavailable, _ = macObj.chkMacAvailable(lot=lot)
+                        if not isUnavailable:
+                            availableMacs.append(macObj)
+                    else:
                         availableMacs.append(macObj)
-                else:
-                    availableMacs.append(macObj)
+
+            # Bagging 공정의 경우 machine의 상태만 판단
+            elif macObj.Oper.Kind == "BAGGING":
+                if macObj.Status == "IDLE":     # Machine이 IDLE 상태일때 이용가능
+                    if macObj.hasCalendar:      # Machine의 가용계획 check
+                        isUnavailable, _ = macObj.chkMacAvailable(lot=lot)
+                        if (not isUnavailable) & (macObj.PackKind == lot.PackType):
+                            availableMacs.append(macObj)
+                    else:
+                        if macObj.PackKind == lot.PackType:
+                            availableMacs.append(macObj)
 
         return availableMacs
-
-    def GetAssignableFlag(self, lot: objLot.Lot):
-        availableMacs: list = self._getAvailableMac(lot=lot)
-        return len(availableMacs) > 0, availableMacs
 
     # def _find_available_to_wh_list(self, lot: objLot):
     #     rsltWhs: list = []
