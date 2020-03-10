@@ -85,13 +85,21 @@ class Lot(object):
             )
         self.__setattr__(name=attr, value=value)
 
+    def reduce_duration(self, by: float):
+        self.PackDuration, self.PackDurationFloat = self._get_pack_duration(grade=self.Id, by=by)
+        self.ReactDuration, self.ReactDurationFloat = self._get_react_duration(grade=self.Grade, by=by)
+        self.Duration = math.ceil(self.PackDurationFloat + self.ReactDurationFloat)
+
+        self.StartTimeMax = self.DueDate - datetime.timedelta(hours=self.Duration)
+        self.StartTimeMin = self.DueDate.replace(day=1, hour=8, minute=0, second=0)
+
     def _get_last_day_of_month(self, due_date: str):
         date_tmp: datetime.datetime = datetime.datetime.strptime(due_date, '%Y%m')
         last_day, month_len = calendar.monthrange(year=date_tmp.year, month=date_tmp.month)
         date_tmp = date_tmp.replace(day=month_len, hour=23, minute=59, second=59)
         return date_tmp
 
-    def _get_pack_duration(self, grade: str):
+    def _get_pack_duration(self, grade: str, by: float=1.0):
         dataMgr: dbDataMgr.DataManager = comUtility.Utility.get_data_manager()
         dict_prod_yield: dict = dataMgr._get_dict_prod_yield()
         dict_prod_yield: dict = dict_prod_yield['package']
@@ -103,12 +111,11 @@ class Lot(object):
             tmp_rslt: float = self.Qty/dict_prod_yield[grade_adj]
         else:
             tmp_rslt: float = self.Qty/dict_prod_yield[grade]
-        rslt = datetime.timedelta(hours=tmp_rslt, microseconds=0)
+        rslt = datetime.timedelta(hours=tmp_rslt/by, microseconds=0)
         rslt_chp = comUtility.Utility.chop_microsecond(rslt)
         return rslt_chp, tmp_rslt
 
-    def _get_react_duration(self, grade: str):
-
+    def _get_react_duration(self, grade: str, by: float=1.0):
         dataMgr: dbDataMgr.DataManager = comUtility.Utility.get_data_manager()
         dict_prod_yield: dict = dataMgr._get_dict_prod_yield()
         dict_prod_yield: dict = dict_prod_yield['reactor']
@@ -116,7 +123,7 @@ class Lot(object):
         if grade not in dict_prod_yield.keys():
             raise Exception("")
         tmp_rslt: float = self.Qty/dict_prod_yield[grade]
-        rslt = datetime.timedelta(hours=tmp_rslt, microseconds=0)
+        rslt = datetime.timedelta(hours=tmp_rslt/by, microseconds=0)
         rslt_chp = comUtility.Utility.chop_microsecond(rslt)
         return rslt_chp, tmp_rslt
 

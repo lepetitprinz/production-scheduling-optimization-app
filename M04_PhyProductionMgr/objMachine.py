@@ -56,14 +56,21 @@ class Machine(object):
             # Lot을 할당하고 이전의 Lot의 Grade를 갱신하기 전에 grade change cost를 산출
             bfLotGrade = self.BfLotGrade
             currLotGrade = lot.Grade
-            gradeChangeCost = comUtility.Utility.ProdWheelHour[(bfLotGrade, currLotGrade)]
-            self.BfLotGrade = lot.Grade     # Grade Chnage Cost 계산 후 update
+            if bfLotGrade != None:
+                gradeChangeCost = comUtility.Utility.ProdWheelHour[(bfLotGrade, currLotGrade)]
+                self.BfLotGrade = lot.Grade     # Grade Chnage Cost 계산 후 update
 
-            runTime = comUtility.Utility.runtime
-            startTime = runTime + timedelta(hours=gradeChangeCost)
-            self._setStartTime(startTime=startTime)
-            self.Lot.ReactIn = self.StartTime
-            self.Lot.set_location(location=self)
+                runTime = comUtility.Utility.runtime
+                startTime = runTime + timedelta(hours=gradeChangeCost)
+                self._setStartTime(startTime=startTime)
+                self.Lot.ReactIn = self.StartTime
+                self.Lot.set_location(location=self)
+
+            else:
+                runTime = comUtility.Utility.runtime
+                self._setStartTime(startTime=runTime)
+                self.Lot.ReactIn = self.StartTime
+                self.Lot.set_location(location=self)
 
         # Bagging의 machine의 경우 Grade Change Cost가 없음
         elif self.Oper.Kind == "BAGGING":

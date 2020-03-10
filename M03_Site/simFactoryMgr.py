@@ -98,10 +98,13 @@ class Factory:
 
         # Grade Sequence Optimization using SCOP algorithm
         lotSeqOptList = rmWh.SeqOptByScop(lotObjList=rmWhLotList, dueUom='nan')
+        rmWh.truncate_lot_list()   # 기존 RM Warehouse에 있는 Lot List 삭제
 
         # RM warehouse에 최적화 한 lot Sequence 등록
         for obj in lotSeqOptList:
             lotObj: objLot.Lot = obj
+            # for Debugging
+            # lotObj.reduce_duration(by=10)
             rmWh._registerLotObj(lotObj=lotObj)
 
         # # Grade Sequence Optimization using SCOP algorithm
@@ -111,18 +114,20 @@ class Factory:
         # lotSeqOptList = self.GetLotSeqOptList(gradeSeqOpt=gradeSeqOpt, dmdLotList=rmWhLotList, dueUom="nan")
         # rmWh.truncate_lot_list()   # 기존 RM Warehouse에 있는 Lot List 삭제
 
-
     def _buildFactory(self, silo_qty: float, nof_silo: int = 1):
         reactor: simOperMgr.Operation = self._register_new_oper(oper_id="REACTOR", kind="REACTOR", return_flag=True)
         self._register_new_machine(mac_id="M1", oper=reactor, uom="")
 
         bagging: simOperMgr.Operation = self._register_new_oper(oper_id="BAGGING", kind="BAGGING", return_flag=True)
-        self._register_new_machine(mac_id="P2", oper=bagging, uom="25 KG", need_calendar=True,
-                                   work_start_hour=8, work_end_hour=20)
-        self._register_new_machine(mac_id="P7", oper=bagging, uom="750 KG", need_calendar=True,
-                                   work_start_hour=8, work_end_hour=20)
-        self._register_new_machine(mac_id="P9", oper=bagging, uom="BULK", need_calendar=True,
-                                   work_start_hour=8, work_end_hour=20)
+        self._register_new_machine(mac_id="P2", oper=bagging, uom="25 KG")
+        self._register_new_machine(mac_id="P7", oper=bagging, uom="750 KG")
+        self._register_new_machine(mac_id="P9", oper=bagging, uom="BULK")
+        # self._register_new_machine(mac_id="P2", oper=bagging, uom="25 KG", need_calendar=True,
+        #                            work_start_hour=8, work_end_hour=20)
+        # self._register_new_machine(mac_id="P7", oper=bagging, uom="750 KG", need_calendar=True,
+        #                            work_start_hour=8, work_end_hour=20)
+        # self._register_new_machine(mac_id="P9", oper=bagging, uom="BULK", need_calendar=True,
+        #                            work_start_hour=8, work_end_hour=20)
 
         # self.StockList = self._facUtil.GetStockObjList()
         rm: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="RM", kind="RM", return_flag=True)     # RM / WareHouse / silo / hopper
@@ -136,12 +141,14 @@ class Factory:
         fgi: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="FGI", kind="FGI", capacity=43000, return_flag=True)
 
         rm.set_to_location(to_loc=reactor.Id)
-        reactor.SetFromLoc(from_locs=[rm])
+        reactor.SetFromLocs(from_locs=[rm])
+        reactor.SetFromLoc(from_loc=rm.Kind)
         reactor.SetToLoc(to_loc=silos[0].Kind)
         for silo in silos:
             silo.set_to_location(to_loc=bagging.Id)
         # hopper.set_to_location(to_loc=fgi.Id)
-        bagging.SetFromLoc(from_locs=silos)
+        bagging.SetFromLocs(from_locs=silos)
+        bagging.SetFromLoc(from_loc=silos[0].Kind)
         bagging.SetToLoc(to_loc=fgi.Id)
         fgi.set_to_location(to_loc="Sales")     # Ternminal Status
 
@@ -152,9 +159,9 @@ class Factory:
         for obj in self.WhouseObjList:
             whObj: objWarehouse.Warehouse = obj
             if whObj.Id == "RM":
-                whObj.setFstEventTime(runTime=self._utility.DayStartDate)
+                whObj.setFstEventTime(runTime=self._utility.DayStartDate, init_flag=True)
             else:
-                whObj.setFstEventTime()
+                whObj.setFstEventTime(init_flag=True)
 
     def sendInitEvent(self):
         """공장 객체 초기화 정보를 DB에 전달하는 메서드"""
