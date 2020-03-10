@@ -68,6 +68,8 @@ class Warehouse:
         if self.ToLoc == "Sales":
             self.shipping()
 
+            # lot
+
         else:
 
             # 선택한 Lot에 대해 할당 가능한 Operation - Machine을 찾는 처리

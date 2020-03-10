@@ -122,7 +122,6 @@ class ConnectionManager(object):
             f"Make Me !! from {self.__class__.loadData}"
         )
 
-
     def _getConnection(self):
         try:
             if self._pool is None:
@@ -190,6 +189,19 @@ class ConnectionManager(object):
     def _reset_conf_path(self):
         self.conf_path = self._get_server_config()
 
+    # ================================================================================= #
+    # DB에서 Data 불러오는 처리
+    # ================================================================================= #
+    def GetDpQtyDataSql(self):
+        sql = """ SELECT 
+        
+        
+        """
+
+    def GetProdWheelDataSql(self):
+
+
+    def GetFpCapaMstDataSql
 
 class Queries:
     sample_sql: str = """
@@ -197,6 +209,7 @@ class Queries:
     FROM EDU.AIRPUSAN 
     WHERE 1 = 1
     """
+
 
 
 def main():

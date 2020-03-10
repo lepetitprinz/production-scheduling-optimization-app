@@ -7,7 +7,6 @@ from M03_Site import simFactoryMgr, simOperMgr
 from M05_ProductManager import objLot
 from M06_Utility import comUtility, comCalMgr
 
-
 class Machine(object):
     def __init__(self, factory: simFactoryMgr, operation: simOperMgr, mac_id: str):
         self._factory: simFactoryMgr = factory
