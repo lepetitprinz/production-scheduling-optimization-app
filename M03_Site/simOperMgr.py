@@ -93,9 +93,9 @@ class Operation(object):
     def lotArrive(self, lot: objLot.Lot):
         is_assignable, machines = self.GetAssignableFlag(lot=lot)
         if not is_assignable:
-
             print(f"\t\t{self.__class__.__name__}({self.Id}).lot_arrive() >> <{'No Machines Available'}> / {machines}")
             return False
+
         machine: objMachine.Machine = self._assignMac(macList=machines)
         machine.assign_lot(lot=lot)
         machine.RunMachine()

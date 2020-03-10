@@ -56,8 +56,11 @@ class Warehouse:
     def SyncRunningTime(self):
         # to_loc: object =
         least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
+
+        # 최종 생산이 완료된 제품의 경우 출하 처리
         if self.ToLoc == "Sales":
             self.shipping(lot=least_lpst_lot)
+
         else:
             to_oper, available_machines = self._findAvailableOper(lot=least_lpst_lot)
             if len(available_machines) > 0:

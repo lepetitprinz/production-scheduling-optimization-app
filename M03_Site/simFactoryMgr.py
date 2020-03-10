@@ -88,20 +88,24 @@ class Factory:
     def setup_rm_wh(self):
         wh_rm: objWarehouse.Warehouse = self._findWhById(wh_id="RM")
         df_demand = self._dataMgr.df_demand.copy()
+
         # Lot Sizing
         dfDmdLotSizing = self._setDmdProdLotSizing(df_demand)
         wh_rm.setup_resume_data(dfDmdLotSizing)
         wh_rm_lots: list = wh_rm.LotObjList
+
         # Grade Sequence Optimization using SCOP algorithm
         gradeSeqOpt = self.SeqOptByScop(dmdLotList=wh_rm_lots)
-        # Grade Sequence 별로 Lot을 grouping해서 List 변환
+
+        # Grade Sequence 별로 Lot을 그룹화해서 List 변환
         lotSeqOptList = self.GetLotSeqOptList(gradeSeqOpt=gradeSeqOpt, dmdLotList=wh_rm_lots, dueUom="nan")
-        wh_rm.truncate_lot_list()
+        wh_rm.truncate_lot_list()   # 기존 RM Warehouse에 있는 Lot List 삭제
+
+        # RM warehouse에 최적화 한 lot Sequence 등록
         for obj in lotSeqOptList:
             lotObj: objLot.Lot = obj
             wh_rm._registerLotObj(lotObj=lotObj)
         print("")
-
 
     def _buildFactory(self, silo_qty: float, nof_silo: int = 1):
         reactor: simOperMgr.Operation = self._register_new_oper(oper_id="REACTOR", kind="REACTOR", return_flag=True)
@@ -157,6 +161,7 @@ class Factory:
         endFlag: bool = False
         end_date: datetime.datetime = self._utility.DayEndDate  # 공장 가동의 종료시간
         loopCnt: int = 0
+
         while not endFlag:
             # OperTAT, Machine, Transporter, Warehouse 에서 이벤트 처리 대상을 찾기
             runTime: datetime.datetime = self.Get1stTgtMinTime()
@@ -168,6 +173,7 @@ class Factory:
                 # self._utility.LotStatusObj.PrintWaitLotList()
                 endFlag = True
                 continue
+
             elif runTime >= end_date:
                 endFlag = True
                 self._utility.set_runtime(runtime=end_date)

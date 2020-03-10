@@ -39,8 +39,8 @@ class Simulator:
 
         for obj in self._facObjList:
             facObj: simFactoryMgr = obj
-            facObj.SetupResumeData()
-            facObj.sendInitEvent()
+            facObj.SetupResumeData()    # 현재 RM warehouse만 setting
+            facObj.sendInitEvent()      # 공장 객체 초기화 정보를 DB에 전달(미구현)
 
     def run_simulator(self):
         if len(self._facObjList) < 1:
@@ -59,9 +59,10 @@ class Simulator:
         # Lot 할당
         # facObj.AssignLot()
 
-        # Factor 초기 시작시간 셋팅
+        # Factory 초기 시작시간 셋팅
         self._util.set_runtime(runtime=self._util.DayStartDate)
 
+        # Factory 가동 시작
         facObj.run_factory()
 
     def _run_multi_factory(self):
@@ -79,18 +80,6 @@ class Simulator:
             nof_silo=nof_silo
         )
         self._facObjList.append(facObj)
-
-
-
-
-    ########################################
-    # 제약
-    ########################################
-
-    # Time Constraint
-    # 1.Reactor Constraint
-
-    # 2.Packaging Constraint
 
 
 
