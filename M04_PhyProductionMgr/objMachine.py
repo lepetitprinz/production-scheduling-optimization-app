@@ -71,6 +71,7 @@ class Machine(object):
                 self._setStartTime(startTime=runTime)
                 self.Lot.ReactIn = self.StartTime
                 self.Lot.set_location(location=self)
+                self.BfLotGrade = lot.Grade
 
                 self.BfLotGrade = lot.Grade
 

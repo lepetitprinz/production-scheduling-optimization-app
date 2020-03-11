@@ -92,7 +92,7 @@ def test():
     simulator: Simulator = Simulator()
     simulator.SetupDbObject(
         source="db", year=2020, month=3, day=1, day_start_time="08:00:00", horizon_days=92,
-        silo_qty=4000, nof_silo=10, silo_wait_hours=0
+        silo_qty=4000, SiloQty=10, silo_wait_hours=0
     )
 
     factory: simFactoryMgr.Factory = simFactoryMgr.Factory(simul=simulator, facID="IM_FACTORY")

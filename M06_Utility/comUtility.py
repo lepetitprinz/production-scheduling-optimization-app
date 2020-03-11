@@ -49,6 +49,10 @@ class Utility:
     MinLotSize: int = 50    # Lot Minimum Capacity
     MaxLotSize: int = 400   # Lot Maximum Capacity
 
+    # Silo Capa 정보
+    SiloCapa: int = 4000
+    SiloQty:int = 10
+
     # Constraint 정보
     AfterSdGrade: str = ""
 
@@ -64,6 +68,9 @@ class Utility:
     GradeChangeFinishConst: bool = False    # Configuration DB화 필요
     GradeGroupChangeConst: bool = False     # Configuration DB화 필요
     BaggingOperTimeConst: bool = False      # Configuration DB화 필요
+
+    BaggingLeadTimeConst: bool = False
+    BaggingLeadTime: int = 0
 
     @staticmethod
     def setupObject(simul: PE_Simulator, engConfig: pd.DataFrame):
@@ -94,6 +101,13 @@ class Utility:
         # Utility.AfterSdGrade = engConfDict['PROD_ITEM_AFTER_SHUTDOWN']
 
         # Time Constraint
+        baggingLeadTimeYn = engConfDict['BAGGING_LOT_CHANGE_TIME_LT_YN']
+        if baggingLeadTimeYn == "Y":
+            baggingLeadTimeConst = True
+        else:
+            baggingLeadTimeConst = False
+        Utility.BaggingLeadTimeConst = baggingLeadTimeConst
+        Utility.BaggingLeadTime = engConfDict['BAGGING_LOT_CHANGE_TIME_LT']
 
     @staticmethod
     def setSiloWaitTime(hours: float):
