@@ -37,7 +37,7 @@ class Machine(object):
         self.Uom = uom
 
         # Setup Calendar
-        if need_calendar:
+        if need_calendar or sum([hour is not None for hour in [work_start_hour, work_end_hour]]) >= 2:
             self.hasCalendar = True
             self._calendar = comCalMgr.CalendarManager()
             self._calendar.SetupObject(factory=self._factory, machine=self,
@@ -192,3 +192,28 @@ class Machine(object):
             lot.PackDuration
         return duration
 
+
+def test():
+
+    from PE_Simulator import Simulator
+
+    simulator: Simulator = Simulator()
+
+    factory: simFactoryMgr.Factory = simFactoryMgr.Factory(
+        simul=simulator, facID="IM_FACTORY"
+    )
+
+    oper: simOperMgr.Operation = simOperMgr.Operation(
+        factory=factory, oper_id="BAG", kind="BAGGING"
+    )
+
+    macObj: Machine = Machine(factory=simulator, operation=oper, mac_id="BEGGAR")
+    macObj.setup_object(status="IDLE", uom="UnitOfMeasure",
+                        work_start_hour=8, work_end_hour=20)
+
+    print("DEBUGGING")
+
+
+if __name__ == '__main__':
+
+    test()

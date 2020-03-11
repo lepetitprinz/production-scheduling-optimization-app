@@ -501,6 +501,7 @@ class Warehouse:
                     '',                     # COLOR
                     lotOjb.ReactDuration.seconds,   # DURATION
                     lotOjb.Qty              # QTY
+            ]
 
         # Bagging 공정 추가
         baggingInStr = lotOjb.BaggingIn.strftime("%Y-%m-%d %H:%M:%S")
@@ -521,6 +522,7 @@ class Warehouse:
                     '',                     # COLOR
                     lotOjb.PackDuration.seconds,    # DURATION
                     lotOjb.Qty              # QTY
+            ]
 
         self.ProdScheduleRsltArr.append(reactorScheduleRslt)
         self.ProdScheduleRsltArr.append(baggingScheduleRslt)

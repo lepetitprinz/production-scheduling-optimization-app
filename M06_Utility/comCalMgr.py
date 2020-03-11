@@ -38,6 +38,14 @@ class CalendarManager(object):
             self._build_daily_break_sequence(start_hour=start_hour, end_hour=end_hour,
                                              start_date=start_date, end_date=end_date)
 
+    def append_downtime(self, from_date: datetime.datetime, to_date: datetime.datetime):
+        appending_tuple: tuple = (from_date, to_date)
+        self.macStopSeq.append(appending_tuple)
+        self.macStopSeq.sort()
+
+    def rebuild_break_sequence(self):
+        pass
+
     # 작성 중
     def _build_daily_break_sequence(self,
             start_hour: int, end_hour: int,
