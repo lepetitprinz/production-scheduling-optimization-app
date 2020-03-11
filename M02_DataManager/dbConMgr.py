@@ -7,6 +7,7 @@ import os
 import argparse
 import enum
 import cx_Oracle
+from M06_Utility.comUtility import Utility
 
 from M06_Utility import comUtility
 
@@ -125,7 +126,6 @@ class ConnectionManager(object):
             f"Make Me !! from {self.__class__.loadData}"
         )
 
-
     def _getConnection(self):
         try:
             if self._pool is None:
@@ -134,11 +134,11 @@ class ConnectionManager(object):
                     user=self._conUID,
                     password=self._conPWD,
                     dsn=self._conTNS,
-                    min=1,
-                    max = 2,
-                    increment=1,
-                    threaded=True,
-                    encoding="UTF-8"
+                    #min=1,
+                    #max = 2,
+                    #increment=1,
+                    #threaded=True,
+                    # encoding="UTF-8"
                 )
             return self._pool.acquire()
 
@@ -157,8 +157,8 @@ class ConnectionManager(object):
 
     def _get_server_config(self):
         # server_config 폴더 경로 찾는 처리
+        for directory, folder, filename in os.walk(Utility.project_dir):
 
-        for directory, folder, filename in os.walk(comUtility.Utility.project_dir):
             if 'server.conf' in filename:
                 server_conf: str = os.path.join(directory, 'server.conf')
                 return server_conf
@@ -193,71 +193,99 @@ class ConnectionManager(object):
     def _reset_conf_path(self):
         self.conf_path = self._get_server_config()
 
+    # ================================================================================= #
+    # DB에서 Data 불러오는 처리
+    # ================================================================================= #
+    def GetDpQtyDataSql(self):
+        sql = """ SELECT MST.YYYYMM
+                       , MST.PRODUCT
+                       , MST.QTY
+                       , J01.DOME_CD
+                   FROM (
+                         SELECT PLAN_YYMM AS YYYYMM
+                              , ITEM_NM AS PRODUCT
+                              , DP_QTY AS QTY
+                              , CUST_CD
+                           FROM SCMUSER.TB_DP_QTY_DATA
+                          WHERE 1=1
+                            AND DP_VRSN_ID = 'DP_202003_V01'
+                         ) MST
+                  INNER JOIN (
+                              SELECT CUST_CD
+                                   , DOME_CD
+                                FROM SCMUSER.TB_CM_CUST_MST
+                             ) J01
+                     ON MST.CUST_CD = J01.CUST_CD """
+        return sql
 
-class Queries:
-    sample_sql: str = """
-    SELECT * 
-    FROM EDU.AIRPUSAN 
-    WHERE 1 = 1
-    """
+    def GetProdWheelDataSql(self):
+        sql = """ SELECT FROM_MATRL_CD AS GRADE_FROM
+                       , TO_MATRL_CD AS GRADE_TO
+                       , OP_STOP_TIME AS STOP_TIME
+                       , OG_OCCUR_QTY AS OG
+                    FROM SCMUSER.TB_FP_PROD_WHEEL_MST
+                   WHERE 1=1
+                     AND PROD_WHEEL_GRP_CD = 'PROD1'
+                   UNION ALL
+                  SELECT 'GRADE_A' AS GRADE_FROM
+                       , 'GRADE_A' AS GRADE_TO
+                       , 0 AS STOP_TIME
+                       , 0 AS OG
+                    FROM DUAL
+                   UNION ALL
+                  SELECT 'GRADE_B' AS GRADE_FROM
+                       , 'GRADE_B' AS GRADE_TO
+                       , 0 AS STOP_TIME
+                       , 0 AS OG
+                   FROM DUAL
+                  UNION ALL
+                 SELECT 'GRADE_C' AS GRADE_FROM
+                      , 'GRADE_C' AS GRADE_TO
+                      , 0 AS STOP_TIME
+                      , 0 AS OG
+                   FROM DUAL
+                  UNION ALL
+                 SELECT 'GRADE_D' AS GRADE_FROM
+                      , 'GRADE_D' AS GRADE_TO
+                      , 0 AS STOP_TIME
+                      , 0 AS OG
+                   FROM DUAL
+                  UNION ALL
+                 SELECT 'GRADE_E' AS GRADE_FROM
+                      , 'GRADE_E' AS GRADE_TO
+                      , 0 AS STOP_TIME
+                      , 0 AS OG
+                   FROM DUAL
+                  UNION ALL
+                 SELECT 'GRADE_F' AS GRADE_FROM
+                      , 'GRADE_F' AS GRADE_TO
+                      , 0 AS STOP_TIME
+                      , 0 AS OG
+                   FROM DUAL
+                  UNION ALL
+                 SELECT 'GRADE_G' AS GRADE_FROM
+                      , 'GRADE_G' AS GRADE_TO
+                      , 0 AS STOP_TIME
+                      , 0 AS OG
+                   FROM DUAL """
+        return sql
 
-
-def main():
-
-    if_proc_dict = {
-        "MP": [
-            ""
-        ],
-        "DS": [
-            ""
-        ]
-    }
-
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--ip', required=True, help='IP Address')
-    parser.add_argument('--port', required=True, help='Port Number')
-    parser.add_argument('--sid', required=True, help='SID')
-    parser.add_argument('--uid', required=True, help='User ID')
-    parser.add_argument('--pwd', required=True, help='Password')
-    parser.add_argument('--mode', required=True, help='MP or DS')
-    parser.add_argument('--sc_type', required=True, help='Procedure Parameter/Varchar2')
-    parser.add_argument('--in_time', required=True, help='Procedure Parameter/Varchar2')
-    parser.add_argument('--del_period', required=True, help='Procedure Parameter/Number')
-    parser.add_argument('--in_type', required=True, help='Procedure Parameter/Number')
-
-    args = parser.parse_args()
-
-    procExecutor = ConnectionManager()
-    procExecutor.SetupObject(
-        ip=args.ip,
-        port=args.port,
-        sid=args.sid,
-        uid=args.uid,
-        pwd=args.pwd
-    )
-
-    params = [args.sc_type, args.in_time, args.del_period, args.in_type]
-
-    for procNm in if_proc_dict[args.mode]:
-        procExecutor.ExecuteProc(procNm=procNm, params=params)
-
-
-def test():
-
-    conMgr: ConnectionManager = ConnectionManager()
-
-    conMgr._reset_conf_path()
-
-    conMgr.LoadConInfo()
-
-    print(conMgr.conf_path)
-
-    print((conMgr._conIP, conMgr._conPORT, conMgr._conSID, conMgr._conUID, conMgr._conPWD))
-
-    sample_arr: list = conMgr.GetDbData(sql=Queries.sample_sql)
-    print(sample_arr)
-
-
-if __name__ == '__main__':
-    test()
+    def GetFpCapaMstDataSql(self):
+        sql = """ SELECT MST.OPER
+                       , MST.GRADE
+                       , J01.PROD_YIELD
+                    FROM (
+                          SELECT ITEM_CD
+                               , ITEM_NM AS GRADE
+                               , CASE WHEN ITEM_TYPE_CD = 'P01' THEN 'package'
+                                     WHEN ITEM_TYPE_CD = 'P02' THEN 'reactor'
+                                  END AS OPER
+                            FROM SCMUSER.TB_CM_ITEM_MST
+                         ) MST
+                   INNER JOIN (
+                               SELECT ITEM_CD
+                                    , CAPA_QTY AS PROD_YIELD
+                                 FROM SCMUSER.TB_FP_CAPA_MST
+                              ) J01
+                      ON MST.ITEM_CD = J01.ITEM_CD """
+        return sql

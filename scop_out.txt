@@ -1,23 +1,23 @@
-# reading data ... done: 0.01(s)
-penalty = 3/155 (hard/soft), time = 0.01(s), iteration = 0
+# reading data ... done: 0.00(s)
+penalty = 3/155 (hard/soft), time = 0.00(s), iteration = 0
 # improving the initial solution greedily
-penalty = 0/118 (hard/soft), time = 0.01(s), iteration = 0
+penalty = 0/118 (hard/soft), time = 0.00(s), iteration = 0
 # start tabu search
 
 
 # penalty = 0/118 (hard/soft)
-# cpu time = 0.01/0.01(s)
+# cpu time = 0.00/0.00(s)
 # iteration = 0/0
 
 [best solution]
-GRADE_A: 1
-GRADE_B: 6
-GRADE_C: 5
-GRADE_D: 7
-GRADE_E: 0
-GRADE_F: 2
-GRADE_G: 4
-GRADE_H: 3
+GRADE_E: 1
+GRADE_F: 6
+GRADE_G: 5
+GRADE_H: 7
+GRADE_A: 0
+GRADE_B: 2
+GRADE_C: 4
+GRADE_D: 3
 
 penalty: 0/118 (hard/soft)
 

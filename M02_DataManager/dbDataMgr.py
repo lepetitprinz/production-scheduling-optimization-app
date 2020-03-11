@@ -10,7 +10,7 @@ from M06_Utility import comUtility
 
 class DataManager:
 
-    def __init__(self, source: str = "file"):
+    def __init__(self, source: str = "db"):
 
         # 기본 정보
         self._source: str = source
@@ -28,14 +28,32 @@ class DataManager:
         self._dict_days_by_month: dict = {}
 
     def SetupObject(self):    # or source = "db"
-        if self._source == "db":
-            self._setup_db_connection()
-        elif self._source == "file":
-            self._setup_file_connection()
+        # if self._source == "db":
+        #     self._setup_db_connection()
+        # elif self._source == "file":
+        #     self._setup_file_connection()
 
-        self.df_demand = self._conMgr.loadData(data_name="demand")
-        self.dfProdWheel = self._conMgr.loadData(data_name="prod_wheel")
-        self.df_prod_yield = self._conMgr.loadData(data_name="prod_yield")
+
+        # self._conMgr = dbConMgr.ConnectionManager()
+        self._conMgr = dbConMgr.ConnectionManager()
+        self._conMgr.LoadConInfo()
+
+        demand = self._conMgr.GetDbData(self._conMgr.GetDpQtyDataSql())
+        prodWheel = self._conMgr.GetDbData(self._conMgr.GetProdWheelDataSql())
+        prodYield = self._conMgr.GetDbData(self._conMgr.GetFpCapaMstDataSql())
+
+        # Data Column 정의
+        dmdColName = ['yyyymm', 'product', 'qty', 'region']
+        prodWheelColName = ['grade_from', 'grade_to', 'hour', 'og']
+        prodYieldColName = ['oper', 'grade', 'prod_yield']
+
+        self.df_demand = pd.DataFrame(demand, columns=dmdColName)
+        self.dfProdWheel = pd.DataFrame(prodWheel, columns=prodWheelColName)
+        self.df_prod_yield = pd.DataFrame(prodYield, columns=prodYieldColName)
+
+        # self.df_demand = self._conMgr.load_data(data_name="demand")
+        # self.dfProdWheel = self._conMgr.load_data(data_name="prod_wheel")
+        # self.df_prod_yield = self._conMgr.load_data(data_name="prod_yield")
 
         self._preprocessing()
         self._build_dict_prod_yield()
@@ -144,13 +162,18 @@ class DataManager:
     # ============================================================================================================== #
     # Data -> DB Upload 모듈
     # ============================================================================================================== #
+
+    def SaveProdScheduleRslt(self, prodScheduleRslt:list):
+        prodScheduleArr = prodScheduleRslt
+        self.UpdateSchedHourRslt(schedHourRsltArr=prodScheduleArr)
+
     # Prduction Scheduling Result (Hourly)
     def UpdateSchedHourRslt(self, schedHourRsltArr: list):
         '''
         Send Production Schedule Hourly Result Array to DB.
         '''
         strTemplate: str = """ insert into TB_FS_QTY_HH_DATA(
-                                    FS_VRSN_ID, PLANT_NAME, LINE_NAME, PLAN_CODE, SALE_MAN, PRODUCT, CUSTOMER, 
+                                    FS_VRSN_ID, PLANT_NAME, LINE_NAME, PLAN_CODE, SALE_MAN, PRODUCT, CUSTOMER,
                                     LOT_NO, DATE_FROM, DATE_TO, DATE_FROM_TEXT, DATE_TO_TEXT, COLOR, DURATION, DELETE_KEY
                                )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15) """
 
@@ -181,7 +204,7 @@ class DataManager:
         Send Production Schedule Daily Result Array to DB.
         '''
         strTemplate: str = """ insert into TB_FS_QTY_DD_DATA(
-                                    FS_VRSN_ID, PLANT_NAME, LINE_NAME, MATRL_CD, MATRL_DESCR, PROD_DATE, DAILY_QTY, 
+                                    FS_VRSN_ID, PLANT_NAME, LINE_NAME, MATRL_CD, MATRL_DESCR, PROD_DATE, DAILY_QTY,
                                     DAILY_DURATION, DEMAND_TYPE, DELETE_KEY)
                                )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10)"""
 
@@ -207,12 +230,10 @@ class DataManager:
         return flag, errCode
 
         # Engine Configuration Histroy(HT_CONFIG) DB에 저장
-
     def UpdateEngConfHistory(self, engConfArr: list):
         strTemplate: str = """ insert into TB_FS_PS_CONFIG(
                                     DATASET_ID, SIMUL_NUM, CONFIG_NAME, CONFIG_VALUE, CREATE_DATE
                                 )values(:1, :2, :3, :4, sysdate) """
-
         flag = False
         errCnt = 0
         sqlDel = ""

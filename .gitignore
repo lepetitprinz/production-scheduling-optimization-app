@@ -2,3 +2,16 @@
 .idea/workspace.xml
 *.pyc
 .idea/workspace.xml
+*.pyc
+M01_Simulator/__pycache__/PE_Simulator.cpython-37.pyc
+M02_DataManager/__pycache__/dbConMgr.cpython-37.pyc
+M02_DataManager/__pycache__/dbDataMgr.cpython-37.pyc
+M02_DataManager/__pycache__/fileConMgr.cpython-37.pyc
+M03_Site/__pycache__/simFactoryMgr.cpython-37.pyc
+M03_Site/__pycache__/simOperMgr.cpython-37.pyc
+M04_PhyProductionMgr/__pycache__/objMachine.cpython-37.pyc
+M04_PhyProductionMgr/__pycache__/objStocker.cpython-37.pyc
+M04_PhyProductionMgr/__pycache__/objWarehouse.cpython-37.pyc
+M05_ProductManager/__pycache__/objLot.cpython-37.pyc
+M06_Utility/__pycache__/comEnum.cpython-37.pyc
+M06_Utility/__pycache__/comUtility.cpython-37.pyc
