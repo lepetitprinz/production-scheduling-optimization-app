@@ -309,6 +309,7 @@ class ConnectionManager(object):
     # Production Ton/hour Data
     def GetFpCapaMstDataSql(self):
         sql = """ SELECT MST.OPER
+                       , MST.ITEM_CD AS PROD_CODE
                        , MST.GRADE
                        , J01.PROD_YIELD
                     FROM (
@@ -351,6 +352,13 @@ class ConnectionManager(object):
                , MAC_ID
                , FROM_TIME
                 """
+        return sql
+
+    def GetProdMstDataSql(self):
+        sql = """ SELECT ITEM_CD AS PROD_CODE
+                       , ITEM_NM AS PROD_NAME
+                    FROM SCMUSER.TB_CM_ITEM_MST
+        """
         return sql
 
     # def GetDpQtyDataSql(self):

@@ -28,6 +28,8 @@ class Utility:
     # 날짜 문자열 형식 검사를 위한 정규식
     day_start_time_regex = re.compile(comEnum.RegexCollection.day_start_time.value)
 
+    ProdMstDict: dict = {}
+
     # =========================================== #
     # Cofiguration 정보
     # =========================================== #
@@ -89,7 +91,7 @@ class Utility:
         Utility.MaxLotSize = int(engConfDict['REACTOR_LOT_MAX'])
 
         # Shutdown 처리
-        Utility.AfterSdGrade = engConfDict['PROD_ITEM_AFTER_SHUTDOWN']
+        # Utility.AfterSdGrade = engConfDict['PROD_ITEM_AFTER_SHUTDOWN']
 
         # Time Constraint
 

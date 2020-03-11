@@ -1,6 +1,7 @@
 # -*- coding: utf-8
 
 import datetime
+from datetime import timedelta
 import pandas as pd
 import time
 
@@ -19,14 +20,16 @@ class DataManager:
         self.dbDemand: pd.DataFrame = None
         self.dbProdWheel: pd.DataFrame = None
         self.dbProdYield: pd.DataFrame = None
+        self.dbProdMst: pd.DataFrame = None
 
         # configuration 정보
         self.dbEngConf: pd.DataFrame = None  # Engine Configuration 정보
         self.dbMacUnAvlTime: pd.DataFrame = None
 
         # Dictionary 변수 선언
-        self._dict_prod_yield: dict = {}
+        self._prodYieldDict: dict = {}
         self._dict_days_by_month: dict = {}
+        self._prodToYieldDict: dict = {}
 
     def SetupEngConfData(self):
         self._conMgr = dbConMgr.ConnectionManager()
@@ -58,23 +61,29 @@ class DataManager:
             
             # DB에서 Data Load 하는 처리
             demand = self._conMgr.GetDbData(self._conMgr.GetDpQtyDataSql())
+            prodMst = self._conMgr.GetDbData(self._conMgr.GetProdMstDataSql())
             prodWheel = self._conMgr.GetDbData(self._conMgr.GetProdWheelDataSql())
             prodYield = self._conMgr.GetDbData(self._conMgr.GetFpCapaMstDataSql())
+
             macUnAvlTime = self._conMgr.GetDbData(self._conMgr.GetMacUnAvlTimeDataSql())
             # engConfig = self._conMgr.GetDbData(self._conMgr.GetEngineConfDataSql())
 
             # Data Column 정의
             dmdColName = ['yyyymm', 'prodCode', 'product', 'qty']
+            prodMstColName = ['prodCode', 'prodName']
             prodWheelColName = ['grade_from', 'grade_to', 'hour', 'og']
-            prodYieldColName = ['oper', 'grade', 'prod_yield']
+            prodYieldColName = ['oper', 'prodCode', 'grade', 'prod_yield']
+
             macUnAvlColName = ['operId', 'macId', 'fromTime', 'toTIme']
             # engConfigColName = ['paramCode', 'paramName', 'paramVal']
 
             self.dbDemand = pd.DataFrame(demand, columns=dmdColName)
+            self.dbProdMst = pd.DataFrame(prodMst, columns=prodMstColName)
             self.dbProdWheel = pd.DataFrame(prodWheel, columns=prodWheelColName)
             self.dbProdYield = pd.DataFrame(prodYield, columns=prodYieldColName)
 
             self.dbMacUnAvlTime =  pd.DataFrame(macUnAvlTime, columns=macUnAvlColName)
+
             # self.dbEngConf = pd.DataFrame(engConfig, columns=engConfigColName)
 
         # self.df_demand = self._conMgr.load_data(data_name="demand")
@@ -82,7 +91,8 @@ class DataManager:
         # self.df_prod_yield = self._conMgr.load_data(data_name="prod_yield")
 
         # self._preprocessing()
-        self._build_dict_prod_yield()
+        self._getProdMstDict()
+        self._getProdYieldDict()
 
         comUtility.Utility.ProdWheelDf = self.dbProdWheel.copy()
         # comUtility.Utility.SetRootPath(rootPath=self._conMgr.RootPath)
@@ -129,20 +139,34 @@ class DataManager:
         self._conMgr.setup_object()
 
     def _get_dict_prod_yield(self):
-        return self._dict_prod_yield
+        return self._prodYieldDict
 
-    def _build_dict_prod_yield(self):
-        self._dict_prod_yield: dict = {}
+    def _getProdYieldDict(self):
+        self._prodYieldDict: dict = {}
+        prodToYieldDict = {}
         for idx, row in self.dbProdYield.iterrows():
-            if row['oper'] not in self._dict_prod_yield.keys():
-                self._dict_prod_yield[row['oper']] = {row['grade']: row['prod_yield']}
+            if row['oper'] not in self._prodYieldDict.keys():
+                self._prodYieldDict[row['oper']] = {row['grade']: row['prod_yield']}
             else:
-                if row['grade'] not in self._dict_prod_yield[row['oper']].keys():
-                    self._dict_prod_yield[row['oper']][row['grade']] = row['prod_yield']
+                if row['grade'] not in self._prodYieldDict[row['oper']].keys():
+                    self._prodYieldDict[row['oper']][row['grade']] = row['prod_yield']
                 else:
                     raise KeyError(
                         "Production Yield 테이블의 키가 중복되었습니다."
                     )
+
+        for idx, row in self.dbProdYield.iterrows():
+            prodToYieldDict[row['prodCode']] = row['prod_yield']
+
+        self._prodToYieldDict = prodToYieldDict
+
+    def _getProdMstDict(self):
+        prodMstDict = {}
+        for idx, row in self.dbProdMst.iterrows():
+            prodMstDict[row['prodName']] = row['prodCode']
+
+        self._prodMstDict = prodMstDict
+        comUtility.Utility.ProdMstDict = prodMstDict
 
     def _preprocessing(self):
         # Changing dtypes
@@ -191,7 +215,104 @@ class DataManager:
 
     def SaveProdScheduleRslt(self, prodScheduleRslt:list):
         prodScheduleArr = prodScheduleRslt
+
+        dailySchedArr = self._makeDailySchedRslt(prodScheduleArr=prodScheduleArr)
+
+        self.UpdateSchedDailyRslt(schedDailyRsltArr=dailySchedArr)
         self.UpdateSchedHourRslt(schedHourRsltArr=prodScheduleArr)
+
+    def _makeDailySchedRslt(self, prodScheduleArr: list):
+        dailySchedArr = []
+        # 일별 분할을 위한 데이터 전처리
+        schedColumns = ['FS_VRSN_ID', 'PLANT_NAME' ,'LINE_NAME','PLAN_CODE',
+                      'SALE_MAN', 'PRODUCT', 'CUSTOMER', 'LOT_NO',
+                      'DATE_FROM', 'DATE_TO', 'DATE_FROM_TEXT', 'DATE_TO_TEXT',
+                      'COLOR', 'DURATION', 'QTY']
+        scheduleDf = pd.DataFrame(prodScheduleArr, columns=schedColumns)
+        scheduleDf = scheduleDf.drop(['DATE_FROM', 'DATE_TO'], axis=1)
+
+        for i in range(len(scheduleDf)):
+            dateFrom = datetime.datetime.strptime(scheduleDf.loc[i, 'DATE_FROM_TEXT'], "%Y-%m-%d %H:%M:%S")
+            scheduleDf.loc[i, 'Date'] = dateFrom.date()
+        scheduleDf = scheduleDf.sort_values(['DATE_FROM_TEXT', 'DATE_TO_TEXT'])
+        scheduleDf = scheduleDf.reset_index(drop=True)
+
+        schedStartTime = comUtility.Utility.PlanStartTime
+        schedEndTime = comUtility.Utility.PlanEndTime
+        schedStartDateTime = datetime.datetime.strptime(schedStartTime, '%Y%m%d')
+        schedEndDateTime = datetime.datetime.strptime(schedEndTime, '%Y%m%d')
+        schedPeriod = str(schedEndDateTime-schedStartDateTime)
+        schedPeriodDays = int(schedPeriod.split()[0]) + 1
+
+        lineKind = []
+        for idx, row in scheduleDf.iterrows():
+            if row['LINE_NAME'] not in lineKind:
+                lineKind.append(row['LINE_NAME'])
+
+        for line in lineKind:
+            prodDayLine, timeDict = self._getSchedLineDaily(scheduleDf=scheduleDf, line=line,
+                                                            schedPeriod=schedPeriodDays, startDate=schedStartTime)
+            for idx, row in prodDayLine.iterrows():
+                prodDateStr = row['PROD_DATE'].strftime("%Y%m%d")
+                dailySched = [
+                    row['FS_VRSN_ID'],
+                    row['PLANT_NAME'],
+                    row['LINE_NAME'],
+                    row['PRODUCT'],
+                    '',
+                    prodDateStr,
+                    int(row['DAILY_QTY']),
+                    round(row['DURATION_DAY'], 2),
+                    ''
+                ]
+                dailySchedArr.append(dailySched)
+
+        return dailySchedArr
+
+    def _getSchedLineDaily(self, scheduleDf:pd.DataFrame, line:str, schedPeriod:int, startDate:str):
+        idx = 0
+        prodUpdate = scheduleDf.copy()
+        prodUpdate['DURATION'] = prodUpdate['DURATION'] / 3600
+        prodUpdate = prodUpdate[prodUpdate['LINE_NAME'] == line]
+        prodUpdate.reset_index(drop=True, inplace=True)
+        prodDayLine = pd.DataFrame(columns=prodUpdate.columns)
+
+        period = schedPeriod
+        startDatetime = datetime.datetime.strptime(startDate, '%Y%m%d')
+
+        timeDict = {}
+        for time in range(period):
+            date = startDatetime + timedelta(days=time)
+            date = date.date()
+            timeDict.update({date: 24})
+
+            for i in range(len(prodUpdate)):
+                if prodUpdate.loc[i, 'Date'] == date:
+                    if timeDict[date] > prodUpdate.loc[i, 'DURATION'] and prodUpdate.loc[i, 'DURATION'] > 0:
+                        prodDayLine.loc[idx, :] = prodUpdate.loc[i, :]
+                        prodDayLine.loc[idx, 'PROD_DATE'] = date
+                        prodDayLine.loc[idx, 'DURATION_DAY'] = prodUpdate.loc[i, 'DURATION']
+
+                        timeDict.update({date: timeDict[date] - prodUpdate.loc[i, 'DURATION']})
+                        prodUpdate.loc[i, 'DURATION'] = 0
+                        idx += 1
+
+                    elif timeDict[date] < prodUpdate.loc[i, 'DURATION'] and prodUpdate.loc[i, 'DURATION'] > 0:
+                        prodDayLine.loc[idx, :] = prodUpdate.loc[i, :]
+                        prodDayLine.loc[idx, 'PROD_DATE'] = date
+                        prodDayLine.loc[idx, 'DURATION_DAY'] = timeDict[date]
+
+                        prodUpdate.loc[i, 'DURATION'] = prodUpdate.loc[i, 'DURATION'] - timeDict[date]
+                        timeDict.update({date: 0})
+                        prodUpdate.loc[i, 'Date'] += timedelta(days=1)
+                        idx += 1
+                        continue
+
+        for idx, row in prodDayLine.iterrows():
+            prodCode = prodDayLine.loc[idx, 'PRODUCT']
+            prodDayLine.loc[idx, 'DAILY_QTY'] = round(prodDayLine.loc[idx, 'DURATION_DAY'] * self._prodToYieldDict[prodCode],0)
+
+        return prodDayLine, timeDict
 
     # Prduction Scheduling Result (Hourly)
     def UpdateSchedHourRslt(self, schedHourRsltArr: list):
@@ -238,9 +359,9 @@ class DataManager:
         # self._conMgr.LoadConInfo()
 
         strTemplate: str = """ insert into SCMUSER.TB_FS_QTY_DD_DATA(
-                                    FS_VRSN_ID, PLANT_NAME, LINE_NAME, MATRL_CD, MATRL_DESCR, PROD_DATE, DAILY_QTY,
-                                    DAILY_DURATION, DEMAND_TYPE, DELETE_KEY)
-                               )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10)"""
+                                    FS_VRSN_ID, PLANT_NAME, LINE_NAME, MATRL_CD, MATRL_DESCR, 
+                                    PROD_DATE, DAILY_QTY, DAILY_DURATION, DEMAND_TYPE)
+                               values(:1, :2, :3, :4, :5, :6, :7, :8, :9)"""
 
         totLen = len(schedDailyRsltArr)
         flag = False
