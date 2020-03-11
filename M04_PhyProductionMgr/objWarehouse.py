@@ -40,6 +40,7 @@ class Warehouse:
 
         # Production Scheduling 결과 저장
         self.ProdScheduleRsltArr: list = []
+        self.BagScheduleRsltArr: list = []
 
     def setup_object(self, capacity: float = None):
         self._fsVerId = comUtility.Utility.FsVerId
@@ -488,13 +489,14 @@ class Warehouse:
         # Reactor 공정 추가
         reactInStr = lotOjb.ReactIn.strftime("%Y-%m-%d %H:%M:%S")
         reactOutStr = lotOjb.ReactOut.strftime("%Y-%m-%d %H:%M:%S")
+        reactorProdCode = comUtility.Utility.ProdMstDict[lotOjb.Grade]
         reactorScheduleRslt = [
-                    self._fsVerId,          # FS_VRSN_ID
-                    'GS Caltex',            # PLANT_NAME
-                    'REACTOR',              # LINE_NAME
+                    comUtility.Utility.FsVerId,  # FS_VRSN_ID
+                    'REACTOR',              # PLANT_NAME
+                    'M1',                   # LINE_NAME
                     'Act['+lotOjb.Grade+']',# PLAN_CODE
                     '',                     # SALE_MAN
-                    lotOjb.ProdCode,        # PRODUCT
+                    reactorProdCode,        # PRODUCT
                     '',                     # CUSTOMER
                     lotOjb.Id,              # LOT_NO
                     '',                     # DATE_FROM
@@ -510,9 +512,9 @@ class Warehouse:
         baggingInStr = lotOjb.BaggingIn.strftime("%Y-%m-%d %H:%M:%S")
         baggingOutStr = lotOjb.BaggingOut.strftime("%Y-%m-%d %H:%M:%S")
         baggingScheduleRslt = [
-                    self._fsVerId,          # FS_VRSN_ID
-                    'GS Caltex',            # PLANT_NAME
-                    'BAGGING',              # LINE_NAME
+                    comUtility.Utility.FsVerId, # FS_VRSN_ID
+                    'BAGGING',              # PLANT_NAME
+                    lotOjb.PackSize,        # LINE_NAME
                     'Act['+lotOjb.Id+']',   # PLAN_CODE
                     '',                     # SALE_MAN
                     lotOjb.ProdCode,        # PRODUCT
@@ -529,3 +531,4 @@ class Warehouse:
 
         self.ProdScheduleRsltArr.append(reactorScheduleRslt)
         self.ProdScheduleRsltArr.append(baggingScheduleRslt)
+        self.BagScheduleRsltArr.append(baggingScheduleRslt)
