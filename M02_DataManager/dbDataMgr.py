@@ -187,7 +187,7 @@ class DataManager:
         totLen = len(schedHourRsltArr)
         flag = False
         errCnt = 0
-        sqlDel = ""
+        sqlDel= "delete from SCMUSER.TB_FS_QTY_HH_DATA"
         errCode = 0
         while flag == False:
             flag, errCode = self._conMgr.BatchQuery(sqlTemplate=strTemplate, dataArr=schedHourRsltArr, sqlDel=sqlDel)
