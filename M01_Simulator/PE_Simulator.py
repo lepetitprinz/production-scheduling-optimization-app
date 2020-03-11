@@ -77,7 +77,8 @@ class Simulator:
             day=day,
             horizon_days=horizon_days,
             silo_qty=silo_qty,
-            nof_silo=nof_silo
+            nof_silo=nof_silo,
+            silo_wait_hours=12
         )
         self._facObjList.append(facObj)
 

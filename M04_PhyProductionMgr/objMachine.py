@@ -86,10 +86,6 @@ class Machine(object):
     def lotLeave(self, actual_leave_flag: bool = True):
         leaving_lot: objLot.Lot = self.Lot
         if actual_leave_flag:
-            if self.Oper.Kind == "REACTOR":
-                leaving_lot.ReactOut = comUtility.Utility.runtime
-            else:
-                leaving_lot.BaggingOut = comUtility.Utility.runtime
             self.Lot = None
             self._setStartTime()
             self._setEndTime()

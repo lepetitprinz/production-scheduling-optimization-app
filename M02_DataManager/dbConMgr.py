@@ -8,6 +8,9 @@ import argparse
 import enum
 import cx_Oracle
 
+from M06_Utility import comUtility
+
+
 class ConnectionManager(object):
     # 환경 설정
     os.environ["NLS_LANG"] = ".AL32UTF8"
@@ -155,7 +158,7 @@ class ConnectionManager(object):
     def _get_server_config(self):
         # server_config 폴더 경로 찾는 처리
 
-        for directory, folder, filename in os.walk(M06_Utility.comUtility.Utility.project_dir):
+        for directory, folder, filename in os.walk(comUtility.Utility.project_dir):
             if 'server.conf' in filename:
                 server_conf: str = os.path.join(directory, 'server.conf')
                 return server_conf
@@ -243,6 +246,8 @@ def main():
 def test():
 
     conMgr: ConnectionManager = ConnectionManager()
+
+    conMgr._reset_conf_path()
 
     conMgr.LoadConInfo()
 
