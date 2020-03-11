@@ -85,6 +85,24 @@ class CalendarManager(object):
 
 
 def test():
+
+    from PE_Simulator import Simulator
+    from simOperMgr import Operation
+
+    simulator: Simulator = Simulator()
+    simulator.SetupDbObject(
+        source="db", year=2020, month=3, day=1, day_start_time="08:00:00", horizon_days=92,
+        silo_qty=4000, nof_silo=10, silo_wait_hours=0
+    )
+
+    factory: simFactoryMgr.Factory = simFactoryMgr.Factory(simul=simulator, facID="IM_FACTORY")
+
+    operation: Operation = Operation(factory=factory, oper_id="BAG", kind="BAGGING")
+
+    machine: objMachine.Machine = objMachine.Machine(
+        factory=factory, operation=operation, mac_id="BEGGAR"
+    )
+
     comUtility.Utility.setDayStartDate(year=2020, month=3, day=9, hour=9)
     comUtility.Utility.setDayHorizon(days=10)
     comUtility.Utility.calcDayEndDate()
@@ -92,13 +110,32 @@ def test():
     print(f"DayEndDate = {comUtility.Utility.DayEndDate}")
 
     calendar: CalendarManager = CalendarManager()
+    calendar.SetupObject(
+        factory=factory,
+        machine=machine,
+        start_date=datetime.datetime(2020, 3, 1, 8, 0, 0),
+        end_date=datetime.datetime(2020, 6, 1, 20, 0, 0),
+        start_hour=8,
+        end_hour=20
+    )
     from_date: datetime.datetime = calendar._get_first_time(start_hour=8, end_hour=20, target_date=comUtility.Utility.DayStartDate)
     print(f"from_date = {from_date}")
 
     breaks_seq: list = calendar._build_daily_break_sequence(start_hour=8, end_hour=20, start_date=comUtility.Utility.DayStartDate, end_date=comUtility.Utility.DayEndDate)
+
+    calendar.append_downtime(from_date=datetime.datetime(2020, 5, 11, 0, 0, 0),
+                             to_date=datetime.datetime(2020, 5, 12, 0, 0, 0))
+    breaks_seq = calendar.macStopSeq
+
+    print("\nBEFORE")
     for breaktime in breaks_seq:
         print(breaktime)
 
+    calendar.rebuild_break_sequence()
+
+    print("\nAFTER")
+    for breaktime in breaks_seq:
+        print(breaktime)
 
 if __name__ == '__main__':
     test()

@@ -149,6 +149,10 @@ class Machine(object):
         self._setStartTime(startTime=downtime[0])
         self._setEndTime(end_time=downtime[1])
 
+    def append_downtime(self, from_date: datetime.datetime, to_date: datetime.datetime):
+        if self.hasCalendar:
+            self._calendar.append_downtime(from_date=from_date, to_date=to_date)
+
     def get_current_downtime(self):
         downtime: tuple = None
         for downtime in self._calendar.macStopSeq:
@@ -210,6 +214,8 @@ def test():
     macObj: Machine = Machine(factory=simulator, operation=oper, mac_id="BEGGAR")
     macObj.setup_object(status="IDLE", uom="UnitOfMeasure",
                         work_start_hour=8, work_end_hour=20)
+
+    macObj.append()
 
     print("DEBUGGING")
 
