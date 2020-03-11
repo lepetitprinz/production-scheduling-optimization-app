@@ -19,11 +19,32 @@ class Simulator:
         self._whNgr: objWarehouse.Warehouse = None
         self._facObjList: list = []
 
-    def SetupDbObject(self, source: str, year: int, month: int, day: int, day_start_time: str, horizon_days: int, silo_qty: int, nof_silo: int = 1, silo_wait_hours: int = 0):
+    def SetupDbObject(self, source: str, day_start_time: str):
         self.DataMgr = dbDataMgr.DataManager(source=source)
         engConfData = self.DataMgr.SetupEngConfData()
         self._util.setupObject(simul=self, engConfig=engConfData)
-        
+
+        year = int(self._util.PlanStartTime[:4])
+        month = int(self._util.PlanStartTime[4:6])
+        day = int(self._util.PlanStartTime[6:])
+
+        schedStartTime = self._util.PlanStartTime
+        schedEndTime = self._util.PlanEndTime
+        schedStartDateTime = datetime.datetime.strptime(schedStartTime, '%Y%m%d')
+        schedEndDateTime = datetime.datetime.strptime(schedEndTime, '%Y%m%d')
+        schedPeriod = str(schedEndDateTime - schedStartDateTime)
+        schedPeriodDays = int(schedPeriod.split()[0]) + 1
+        horizon_days = schedPeriodDays  # 고정값 처리 가능
+
+        siloCapa = self._util.SiloCapa
+        SiloQty = self._util.SiloQty
+
+        # Bagging Lead Time 제약
+        if self._util.BaggingLeadTimeConst == True:
+            silo_wait_hours = self._util.BaggingLeadTime
+        else:
+            silo_wait_hours = 0
+
         # DB에 있는 Data 정보 받아오는 처리
         self.DataMgr.SetupObject()
         self.DataMgr.build_demand_max_days_by_month()
@@ -35,7 +56,7 @@ class Simulator:
         print("=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=")
 
         # Factory 인스턴스 세팅
-        self._create_new_factory(factory_id="GS_CALTEX", day_start_time=day_start_time, year=year, month=month, day=day, horizon_days=horizon_days, silo_qty=silo_qty, nof_silo=nof_silo, silo_wait_hours=silo_wait_hours)
+        self._create_new_factory(factory_id="GS_CALTEX", day_start_time=day_start_time, year=year, month=month, day=day, horizon_days=horizon_days, silo_qty=siloCapa, nof_silo=SiloQty, silo_wait_hours=silo_wait_hours)
 
         flag = self.SetupObject()
 
