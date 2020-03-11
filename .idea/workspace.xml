@@ -2,8 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="0bb223df-5121-46b6-809a-0a698978ca23" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/production_schedule.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/production_schedule.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/M02_DataManager/dbConMgr.py" beforeDir="false" afterPath="$PROJECT_DIR$/M02_DataManager/dbConMgr.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/M03_Site/simFactoryMgr.py" beforeDir="false" afterPath="$PROJECT_DIR$/M03_Site/simFactoryMgr.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -36,7 +38,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../../SKSiltron/1차 APS/Simulation/Nc_Teamwork-master_200115" />
+    <property name="last_opened_file_path" value="$USER_HOME$/SKSiltron/1차 APS/Simulation/Nc_Teamwork-master_200115" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
@@ -153,19 +155,19 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="957" y="28" key="#run_simulator/0.0.1536.824@0.0.1536.824" timestamp="1583843008288" />
-    <state x="352" y="311" width="581" height="513" key="#xdebugger.evaluate" timestamp="1583839294100">
+    <state x="352" y="311" width="581" height="513" key="#xdebugger.evaluate" timestamp="1583892955705">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="352" y="311" width="581" height="513" key="#xdebugger.evaluate/0.0.1536.824@0.0.1536.824" timestamp="1583839294100" />
+    <state x="352" y="311" width="581" height="513" key="#xdebugger.evaluate/0.0.1536.824@0.0.1536.824" timestamp="1583892955705" />
     <state x="56" y="0" key="CommitChangelistDialog2" timestamp="1583494003838">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="56" y="0" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1583494003838" />
-    <state width="1918" height="556" key="DebuggerActiveHint" timestamp="1583847872646">
-      <screen x="1920" y="0" width="1920" height="1040" />
+    <state width="1534" height="440" key="DebuggerActiveHint" timestamp="1583892846550">
+      <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1918" height="556" key="DebuggerActiveHint/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1583847872646" />
-    <state width="1534" height="440" key="DebuggerActiveHint/0.0.1536.824@0.0.1536.824" timestamp="1583844265416" />
+    <state width="1534" height="440" key="DebuggerActiveHint/0.0.1536.824@0.0.1536.824" timestamp="1583892846550" />
     <state x="2660" y="275" key="FileChooserDialogImpl" timestamp="1583888158653">
       <screen x="1920" y="0" width="1920" height="1040" />
     </state>
@@ -186,51 +188,51 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="480" height="768" key="GridCell.Tab.-1.right/0.0.1536.824@0.0.1536.824" timestamp="1583844173880" />
-    <state width="1899" height="323" key="GridCell.Tab.0.bottom" timestamp="1583886645321">
-      <screen x="1920" y="0" width="1920" height="1040" />
+    <state width="560" height="768" key="GridCell.Tab.0.bottom" timestamp="1583900024096">
+      <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1899" height="323" key="GridCell.Tab.0.bottom/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1583886645321" />
-    <state width="480" height="768" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1583844344140" />
-    <state width="1899" height="323" key="GridCell.Tab.0.center" timestamp="1583886645320">
-      <screen x="1920" y="0" width="1920" height="1040" />
+    <state width="560" height="768" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1583900024096" />
+    <state width="560" height="768" key="GridCell.Tab.0.center" timestamp="1583900024096">
+      <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1899" height="323" key="GridCell.Tab.0.center/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1583886645320" />
-    <state width="480" height="768" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1583844344140" />
-    <state width="1899" height="323" key="GridCell.Tab.0.left" timestamp="1583886645320">
-      <screen x="1920" y="0" width="1920" height="1040" />
+    <state width="560" height="768" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1583900024096" />
+    <state width="560" height="768" key="GridCell.Tab.0.left" timestamp="1583900024096">
+      <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1899" height="323" key="GridCell.Tab.0.left/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1583886645320" />
-    <state width="480" height="768" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1583844344140" />
-    <state width="1899" height="323" key="GridCell.Tab.0.right" timestamp="1583886645320">
-      <screen x="1920" y="0" width="1920" height="1040" />
+    <state width="560" height="768" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1583900024096" />
+    <state width="560" height="768" key="GridCell.Tab.0.right" timestamp="1583900024096">
+      <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1899" height="323" key="GridCell.Tab.0.right/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1583886645320" />
-    <state width="480" height="768" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1583844344140" />
-    <state width="1899" height="323" key="GridCell.Tab.1.bottom" timestamp="1583886645321">
-      <screen x="1920" y="0" width="1920" height="1040" />
+    <state width="560" height="768" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1583900024096" />
+    <state width="560" height="768" key="GridCell.Tab.1.bottom" timestamp="1583900015884">
+      <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1899" height="323" key="GridCell.Tab.1.bottom/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1583886645321" />
-    <state width="480" height="768" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1583844362874" />
-    <state width="1899" height="323" key="GridCell.Tab.1.center" timestamp="1583886645321">
-      <screen x="1920" y="0" width="1920" height="1040" />
+    <state width="560" height="768" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1583900015884" />
+    <state width="560" height="768" key="GridCell.Tab.1.center" timestamp="1583900015884">
+      <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1899" height="323" key="GridCell.Tab.1.center/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1583886645321" />
-    <state width="480" height="768" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1583844362874" />
-    <state width="1899" height="323" key="GridCell.Tab.1.left" timestamp="1583886645321">
-      <screen x="1920" y="0" width="1920" height="1040" />
+    <state width="560" height="768" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1583900015884" />
+    <state width="560" height="768" key="GridCell.Tab.1.left" timestamp="1583900015884">
+      <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1899" height="323" key="GridCell.Tab.1.left/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1583886645321" />
-    <state width="480" height="768" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1583844362874" />
-    <state width="1899" height="323" key="GridCell.Tab.1.right" timestamp="1583886645321">
-      <screen x="1920" y="0" width="1920" height="1040" />
+    <state width="560" height="768" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1583900015884" />
+    <state width="560" height="768" key="GridCell.Tab.1.right" timestamp="1583900015884">
+      <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1899" height="323" key="GridCell.Tab.1.right/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1583886645321" />
-    <state width="480" height="768" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1583844362874" />
-    <state x="2381" y="162" key="SettingsEditor" timestamp="1583844522958">
-      <screen x="1920" y="0" width="1920" height="1040" />
+    <state width="560" height="768" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1583900015884" />
+    <state x="369" y="110" key="SettingsEditor" timestamp="1583892113052">
+      <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="2381" y="162" key="SettingsEditor/0.0.1536.824/1920.0.1920.1040@1920.0.1920.1040" timestamp="1583844522958" />
-    <state x="369" y="110" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1583843017480" />
+    <state x="369" y="110" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1583892113052" />
     <state x="63" y="149" key="Vcs.Push.Dialog.v2" timestamp="1583494023876">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -283,7 +285,6 @@
     <watches-manager>
       <configuration name="PythonConfigurationType">
         <watch expression="comUtility.Utility.runtime" language="Python" />
-        <watch expression="self.Id" />
       </configuration>
     </watches-manager>
   </component>

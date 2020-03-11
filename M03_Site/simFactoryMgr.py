@@ -432,13 +432,13 @@ class Factory:
             if row['qty'] < minLotSize:
                 dmdProdLot.loc[idx, 'qty'] = minLotSize
                 dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
-                dmdProdLot.loc[idx, 'product'] = row['product']
+                dmdProdLot.loc[idx, 'product'] = row['product'] + '_' + str(1)
                 dmdProdLot.loc[idx, 'region'] = row['region']
                 idx += 1
             elif row['qty'] > minLotSize and row['qty'] < maxLotSize:
                 dmdProdLot.loc[idx, 'qty'] = row['qty']
                 dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
-                dmdProdLot.loc[idx, 'product'] = row['product']
+                dmdProdLot.loc[idx, 'product'] = row['product'] + '_' + str(1)
                 dmdProdLot.loc[idx, 'region'] = row['region']
                 idx += 1
             else:
