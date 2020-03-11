@@ -18,7 +18,7 @@ class Simulator:
         self._facObjList: list = []
 
     def SetupDbObject(self, year: int, month: int, day: int, day_start_time: str, horizon_days: int, silo_qty: int, nof_silo: int = 1):
-        self.DataMgr = dbDataMgr.DataManager(source="file")
+        self.DataMgr = dbDataMgr.DataManager(source="db")
         self.DataMgr.SetupObject()
         self.DataMgr.build_demand_max_days_by_month()
         self._util.setup_object(simul=self)

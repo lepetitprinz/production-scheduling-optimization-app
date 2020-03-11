@@ -10,7 +10,7 @@ from M06_Utility import comUtility
 
 class DataManager:
 
-    def __init__(self, source: str = "file"):
+    def __init__(self, source: str = "db"):
 
         # 기본 정보
         self._source: str = source
@@ -28,14 +28,31 @@ class DataManager:
         self._dict_days_by_month: dict = {}
 
     def SetupObject(self):    # or source = "db"
-        if self._source == "db":
-            self._setup_db_connection()
-        elif self._source == "file":
-            self._setup_file_connection()
+        # if self._source == "db":
+        #     self._setup_db_connection()
+        # elif self._source == "file":
+        #     self._setup_file_connection()
 
-        self.df_demand = self._conMgr.load_data(data_name="demand")
-        self.dfProdWheel = self._conMgr.load_data(data_name="prod_wheel")
-        self.df_prod_yield = self._conMgr.load_data(data_name="prod_yield")
+        # self._conMgr = dbConMgr.ConnectionManager()
+        self._conMgr = dbConMgr.ConnectionManager()
+        self._conMgr.LoadConInfo()
+
+        demand = self._conMgr.GetDbData(self._conMgr.GetDpQtyDataSql())
+        prodWheel = self._conMgr.GetDbData(self._conMgr.GetProdWheelDataSql())
+        prodYield = self._conMgr.GetDbData(self._conMgr.GetFpCapaMstDataSql())
+
+        # Data Column 정의
+        dmdColName = ['yyyymm', 'product', 'qty', 'region']
+        prodWheelColName = ['grade_from', 'grade_to', 'hour', 'og']
+        prodYieldColName = ['oper', 'grade', 'prod_yield']
+
+        self.df_demand = pd.DataFrame(demand, columns=dmdColName)
+        self.dfProdWheel = pd.DataFrame(prodWheel, columns=prodWheelColName)
+        self.df_prod_yield = pd.DataFrame(prodYield, columns=prodYieldColName)
+
+        # self.df_demand = self._conMgr.load_data(data_name="demand")
+        # self.dfProdWheel = self._conMgr.load_data(data_name="prod_wheel")
+        # self.df_prod_yield = self._conMgr.load_data(data_name="prod_yield")
 
         self._preprocessing()
         self._build_dict_prod_yield()
