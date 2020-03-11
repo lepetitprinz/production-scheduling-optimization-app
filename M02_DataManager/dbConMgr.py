@@ -244,6 +244,7 @@ class ConnectionManager(object):
                            FROM SCMUSER.TB_DP_QTY_DATA
                           WHERE 1=1
                             AND DP_VRSN_ID = 'DP_202003_V01'
+                            AND SUBSTR(ITEM_NM,1,7) != 'GRADE_T'
                          ) MST
                   INNER JOIN (
                               SELECT CUST_CD
