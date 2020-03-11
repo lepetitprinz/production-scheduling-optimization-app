@@ -40,7 +40,7 @@ class Factory:
 
         # --- DB 연결 결과 취득 ---
         self._dataMgr: dbDataMgr.DataManager = simul.DataMgr  # DB에서 기준정보를 가지고 있는 객체
-        self._prodWheelDf = self._dataMgr.dfProdWheel.copy()
+        self._prodWheelDf = self._dataMgr.dbProdWheel.copy()
         self.ProdWheelHour = ""
 
         # Configuration 정보
@@ -93,7 +93,7 @@ class Factory:
 
     def setupRmWh(self):
         rmWh: objWarehouse.Warehouse = self._findWhById(wh_id="RM")
-        demand = self._dataMgr.df_demand.copy()
+        demand = self._dataMgr.dbDemand.copy()
 
         # Lot Sizing
         dfDmdLotSizing = self._setDmdProdLotSizing(demand)
@@ -424,7 +424,8 @@ class Factory:
         minLotSize = comUtility.Utility.MinLotSize
         maxLotSize = comUtility.Utility.MaxLotSize
 
-        dmdProdLot = pd.DataFrame(columns=['yyyymm', 'product', 'lotId', 'qty', 'region'])
+        # 빈 DataFrame 생성
+        dmdProdLot = pd.DataFrame(columns=['yyyymm', 'prodCode', 'product', 'lotId', 'qty'])
 
         idx = 0
         for _, row in demand.iterrows():
@@ -432,15 +433,17 @@ class Factory:
             if row['qty'] < minLotSize:
                 dmdProdLot.loc[idx, 'qty'] = minLotSize
                 dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
+                dmdProdLot.loc[idx, 'prodCode'] = row['prodCode']
                 dmdProdLot.loc[idx, 'product'] = row['product'] + '_' + str(1)
-                dmdProdLot.loc[idx, 'region'] = row['region']
                 idx += 1
+
             elif row['qty'] > minLotSize and row['qty'] < maxLotSize:
                 dmdProdLot.loc[idx, 'qty'] = row['qty']
                 dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
+                dmdProdLot.loc[idx, 'prodCode'] = row['prodCode']
                 dmdProdLot.loc[idx, 'product'] = row['product'] + '_' + str(1)
-                dmdProdLot.loc[idx, 'region'] = row['region']
                 idx += 1
+
             else:
                 quotient = int(row['qty'] // maxLotSize)
                 remainder = row['qty'] % maxLotSize
@@ -449,8 +452,8 @@ class Factory:
                 for i in range(quotient):
                     dmdProdLot.loc[idx, 'qty'] = maxLotSize
                     dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
+                    dmdProdLot.loc[idx, 'prodCode'] = row['prodCode']
                     dmdProdLot.loc[idx, 'product'] = row['product'] + '_' + str(i+1)
-                    dmdProdLot.loc[idx, 'region'] = row['region']
                     idx += 1
 
                 # 나머지 lot 추가 처리
@@ -459,8 +462,8 @@ class Factory:
                 else:
                     dmdProdLot.loc[idx, 'qty'] = remainder
                 dmdProdLot.loc[idx, 'yyyymm'] = row['yyyymm']
+                dmdProdLot.loc[idx, 'prodCode'] = row['prodCode']
                 dmdProdLot.loc[idx, 'product'] = row['product'] + '_' + str(quotient+1)
-                dmdProdLot.loc[idx, 'region'] = row['region']
                 idx += 1
 
         return dmdProdLot
@@ -703,7 +706,7 @@ class Factory:
     # 월별 생산 할 lot 분리 처리
     def _getMonDmdLotDict(self, dmdLotList:list):
         monDmdLotDict = {}
-        dmdLotDf = self._dataMgr.df_demand.copy()
+        dmdLotDf = self._dataMgr.dbDemand.copy()
         months = dmdLotDf['yyyymm'].unique().tolist()
 
         for month in months:
@@ -789,7 +792,7 @@ class Factory:
     # Production Wheel Cost - cost 기준에 맞춰 Dictionary로 생성
     def _setProdWheelDict(self, costCalStd:str):
         # prodWheel = self._prodWheel
-        prodWheel = self._dataMgr.dfProdWheel.copy()
+        prodWheel = self._dataMgr.dbProdWheel.copy()
         appliedProdWheel = {}
 
         for i in range(len(prodWheel)):

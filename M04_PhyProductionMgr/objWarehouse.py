@@ -56,9 +56,9 @@ class Warehouse:
             prodId: str = row['product'][:row['product'].find("_", row['product'].find("_") + 1)]
             lotObj: objLot.Lot = objLot.Lot(id=row['product'], prodId=prodId, loc=self)
             lotObj.setup_object(
-                due_date = row['yyyymm'],
-                qty = row['qty'],
-                region = row['region']
+                due_date=row['yyyymm'],
+                prodCode = row['prodCode'],
+                qty = row['qty']
             )
             self._registerLotObj(lotObj=lotObj)
             # lotObj: objLot = obj
@@ -489,7 +489,7 @@ class Warehouse:
                     'REACTOR',              # LINE_NAME
                     'Act['+lotOjb.Grade+']',# PLAN_CODE
                     '',                     # SALE_MAN
-                    lotOjb.Grade,           # PRODUCT
+                    lotOjb.ProdCode,        # PRODUCT
                     '',                     # CUSTOMER
                     lotOjb.Id,              # LOT_NO
                     '',                     # DATE_FROM
@@ -498,7 +498,7 @@ class Warehouse:
                     reactOutStr,            # DATE_TO_TEXT
                     '',                     # COLOR
                     lotOjb.ReactDuration.seconds,   # DURATION
-                    'Y'                     # DELETE_KEY
+                    lotOjb.Qty              # QTY
                             ]
 
         # Bagging 공정 추가
@@ -510,7 +510,7 @@ class Warehouse:
                     'BAGGING',              # LINE_NAME
                     'Act['+lotOjb.Id+']',   # PLAN_CODE
                     '',                     # SALE_MAN
-                    lotOjb.Grade,           # PRODUCT
+                    lotOjb.ProdCode,        # PRODUCT
                     '',                     # CUSTOMER
                     lotOjb.Id,              # LOT_NO
                     '',                     # DATE_FROM
@@ -519,7 +519,7 @@ class Warehouse:
                     baggingOutStr,          # DATE_TO_TEXT
                     '',                     # COLOR
                     lotOjb.PackDuration.seconds,    # DURATION
-                    'Y'                     # DELETE_KEY
+                    lotOjb.Qty              # QTY
                             ]
 
         self.ProdScheduleRsltArr.append(reactorScheduleRslt)

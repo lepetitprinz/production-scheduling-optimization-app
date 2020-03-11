@@ -23,7 +23,9 @@ class Simulator:
         self.DataMgr = dbDataMgr.DataManager(source="db")
         self.DataMgr.SetupObject()
         self.DataMgr.build_demand_max_days_by_month()
-        self._util.setup_object(simul=self)
+        engConfig = self.DataMgr.dbEngConf
+        self._util.setupObject(simul=self)
+        #self._util.setupObject(simul=self, engConfig=engConfig)
         # self._util.set_runtime(runtime=0)
 
         print("=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*= Configuration Information =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=")

@@ -22,13 +22,12 @@ class Lot(object):
     def __init__(self, id: str, prodId: str, loc: object):
         self.Id: str = id
         self.ProdId: str = prodId
+        self.ProdCode:str = ""
         self.Grade: str = ""        # GRADE_A / GRADE_B / GRADE_C / GRADE_D / GRADE_E/ GRADE_F / GRADE_G / GRADE_H
         self.PackSize: str = ""     # P2 / P7 / P9
         self.PackType: str = ""     # WV / FS / BK / SB
 
         self.Lpst: int = 0
-
-        self.Region: str = ""
 
         self.Duration: int = 0
         self.ReactDurationFloat: float = 0.0
@@ -58,12 +57,12 @@ class Lot(object):
         self.Machine: objMachine.Machine = None
         self.WareHouse: objWarehouse.Warehouse = None
 
-    def setup_object(self, due_date: str, qty: float, region: str):
+    def setup_object(self, due_date: str, prodCode: str, qty: float):
 
+        self.ProdCode = prodCode
         self.Grade = self._get_attr_from_id(id=self.Id, attr="Grade")
         self.PackSize = self._get_attr_from_id(id=self.Id, attr="PackSize")
         self.PackType = self._get_attr_from_id(id=self.Id, attr="PackType").split("_")[0]
-        self.Region = region
         self.Qty = qty
 
         # Time 관련 속성 setting

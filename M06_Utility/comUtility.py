@@ -4,6 +4,7 @@ import os
 import re
 import datetime
 import calendar
+import pandas as pd
 
 from M02_DataManager import dbDataMgr
 from M06_Utility import comEnum
@@ -30,9 +31,22 @@ class Utility:
     # =========================================== #
     # Cofiguration 정보
     # =========================================== #
-    # Capacity
+    EngConfDict: dict = {}
+    # Simulation Version
+    FsVerId: str = ''
+    DsVerId: str = ''
+
+    # Scheduling Period 장보
+    ProdCycle: str = ""
+    PlanStartTime: str = ""
+    PlanEndTime: str = ""
+
+    # Machine Lot Size 정보
     MinLotSize: int = 50    # Lot Minimum Capacity
     MaxLotSize: int = 400   # Lot Maximum Capacity
+
+    # Constraint 정보
+    AfterSdGrade: str = ""
 
     # Production Wheel 관련
     ProdWheelDf = None
@@ -48,8 +62,32 @@ class Utility:
     BaggingOperTimeConst: bool = False      # Configuration DB화 필요
 
     @staticmethod
-    def setup_object(simul: PE_Simulator):
+    def setupObject(simul: PE_Simulator):
+    #def setupObject(simul: PE_Simulator, engConfig: pd.DataFrame):
         Utility._simul = simul
+
+        # engConfDict = {}
+        # for idx, row in engConfig.iterrows():
+        #     engConfig[row['paramCode']] = row['paramVal']
+        # Utility.EngConfDict = engConfDict
+        #
+        # # Configuration 정보 등록
+        # Utility.FsVerId = engConfDict['FS_VRSN_ID']
+        # Utility.DsVerId = engConfDict['DS_VRSN_ID']
+        #
+        # # 계획 기간정보
+        # Utility.ProdCycle = engConfDict['PROD_PERIOD']
+        # Utility.PlanStartTime = engConfDict['PROD_START_DATE']
+        # Utility.PlanEndTime = engConfDict['PROD_END_DATE']
+        #
+        # # Machine Lot Size 정보
+        # Utility.MinLotSize = engConfDict['REACTOR_LOT_MIN']
+        # Utility.MaxLotSize = engConfDict['REACTOR_LOT_MAX']
+        #
+        # # Shutdown 처리
+        # Utility.AfterSdGrade = engConfDict['PROD_ITEM_AFTER_SHUTDOWN']
+        #
+        # # Time Constraint
 
     @staticmethod
     def setSiloWaitTime(hours: float):

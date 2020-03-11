@@ -233,26 +233,25 @@ class ConnectionManager(object):
     # ================================================================================= #
     # 공급 계획 정보
     def GetDpQtyDataSql(self):
-        sql = """ SELECT MST.YYYYMM
-                       , MST.PRODUCT
-                       , MST.QTY
-                       , J01.DOME_CD
-                   FROM (
-                         SELECT PLAN_YYMM AS YYYYMM
-                              , ITEM_NM AS PRODUCT
-                              , DP_QTY AS QTY
-                              , CUST_CD
-                           FROM SCMUSER.TB_DP_QTY_DATA
-                          WHERE 1=1
-                            AND DP_VRSN_ID = 'DP_202003_V01'
-                            AND SUBSTR(ITEM_NM,1,7) != 'GRADE_T'
-                         ) MST
-                  INNER JOIN (
-                              SELECT CUST_CD
-                                   , DOME_CD
-                                FROM SCMUSER.TB_CM_CUST_MST
-                             ) J01
-                     ON MST.CUST_CD = J01.CUST_CD """
+        sql = """ SELECT MST.PLAN_YYMM AS YYYYMM
+                         , MST.ITEM_CD AS PROD_CODE
+                         , J01.ITEM_NM AS PRODUCT
+                         , MST.MP_REQ_QTY AS QTY
+                      FROM (
+                            SELECT MP_VRSN_ID
+                                 , ITEM_CD
+                                 , PLAN_YYMM
+                                 , MP_REQ_QTY
+                            FROM SCMUSER.TB_MP_QTY_DATA
+                            WHERE 1=1
+                            AND MP_VRSN_ID = 'MP_202003_V01'
+                            AND PLAN_YYMM BETWEEN '202004' AND '202006'
+                            AND MP_REQ_QTY > 0
+                            ) MST
+                     INNER JOIN SCMUSER.TB_CM_ITEM_MST J01
+                        ON MST.ITEM_CD = J01.ITEM_CD
+                    ORDER BY MST.PLAN_YYMM
+                           , PROD_CODE """
         return sql
 
     def GetProdWheelDataSql(self):
@@ -353,3 +352,26 @@ class ConnectionManager(object):
                , FROM_TIME
                 """
         return sql
+
+    # def GetDpQtyDataSql(self):
+    #     sql = """ SELECT MST.YYYYMM
+    #                    , MST.PRODUCT
+    #                    , MST.QTY
+    #                    , J01.DOME_CD
+    #                FROM (
+    #                      SELECT PLAN_YYMM AS YYYYMM
+    #                           , ITEM_NM AS PRODUCT
+    #                           , DP_QTY AS QTY
+    #                           , CUST_CD
+    #                        FROM SCMUSER.TB_DP_QTY_DATA
+    #                       WHERE 1=1
+    #                         AND DP_VRSN_ID = 'DP_202003_V01'
+    #                         AND SUBSTR(ITEM_NM,1,7) != 'GRADE_T'
+    #                      ) MST
+    #               INNER JOIN (
+    #                           SELECT CUST_CD
+    #                                , DOME_CD
+    #                             FROM SCMUSER.TB_CM_CUST_MST
+    #                          ) J01
+    #                  ON MST.CUST_CD = J01.CUST_CD """
+    #     return sql
