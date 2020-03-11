@@ -4,6 +4,7 @@
     <list default="true" id="0bb223df-5121-46b6-809a-0a698978ca23" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/M02_DataManager/dbConMgr.py" beforeDir="false" afterPath="$PROJECT_DIR$/M02_DataManager/dbConMgr.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/M03_Site/simFactoryMgr.py" beforeDir="false" afterPath="$PROJECT_DIR$/M03_Site/simFactoryMgr.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -270,7 +271,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/M02_DataManager/dbConMgr.py</url>
-          <line>35</line>
+          <line>37</line>
           <option name="timeStamp" value="78" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
