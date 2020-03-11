@@ -254,6 +254,28 @@ class ConnectionManager(object):
                            , PROD_CODE """.format(Utility.MPVerId, Utility.PlanStartDay, Utility.PlanEndDay)
         return sql
 
+    def GetDpQtyDataSql_Custom(self, plan_start: str, plan_end: str):
+        sql = """ SELECT MST.PLAN_YYMM AS YYYYMM
+                         , MST.ITEM_CD AS PROD_CODE
+                         , J01.ITEM_NM AS PRODUCT
+                         , MST.MP_REQ_QTY AS QTY
+                      FROM (
+                            SELECT MP_VRSN_ID
+                                 , ITEM_CD
+                                 , PLAN_YYMM
+                                 , MP_REQ_QTY
+                            FROM SCMUSER.TB_MP_QTY_DATA
+                            WHERE 1=1
+                            AND MP_VRSN_ID = '{}'
+                            AND PLAN_YYMM BETWEEN '{}' AND '{}'
+                            AND MP_REQ_QTY > 0
+                            ) MST
+                     INNER JOIN SCMUSER.TB_CM_ITEM_MST J01
+                        ON MST.ITEM_CD = J01.ITEM_CD
+                    ORDER BY MST.PLAN_YYMM
+                           , PROD_CODE """.format(Utility.MPVerId, plan_start, plan_end)
+        return sql
+
     def GetProdWheelDataSql(self):
         sql = """ SELECT FROM_MATRL_CD AS GRADE_FROM
                        , TO_MATRL_CD AS GRADE_TO
