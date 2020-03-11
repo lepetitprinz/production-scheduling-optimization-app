@@ -12,7 +12,7 @@ from M01_Simulator import PE_Simulator
 
 class Utility:
 
-    project_dir: str = os.getcwd()
+    project_dir: str = os.path.dirname(os.getcwd())
     _simul: PE_Simulator = None
     DayStartTime: str = "00:00:00"
     DayStartDate: datetime.datetime = None
