@@ -12,8 +12,8 @@ def run_simulator(source: str, year: int, month: int, day: int, day_start_time: 
     print("\nSIMULATION END")
 
     # Simulation 가동 종료 후 Scheduling 결과 저장
-    simul.SaveSimulData()
+    # simul.SaveSimulData()
 
 
 if __name__ == '__main__':
-    run_simulator(source="db", year=2020, month=3, day=1, day_start_time="08:00:00", horizon_days=10000, silo_qty=4000, nof_silo=10, silo_wait_hours=12)
+    run_simulator(source="db", year=2020, month=4, day=1, day_start_time="08:00:00", horizon_days=30, silo_qty=4000, nof_silo=10, silo_wait_hours=12)

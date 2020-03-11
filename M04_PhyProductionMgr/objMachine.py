@@ -28,6 +28,7 @@ class Machine(object):
         # CURRENT PROCESSING LOT
         self.Lot: objLot.Lot = None
         self.BfLotGrade:str = None
+        self.BfLotGrade: str = None
 
     def setup_object(self, status: str, uom: str = "", need_calendar: bool = False,
                      work_start_hour: int = None, work_end_hour: int = None):
@@ -62,6 +63,7 @@ class Machine(object):
 
                 runTime = comUtility.Utility.runtime
                 startTime = runTime + timedelta(hours=gradeChangeCost)
+                startTime = runTime + timedelta(hours=int(gradeChangeCost))
                 self._setStartTime(startTime=startTime)
                 self.Lot.ReactIn = self.StartTime
                 self.Lot.set_location(location=self)
@@ -71,6 +73,8 @@ class Machine(object):
                 self._setStartTime(startTime=runTime)
                 self.Lot.ReactIn = self.StartTime
                 self.Lot.set_location(location=self)
+
+                self.BfLotGrade = lot.Grade
 
         # Bagging의 machine의 경우 Grade Change Cost가 없음
         elif self.Oper.Kind == "BAGGING":
