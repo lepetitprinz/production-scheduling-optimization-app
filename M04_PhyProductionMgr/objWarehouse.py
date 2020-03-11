@@ -13,6 +13,7 @@ from M06_Utility import comUtility
 class Warehouse:
     def __init__(self, factory: simFactoryMgr, whId: str, kind: str):
         self._factory: simFactoryMgr = factory
+        self._fsVerId = ""
         self.Id: str = whId
         self.Kind: str = kind                            # RM / WareHouse / silo / hopper
         self.LotObjList: list = []
@@ -41,6 +42,8 @@ class Warehouse:
         self.ProdScheduleRsltArr: list = []
 
     def setup_object(self, capacity: float = None):
+        self._fsVerId = comUtility.Utility.FsVerId
+
         self._setCapacity(capacity=capacity)
 
         # Time Constraint Configuration Setting
@@ -486,7 +489,7 @@ class Warehouse:
         reactInStr = lotOjb.ReactIn.strftime("%Y-%m-%d %H:%M:%S")
         reactOutStr = lotOjb.ReactOut.strftime("%Y-%m-%d %H:%M:%S")
         reactorScheduleRslt = [
-                    'SENARIO_1',            # FS_VRSN_ID
+                    self._fsVerId,          # FS_VRSN_ID
                     'GS Caltex',            # PLANT_NAME
                     'REACTOR',              # LINE_NAME
                     'Act['+lotOjb.Grade+']',# PLAN_CODE
@@ -501,12 +504,13 @@ class Warehouse:
                     '',                     # COLOR
                     lotOjb.ReactDuration.seconds,   # DURATION
                     lotOjb.Qty              # QTY
+                    ]
 
         # Bagging 공정 추가
         baggingInStr = lotOjb.BaggingIn.strftime("%Y-%m-%d %H:%M:%S")
         baggingOutStr = lotOjb.BaggingOut.strftime("%Y-%m-%d %H:%M:%S")
         baggingScheduleRslt = [
-                    'SENARIO_1',            # FS_VRSN_ID
+                    self._fsVerId,          # FS_VRSN_ID
                     'GS Caltex',            # PLANT_NAME
                     'BAGGING',              # LINE_NAME
                     'Act['+lotOjb.Id+']',   # PLAN_CODE
@@ -521,6 +525,7 @@ class Warehouse:
                     '',                     # COLOR
                     lotOjb.PackDuration.seconds,    # DURATION
                     lotOjb.Qty              # QTY
+                    ]
 
         self.ProdScheduleRsltArr.append(reactorScheduleRslt)
         self.ProdScheduleRsltArr.append(baggingScheduleRslt)

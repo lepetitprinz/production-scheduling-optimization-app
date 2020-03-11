@@ -21,10 +21,13 @@ class Simulator:
 
     def SetupDbObject(self, source: str, year: int, month: int, day: int, day_start_time: str, horizon_days: int, silo_qty: int, nof_silo: int = 1, silo_wait_hours: int = 0):
         self.DataMgr = dbDataMgr.DataManager(source=source)
+        engConfData = self.DataMgr.SetupEngConfData()
+        self._util.setupObject(simul=self, engConfig=engConfData)
+        
+        # DB에 있는 Data 정보 받아오는 처리
         self.DataMgr.SetupObject()
         self.DataMgr.build_demand_max_days_by_month()
         engConfig = self.DataMgr.dbEngConf
-        self._util.setupObject(simul=self)
         #self._util.setupObject(simul=self, engConfig=engConfig)
         # self._util.set_runtime(runtime=0)
 

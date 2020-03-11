@@ -244,14 +244,14 @@ class ConnectionManager(object):
                                  , MP_REQ_QTY
                             FROM SCMUSER.TB_MP_QTY_DATA
                             WHERE 1=1
-                            AND MP_VRSN_ID = 'MP_202003_V01'
-                            AND PLAN_YYMM BETWEEN '202004' AND '202006'
+                            AND MP_VRSN_ID = '{}'
+                            AND PLAN_YYMM BETWEEN '{}' AND '{}'
                             AND MP_REQ_QTY > 0
                             ) MST
                      INNER JOIN SCMUSER.TB_CM_ITEM_MST J01
                         ON MST.ITEM_CD = J01.ITEM_CD
                     ORDER BY MST.PLAN_YYMM
-                           , PROD_CODE """
+                           , PROD_CODE """.format(Utility.MPVerId, Utility.PlanStartDay, Utility.PlanEndDay)
         return sql
 
     def GetProdWheelDataSql(self):

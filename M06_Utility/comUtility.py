@@ -34,12 +34,14 @@ class Utility:
     EngConfDict: dict = {}
     # Simulation Version
     FsVerId: str = ''
-    DsVerId: str = ''
+    MPVerId: str = ''
 
     # Scheduling Period 장보
     ProdCycle: str = ""
     PlanStartTime: str = ""
+    PlanStartDay: str = ""
     PlanEndTime: str = ""
+    PlanEndDay: str = ""
 
     # Machine Lot Size 정보
     MinLotSize: int = 50    # Lot Minimum Capacity
@@ -62,32 +64,34 @@ class Utility:
     BaggingOperTimeConst: bool = False      # Configuration DB화 필요
 
     @staticmethod
-    def setupObject(simul: PE_Simulator):
-    #def setupObject(simul: PE_Simulator, engConfig: pd.DataFrame):
+    def setupObject(simul: PE_Simulator, engConfig: pd.DataFrame):
         Utility._simul = simul
 
-        # engConfDict = {}
-        # for idx, row in engConfig.iterrows():
-        #     engConfig[row['paramCode']] = row['paramVal']
-        # Utility.EngConfDict = engConfDict
-        #
-        # # Configuration 정보 등록
-        # Utility.FsVerId = engConfDict['FS_VRSN_ID']
-        # Utility.DsVerId = engConfDict['DS_VRSN_ID']
-        #
-        # # 계획 기간정보
-        # Utility.ProdCycle = engConfDict['PROD_PERIOD']
-        # Utility.PlanStartTime = engConfDict['PROD_START_DATE']
-        # Utility.PlanEndTime = engConfDict['PROD_END_DATE']
-        #
-        # # Machine Lot Size 정보
-        # Utility.MinLotSize = engConfDict['REACTOR_LOT_MIN']
-        # Utility.MaxLotSize = engConfDict['REACTOR_LOT_MAX']
-        #
-        # # Shutdown 처리
-        # Utility.AfterSdGrade = engConfDict['PROD_ITEM_AFTER_SHUTDOWN']
-        #
-        # # Time Constraint
+        engConfDict = {}
+        for idx, row in engConfig.iterrows():
+            engConfDict[row['paramName']] = row['paramVal']
+
+        Utility.EngConfDict = engConfDict
+
+        # Configuration 정보 등록
+        Utility.FsVerId = engConfDict['FS_VRSN_ID']
+        Utility.MPVerId = engConfDict['MP_VRSN_ID']
+
+        # 계획 기간정보
+        Utility.ProdCycle = engConfDict['PROD_PERIOD']
+        Utility.PlanStartTime = engConfDict['PROD_START_DATE']
+        Utility.PlanStartDay = engConfDict['PROD_START_DATE'][:6]
+        Utility.PlanEndTime = engConfDict['PROD_END_DATE']
+        Utility.PlanEndDay = engConfDict['PROD_END_DATE'][:6]
+
+        # Machine Lot Size 정보
+        Utility.MinLotSize = int(engConfDict['REACTOR_LOT_MIN'])
+        Utility.MaxLotSize = int(engConfDict['REACTOR_LOT_MAX'])
+
+        # Shutdown 처리
+        Utility.AfterSdGrade = engConfDict['PROD_ITEM_AFTER_SHUTDOWN']
+
+        # Time Constraint
 
     @staticmethod
     def setSiloWaitTime(hours: float):

@@ -28,6 +28,15 @@ class DataManager:
         self._dict_prod_yield: dict = {}
         self._dict_days_by_month: dict = {}
 
+    def SetupEngConfData(self):
+        self._conMgr = dbConMgr.ConnectionManager()
+        self._conMgr.LoadConInfo()
+        engConfig = self._conMgr.GetDbData(self._conMgr.GetEngineConfDataSql())
+        engConfigColName = ['paramCode', 'paramName', 'paramVal']
+        self.dbEngConf = pd.DataFrame(engConfig, columns=engConfigColName)
+
+        return self.dbEngConf
+
     def SetupObject(self):    # or source = "db"
         # if self._source == "db":
         #     self._setup_db_connection()
@@ -51,22 +60,22 @@ class DataManager:
             demand = self._conMgr.GetDbData(self._conMgr.GetDpQtyDataSql())
             prodWheel = self._conMgr.GetDbData(self._conMgr.GetProdWheelDataSql())
             prodYield = self._conMgr.GetDbData(self._conMgr.GetFpCapaMstDataSql())
-            engConfig = self._conMgr.GetDbData(self._conMgr.GetEngineConfDataSql())
             macUnAvlTime = self._conMgr.GetDbData(self._conMgr.GetMacUnAvlTimeDataSql())
+            # engConfig = self._conMgr.GetDbData(self._conMgr.GetEngineConfDataSql())
 
             # Data Column 정의
             dmdColName = ['yyyymm', 'prodCode', 'product', 'qty']
             prodWheelColName = ['grade_from', 'grade_to', 'hour', 'og']
             prodYieldColName = ['oper', 'grade', 'prod_yield']
-            engConfigColName = ['paramCode', 'paramName', 'paramVal']
             macUnAvlColName = ['operId', 'macId', 'fromTime', 'toTIme']
+            # engConfigColName = ['paramCode', 'paramName', 'paramVal']
 
             self.dbDemand = pd.DataFrame(demand, columns=dmdColName)
             self.dbProdWheel = pd.DataFrame(prodWheel, columns=prodWheelColName)
             self.dbProdYield = pd.DataFrame(prodYield, columns=prodYieldColName)
 
-            self.dbEngConf = pd.DataFrame(engConfig, columns=engConfigColName)
             self.dbMacUnAvlTime =  pd.DataFrame(macUnAvlTime, columns=macUnAvlColName)
+            # self.dbEngConf = pd.DataFrame(engConfig, columns=engConfigColName)
 
         # self.df_demand = self._conMgr.load_data(data_name="demand")
         # self.dfProdWheel = self._conMgr.load_data(data_name="prod_wheel")
