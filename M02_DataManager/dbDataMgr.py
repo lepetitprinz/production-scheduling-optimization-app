@@ -33,14 +33,19 @@ class DataManager:
         # elif self._source == "file":
         #     self._setup_file_connection()
 
+        if self._source == "file":
+            self._setup_file_connection()
 
-        # self._conMgr = dbConMgr.ConnectionManager()
-        self._conMgr = dbConMgr.ConnectionManager()
-        self._conMgr.LoadConInfo()
-
-        demand = self._conMgr.GetDbData(self._conMgr.GetDpQtyDataSql())
-        prodWheel = self._conMgr.GetDbData(self._conMgr.GetProdWheelDataSql())
-        prodYield = self._conMgr.GetDbData(self._conMgr.GetFpCapaMstDataSql())
+            demand = self._conMgr.loadData("demand")
+            prodWheel = self._conMgr.loadData("prod_wheel")
+            prodYield = self._conMgr.loadData("prod_yield")
+        if self._source == "db":
+            # self._conMgr = dbConMgr.ConnectionManager()
+            self._conMgr = dbConMgr.ConnectionManager()
+            self._conMgr.LoadConInfo()
+            demand = self._conMgr.GetDbData(self._conMgr.GetDpQtyDataSql())
+            prodWheel = self._conMgr.GetDbData(self._conMgr.GetProdWheelDataSql())
+            prodYield = self._conMgr.GetDbData(self._conMgr.GetFpCapaMstDataSql())
 
         # Data Column 정의
         dmdColName = ['yyyymm', 'product', 'qty', 'region']
@@ -172,6 +177,10 @@ class DataManager:
         '''
         Send Production Schedule Hourly Result Array to DB.
         '''
+
+        # self._conMgr = dbConMgr.ConnectionManager()
+        # self._conMgr.LoadConInfo()
+
         strTemplate: str = """ insert into SCMUSER.TB_FS_QTY_HH_DATA(
                                     FS_VRSN_ID, PLANT_NAME, LINE_NAME, PLAN_CODE, SALE_MAN, PRODUCT, CUSTOMER,
                                     LOT_NO, DATE_FROM, DATE_TO, DATE_FROM_TEXT, DATE_TO_TEXT, COLOR, DURATION, DELETE_KEY
@@ -203,6 +212,10 @@ class DataManager:
         '''
         Send Production Schedule Daily Result Array to DB.
         '''
+
+        # self._conMgr = dbConMgr.ConnectionManager()
+        # self._conMgr.LoadConInfo()
+
         strTemplate: str = """ insert into SCMUSER.TB_FS_QTY_DD_DATA(
                                     FS_VRSN_ID, PLANT_NAME, LINE_NAME, MATRL_CD, MATRL_DESCR, PROD_DATE, DAILY_QTY,
                                     DAILY_DURATION, DEMAND_TYPE, DELETE_KEY)
@@ -231,6 +244,10 @@ class DataManager:
 
         # Engine Configuration Histroy(HT_CONFIG) DB에 저장
     def UpdateEngConfHistory(self, engConfArr: list):
+
+        # self._conMgr = dbConMgr.ConnectionManager()
+        # self._conMgr.LoadConInfo()
+
         strTemplate: str = """ insert into SCMUSER.TB_FS_PS_CONFIG(
                                     DATASET_ID, SIMUL_NUM, CONFIG_NAME, CONFIG_VALUE, CREATE_DATE
                                 )values(:1, :2, :3, :4, sysdate) """

@@ -82,7 +82,9 @@ class Warehouse:
             if len(available_machines) > 0:
                 self.lot_leave(to_loc=to_oper, lot=lotObj)
                 # self.setFstEventTime()
-            if len(available_machines) == 0:
+                if self.Kind is not "RM":
+                    self.resetFstEventTime()
+            elif len(available_machines) == 0:
                 # is_in_break, break_end_time = to_oper.are_machines_in_break(lot=least_lpst_lot)
                 # if len(is_in_break)
                 print(f"\t\t{to_oper.__class__.__name__}({to_oper.Id}) No Machines Avaiable. Waiting for Processing...\n"
@@ -91,8 +93,6 @@ class Warehouse:
                 to_oper.inform_to(from_obj=self, runTime=to_oper.FirstEventTime, downFlag=True)
                 # to_oper.set_first_event_time()
                 # self.set_first_event_time(break_end_time)
-            if self.Kind is not "RM":
-                self.resetFstEventTime()
 
     def _shipping(self, lot: objLot):
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
@@ -415,8 +415,8 @@ class Warehouse:
                         delayed_time: datetime.datetime = lotObj.ReactOut + comUtility.Utility.SiloWait
                         lot_arrived_times.append(delayed_time)
 
-            silo_delayed_time_min: datetime.datetime = min(lot_arrived_times)
-            self.setFstEventTime(runTime=silo_delayed_time_min, use_flag=True)
+                silo_delayed_time_min: datetime.datetime = min(lot_arrived_times)
+                self.setFstEventTime(runTime=silo_delayed_time_min, use_flag=True)
 
 
     def setFstEventTime(self, runTime: datetime.datetime = None, use_flag: bool = False):
@@ -433,7 +433,7 @@ class Warehouse:
                     if not self._waitFlag:
                         self.FirstEventTime = runTime
                     else:
-                        pass
+                        self.FirstEventTime = runTime
             else:
                 self.FirstEventTime = runTime
 
@@ -497,7 +497,7 @@ class Warehouse:
                     reactInStr,             # DATE_FROM_TEXT
                     reactOutStr,            # DATE_TO_TEXT
                     '',                     # COLOR
-                    lotOjb.ReactDuration,   # DURATION
+                    lotOjb.ReactDuration.seconds,   # DURATION
                     'Y'                     # DELETE_KEY
                             ]
 
@@ -518,7 +518,7 @@ class Warehouse:
                     baggingInStr,           # DATE_FROM_TEXT
                     baggingOutStr,          # DATE_TO_TEXT
                     '',                     # COLOR
-                    lotOjb.PackDuration,    # DURATION
+                    lotOjb.PackDuration.seconds,    # DURATION
                     'Y'                     # DELETE_KEY
                             ]
 
