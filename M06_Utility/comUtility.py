@@ -21,6 +21,9 @@ class Utility:
     runtime: datetime.datetime = None
     DueDateUom: str = 'nan'     # 고정생산주기(납기기준): nan / mon / day
 
+    # Silo -> Bagging 전송 유예 옵션
+    SiloWait: datetime.timedelta = None
+
     # 날짜 문자열 형식 검사를 위한 정규식
     day_start_time_regex = re.compile(comEnum.RegexCollection.day_start_time.value)
 
@@ -47,6 +50,10 @@ class Utility:
     @staticmethod
     def setup_object(simul: PE_Simulator):
         Utility._simul = simul
+
+    @staticmethod
+    def setSiloWaitTime(hours: float):
+        Utility.SiloWait = datetime.timedelta(hours=hours)
 
     @staticmethod
     def chop_microsecond(date_value: datetime.datetime):

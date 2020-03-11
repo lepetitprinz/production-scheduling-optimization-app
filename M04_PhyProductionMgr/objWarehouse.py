@@ -7,7 +7,8 @@ from scop import Model, Alldiff, Quadratic
 
 from M03_Site import simFactoryMgr, simOperMgr
 from M05_ProductManager import objLot
-from M06_Utility.comUtility import Utility
+from M06_Utility import comUtility
+
 
 class Warehouse:
     def __init__(self, factory: simFactoryMgr, whId: str, kind: str):
@@ -33,6 +34,9 @@ class Warehouse:
         self._prodWheelHour:dict = {}
         self._seqOptTimeLimit: int = 0
 
+        # flags
+        self._waitFlag: bool = False
+
         # Production Scheduling 결과 저장
         self.ProdScheduleRsltArr: list = []
 
@@ -40,11 +44,11 @@ class Warehouse:
         self._setCapacity(capacity=capacity)
 
         # Time Constraint Configuration Setting
-        self.GradeChangeFinishConst = Utility.GradeChangeFinishConst
-        self.GradeGroupChangeConst = Utility.GradeGroupChangeConst
-        self.BaggingOperTimeConst = Utility.BaggingOperTimeConst
+        self.GradeChangeFinishConst = comUtility.Utility.GradeChangeFinishConst
+        self.GradeGroupChangeConst = comUtility.Utility.GradeGroupChangeConst
+        self.BaggingOperTimeConst = comUtility.Utility.BaggingOperTimeConst
 
-        self._prodWheelHour = Utility.ProdWheelHour
+        self._prodWheelHour = comUtility.Utility.ProdWheelHour
 
     def setup_resume_data(self, lotObjArr: pd.DataFrame):
         for idx, row in lotObjArr.iterrows():
@@ -69,6 +73,7 @@ class Warehouse:
         # 최종 생산완료 된 경우 출하 처리
         if self.ToLoc == "Sales":
             self.shipping()
+            self.resetFstEventTime()
 
         else:
 
@@ -86,6 +91,8 @@ class Warehouse:
                 to_oper.inform_to(from_obj=self, runTime=to_oper.FirstEventTime, downFlag=True)
                 # to_oper.set_first_event_time()
                 # self.set_first_event_time(break_end_time)
+            if self.Kind is not "RM":
+                self.resetFstEventTime()
 
     def _shipping(self, lot: objLot):
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
@@ -96,7 +103,7 @@ class Warehouse:
         self._removeLot(lot=lot, shipping_flag=True)
         self._updateCurrCapa(lot=lot, in_flag=False)
         # self._rebuild_lpst_lot_dict()
-        self.setFstEventTime(init_flag=True)
+        self.setFstEventTime(use_flag=True)
 
         print(f"\t\t{self.__class__.__name__}({self.Id}).shipping() >> {lot}")
 
@@ -104,10 +111,9 @@ class Warehouse:
         for lot in self.LotObjList:
             self._shipping(lot=lot)
 
-
     def lot_leave(self, to_loc: simOperMgr, lot: objLot):
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
-        current_time: datetime.datetime = Utility.DayStartDate
+        current_time: datetime.datetime = comUtility.Utility.DayStartDate
 
         print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {(lot.Id, lot.Lpst, lot.ReactDuration, lot.PackDuration)}")
 
@@ -115,7 +121,7 @@ class Warehouse:
         self._removeLot(lot=lot)
         self._updateCurrCapa(lot=lot, in_flag=False)
         # self._rebuild_lpst_lot_dict()
-        self.setFstEventTime(init_flag=True)
+        self.setFstEventTime(use_flag=True)
 
         # ======================================================================================= #
         # RM Lot Re-Sequencing
@@ -142,14 +148,15 @@ class Warehouse:
                 self.setFstEventTime()
         else:
             # self._rebuild_lpst_lot_dict()
-            self.setFstEventTime()
+            # self.resetFstEventTime()
+            self.setFstEventTime(use_flag=True)
 
     # ------------------------------------------------------------------------------------------------------ #
     # Grade Sequence Optimization Using SCOP algorithm
     # ------------------------------------------------------------------------------------------------------ #
     def SeqOptByScop(self, lotObjList: list, dueUom:str = "nan"):
-        prodWheelCostUom = Utility.ProdWheelCalStd
-        prodWheel = Utility.ProdWheelDf.copy()
+        prodWheelCostUom = comUtility.Utility.ProdWheelCalStd
+        prodWheel = comUtility.Utility.ProdWheelDf.copy()
         dmdLotGradeList = self._getGradeList(lotList=lotObjList)  # 전달받은 Lot List에 해당하는 Grade list 산출
 
         # 주어진 Grade List에 해당하는 Production Wheel Cost만 indexing
@@ -270,7 +277,17 @@ class Warehouse:
         self._registerLotObj(lotObj=lotObj)
         self._updateCurrCapa(lot=lotObj, in_flag=True)
         # self._rebuild_lpst_lot_dict()
-        self.setFstEventTime(Utility.runtime)
+
+        # Silo -> Bagging 전송 유예 처리 반영
+        FirstEventTime = comUtility.Utility.runtime
+        if self.Kind == "silo":
+            if comUtility.Utility.SiloWait.seconds > 0:
+                self._waitFlag = True
+            FirstEventTime = comUtility.Utility.runtime + comUtility.Utility.SiloWait
+        if self.FirstEventTime is None:
+            self.setFstEventTime(FirstEventTime, use_flag=True)
+        elif FirstEventTime <= self.FirstEventTime:
+            self.setFstEventTime(FirstEventTime, use_flag=True)
 
     def getAssignableFlag(self, lot: objLot):
         isAssignable = False
@@ -370,10 +387,55 @@ class Warehouse:
         self.LotObjList.append(lotObj)
         self._factory._register_lot_to(lot_obj=lotObj, to="self")
 
-    def setFstEventTime(self, runTime: datetime.datetime = None, init_flag: bool = False):
-        if not init_flag:
-            runTime = Utility.runtime
-        self.FirstEventTime = runTime
+    def resetFstEventTime(self, arrival_flag: bool = False):
+        lot_arrived_times: list = []
+        if len(self.LotObjList) == 0:
+            self.setFstEventTime(runTime=None, use_flag=True)
+        else:
+            if not self._waitFlag:
+                self.setFstEventTime(comUtility.Utility.runtime, use_flag=True)
+                # if arrival_flag:
+                #     # Lot 이 들어온 경우
+                #
+                # else:
+                #     # Lot 을 내보내는 경우
+                #     for obj in self.LotObjList:
+                #         lotObj: objLot.Lot = obj
+                #         delayed_time: datetime.datetime = None
+                #         if self.Kind is "FGI":
+                #             delayed_time = \
+                #                 lotObj.BaggingOutf if arrival_flag else lotObj
+                #             lot_arrived_times.append(delayed_time)
+                #
+                #         lot_arrived_times.append(delayed_time)
+            else:
+                if self.Kind is "silo":
+                    for obj in self.LotObjList:
+                        lotObj: objLot.Lot = obj
+                        delayed_time: datetime.datetime = lotObj.ReactOut + comUtility.Utility.SiloWait
+                        lot_arrived_times.append(delayed_time)
+
+            silo_delayed_time_min: datetime.datetime = min(lot_arrived_times)
+            self.setFstEventTime(runTime=silo_delayed_time_min, use_flag=True)
+
+
+    def setFstEventTime(self, runTime: datetime.datetime = None, use_flag: bool = False):
+        if not use_flag:
+            runTime = comUtility.Utility.runtime
+            self.FirstEventTime = runTime
+        else:
+            if self.FirstEventTime is not None:
+                if runTime is not None:
+                    self.FirstEventTime = runTime
+                    # if runTime <= self.FirstEventTime:
+                    #     self.FirstEventTime = runTime
+                else:
+                    if not self._waitFlag:
+                        self.FirstEventTime = runTime
+                    else:
+                        pass
+            else:
+                self.FirstEventTime = runTime
 
     # def assign_random_lpst(self):
     #     for obj in self.LotObjList:
@@ -462,9 +524,3 @@ class Warehouse:
 
         self.ProdScheduleRsltArr.append(reactorScheduleRslt)
         self.ProdScheduleRsltArr.append(baggingScheduleRslt)
-
-def test():
-    pass
-
-if __name__ == '__main__':
-    test()

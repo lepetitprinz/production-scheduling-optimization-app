@@ -33,6 +33,7 @@ class DataManager:
         # elif self._source == "file":
         #     self._setup_file_connection()
 
+
         # self._conMgr = dbConMgr.ConnectionManager()
         self._conMgr = dbConMgr.ConnectionManager()
         self._conMgr.LoadConInfo()
@@ -67,7 +68,7 @@ class DataManager:
 
     def SaveEngConfig(self):
         confArr = self._getEngConfDataArr()
-        self.UpdateEngConfHistory(dataArr=confArr, useTmpFlag=comUtility.Utility.TempTblUseFlag)
+        # self.UpdateEngConfHistory(dataArr=confArr, useTmpFlag=comUtility.Utility.TempTblUseFlag)
 
     def _getEngConfDataArr(self):
         # datasetId = comUtility.Utility.DataSetID
@@ -172,7 +173,7 @@ class DataManager:
         Send Production Schedule Hourly Result Array to DB.
         '''
         strTemplate: str = """ insert into TB_FS_QTY_HH_DATA(
-                                    FS_VRSN_ID, PLANT_NAME, LINE_NAME, PLAN_CODE, SALE_MAN, PRODUCT, CUSTOMER, 
+                                    FS_VRSN_ID, PLANT_NAME, LINE_NAME, PLAN_CODE, SALE_MAN, PRODUCT, CUSTOMER,
                                     LOT_NO, DATE_FROM, DATE_TO, DATE_FROM_TEXT, DATE_TO_TEXT, COLOR, DURATION, DELETE_KEY
                                )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15) """
 
@@ -203,7 +204,7 @@ class DataManager:
         Send Production Schedule Daily Result Array to DB.
         '''
         strTemplate: str = """ insert into TB_FS_QTY_DD_DATA(
-                                    FS_VRSN_ID, PLANT_NAME, LINE_NAME, MATRL_CD, MATRL_DESCR, PROD_DATE, DAILY_QTY, 
+                                    FS_VRSN_ID, PLANT_NAME, LINE_NAME, MATRL_CD, MATRL_DESCR, PROD_DATE, DAILY_QTY,
                                     DAILY_DURATION, DEMAND_TYPE, DELETE_KEY)
                                )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10)"""
 

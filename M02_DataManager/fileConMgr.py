@@ -17,7 +17,7 @@ class FileManager(object):
         self._find_csv_paths()
         self._reload_csv_batch()
 
-    def load_data(self, data_name: str):
+    def loadData(self, data_name: str):
         if data_name not in self.csv_data_dict.keys():
             raise KeyError(
                 f"data_name : {data_name} 은 File Connector 에서 검색되지 않았습니다."

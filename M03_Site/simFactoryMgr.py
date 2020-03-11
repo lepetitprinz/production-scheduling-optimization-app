@@ -46,11 +46,15 @@ class Factory:
         # Configuration 정보
         self._seqOptTimeLimit: int = 1
 
-    def SetupObject(self, dayStartTime: str, year: int, month: int, day: int, horizon_days: int, silo_qty: int, nof_silo: int = 1):
+    def SetupObject(self,
+                    dayStartTime: str, year: int, month: int, day: int, horizon_days: int,
+                    silo_qty: int, nof_silo: int = 1, silo_wait_hours: int = 0):
         self._utility.setDayStartTime(value=dayStartTime)
         self._utility.setDayStartDate(year=year, month=month, day=day)
         self._utility.setDayHorizon(days=horizon_days)
         self._utility.calcDayEndDate()
+
+        self._utility.setSiloWaitTime(hours=silo_wait_hours)
 
         self._startTime = self._utility.DayStartDate
         self._buildFactory(silo_qty=silo_qty, nof_silo=nof_silo)    # Factory 기본 Configuration 정보 Setting
@@ -159,9 +163,9 @@ class Factory:
         for obj in self.WhouseObjList:
             whObj: objWarehouse.Warehouse = obj
             if whObj.Id == "RM":
-                whObj.setFstEventTime(runTime=self._utility.DayStartDate, init_flag=True)
+                whObj.setFstEventTime(runTime=self._utility.DayStartDate, use_flag=True)
             else:
-                whObj.setFstEventTime(init_flag=True)
+                whObj.setFstEventTime(use_flag=True)
 
     def sendInitEvent(self):
         """공장 객체 초기화 정보를 DB에 전달하는 메서드"""

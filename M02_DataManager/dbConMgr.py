@@ -10,6 +10,9 @@ import enum
 import cx_Oracle
 from M06_Utility.comUtility import Utility
 
+from M06_Utility import comUtility
+
+
 class ConnectionManager(object):
     # 환경 설정
     os.environ["NLS_LANG"] = ".AL32UTF8"
@@ -189,8 +192,8 @@ class ConnectionManager(object):
 
     def _get_server_config(self):
         # server_config 폴더 경로 찾는 처리
-
         for directory, folder, filename in os.walk(Utility.project_dir):
+
             if 'server.conf' in filename:
                 server_conf: str = os.path.join(directory, 'server.conf')
                 return server_conf
@@ -240,7 +243,7 @@ class ConnectionManager(object):
                               , CUST_CD
                            FROM SCMUSER.TB_DP_QTY_DATA
                           WHERE 1=1
-                            AND DP_VRSN_ID = 'DP_202003_V01' 
+                            AND DP_VRSN_ID = 'DP_202003_V01'
                          ) MST
                   INNER JOIN (
                               SELECT CUST_CD
@@ -293,7 +296,7 @@ class ConnectionManager(object):
                       , 'GRADE_F' AS GRADE_TO
                       , 0 AS STOP_TIME
                       , 0 AS OG
-                   FROM DUAL  
+                   FROM DUAL
                   UNION ALL
                  SELECT 'GRADE_G' AS GRADE_FROM
                       , 'GRADE_G' AS GRADE_TO
@@ -317,7 +320,7 @@ class ConnectionManager(object):
                    INNER JOIN (
                                SELECT ITEM_CD
                                     , CAPA_QTY AS PROD_YIELD
-                                 FROM SCMUSER.TB_FP_CAPA_MST   
+                                 FROM SCMUSER.TB_FP_CAPA_MST
                               ) J01
                       ON MST.ITEM_CD = J01.ITEM_CD """
         return sql

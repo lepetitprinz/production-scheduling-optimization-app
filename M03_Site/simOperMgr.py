@@ -74,8 +74,10 @@ class Operation(object):
         for obj in self._factory.WhouseObjList:
             whObj: objWarehouse.Warehouse = obj
             if self.FromLoc == whObj.Kind:
-
-                self.inform_to(from_obj=whObj, runTime=runTime)
+                if whObj.Kind is "silo":
+                    pass
+                else:
+                    self.inform_to(from_obj=whObj, runTime=runTime)
 
     def inform_to(self, from_obj: objWarehouse.Warehouse, runTime: datetime.datetime, downFlag: bool = False):
         from_loc: objWarehouse.Warehouse = from_obj
@@ -84,7 +86,7 @@ class Operation(object):
                 from_loc.setFstEventTime(runTime=runTime)
         else:
             if downFlag:
-                from_loc.setFstEventTime(runTime=runTime, init_flag=True)
+                from_loc.setFstEventTime(runTime=runTime, use_flag=True)
             else:
                 if runTime < from_loc.FirstEventTime:
                     from_loc.setFstEventTime(runTime=runTime)
@@ -106,6 +108,11 @@ class Operation(object):
                 if assignWh != None:
                     print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() >> {(lotObj.Id, lotObj.Lpst, lotObj.ReactDuration, lotObj.PackDuration)}")
                     assignWh.lotArrive(from_loc=macObj, lot=lotObj)
+                    if self.Kind == "REACTOR":
+                        lotObj.ReactOut = comUtility.Utility.runtime
+                    else:
+                        lotObj.BaggingOut = comUtility.Utility.runtime
+                    assignWh.resetFstEventTime(arrival_flag=True)
                     self.inform_to_previous(runTime=macObj.EndTime)
                     macObj.lotLeave()
                 else:
