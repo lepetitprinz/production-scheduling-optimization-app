@@ -31,10 +31,10 @@ class Lot(object):
         self.Region: str = ""
 
         self.Duration: int = 0
-        self.PackDuration: datetime.timedelta = datetime.timedelta(hours=0)
-        self.PackDurationFloat: float = 0.0
-        self.ReactDuration: datetime.timedelta = datetime.timedelta(hours=0)
         self.ReactDurationFloat: float = 0.0
+        self.ReactDuration: datetime.timedelta = datetime.timedelta(hours=0)
+        self.PackDurationFloat: float = 0.0
+        self.PackDuration: datetime.timedelta = datetime.timedelta(hours=0)
 
         self.DueDate: datetime.datetime = None
         self.StartTimeMin: datetime.datetime = None

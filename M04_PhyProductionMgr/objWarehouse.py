@@ -33,6 +33,9 @@ class Warehouse:
         self._prodWheelHour:dict = {}
         self._seqOptTimeLimit: int = 0
 
+        # Production Scheduling 결과 저장
+        self.ProdScheduleRsltArr: list = []
+
     def setup_object(self, capacity: float = None):
         self._setCapacity(capacity=capacity)
 
@@ -67,8 +70,6 @@ class Warehouse:
         if self.ToLoc == "Sales":
             self.shipping()
 
-            # lot
-
         else:
 
             # 선택한 Lot에 대해 할당 가능한 Operation - Machine을 찾는 처리
@@ -88,6 +89,9 @@ class Warehouse:
 
     def _shipping(self, lot: objLot):
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
+
+        # Lot 출하 완료시 DB에 저장할 결과 추가 처리
+        self.SetProdScheduleRslt(lot=lot)
 
         self._removeLot(lot=lot, shipping_flag=True)
         self._updateCurrCapa(lot=lot, in_flag=False)
@@ -411,6 +415,53 @@ class Warehouse:
     def _chkBaggingOperTime(self, lot: objLot):
         pass
 
+    def SetProdScheduleRslt(self, lot):
+        lotOjb:objLot.Lot = lot
+
+        # Reactor 공정 추가
+        reactInStr = lotOjb.ReactIn.strftime("%Y-%m-%d %H:%M:%S")
+        reactOutStr = lotOjb.ReactOut.strftime("%Y-%m-%d %H:%M:%S")
+        reactorScheduleRslt = [
+                    'SENARIO_1',            # FS_VRSN_ID
+                    'GS Caltex',            # PLANT_NAME
+                    'REACTOR',              # LINE_NAME
+                    'Act['+lotOjb.Grade+']',# PLAN_CODE
+                    '',                     # SALE_MAN
+                    lotOjb.Grade,           # PRODUCT
+                    '',                     # CUSTOMER
+                    lotOjb.Id,              # LOT_NO
+                    lotOjb.ReactIn,         # DATE_FROM
+                    lotOjb.ReactOut,        # DATE_TO
+                    reactInStr,             # DATE_FROM_TEXT
+                    reactOutStr,            # DATE_TO_TEXT
+                    '',                     # COLOR
+                    lotOjb.ReactDuration,   # DURATION
+                    'Y'                     # DELETE_KEY
+                            ]
+
+        # Bagging 공정 추가
+        baggingInStr = lotOjb.BaggingIn.strftime("%Y-%m-%d %H:%M:%S")
+        baggingOutStr = lotOjb.BaggingOut.strftime("%Y-%m-%d %H:%M:%S")
+        baggingScheduleRslt = [
+                    'SENARIO_1',            # FS_VRSN_ID
+                    'GS Caltex',            # PLANT_NAME
+                    'BAGGING',              # LINE_NAME
+                    'Act['+lotOjb.Id+']',   # PLAN_CODE
+                    '',                     # SALE_MAN
+                    lotOjb.Grade,           # PRODUCT
+                    '',                     # CUSTOMER
+                    lotOjb.Id,              # LOT_NO
+                    lotOjb.BaggingIn,       # DATE_FROM
+                    lotOjb.BaggingOut,      # DATE_TO
+                    baggingInStr,           # DATE_FROM_TEXT
+                    baggingOutStr,          # DATE_TO_TEXT
+                    '',                     # COLOR
+                    lotOjb.PackDuration,    # DURATION
+                    'Y'                     # DELETE_KEY
+                            ]
+
+        self.ProdScheduleRsltArr.append(reactorScheduleRslt)
+        self.ProdScheduleRsltArr.append(baggingScheduleRslt)
 
 def test():
     pass

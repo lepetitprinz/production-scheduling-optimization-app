@@ -5,6 +5,7 @@ import datetime
 from M03_Site import simFactoryMgr
 from M02_DataManager import dbDataMgr
 from M03_Site import simFactoryMgr, simOperMgr
+from M04_PhyProductionMgr import objWarehouse
 from M05_ProductManager import objLot
 from M06_Utility import comUtility
 
@@ -15,6 +16,7 @@ class Simulator:
     def __init__(self):
         self._util = comUtility.Utility
         self.DataMgr: dbDataMgr.DataManager = None
+        self._whNgr: objWarehouse.Warehouse = None
         self._facObjList: list = []
 
     def SetupDbObject(self, year: int, month: int, day: int, day_start_time: str, horizon_days: int, silo_qty: int, nof_silo: int = 1):
@@ -82,7 +84,14 @@ class Simulator:
         self._facObjList.append(facObj)
 
     def SaveSimulData(self):
+        # self.DataMgr.SaveEngConfig()
+        prodScheduleRslt = []
 
-        self.DataMgr.SaveEngConfig()
+        if len(self._facObjList) == 1:
+            facObj: simFactoryMgr.Factory = self._facObjList[0]
+            for wh in facObj.WhouseObjList:
+                whObj:objWarehouse.Warehouse = wh
+                if whObj.Kind == 'FGI':
+                    prodScheduleRslt = whObj.ProdScheduleRsltArr
 
-        pass
+            self.DataMgr.SaveProdScheduleRslt(prodScheduleRslt=prodScheduleRslt)

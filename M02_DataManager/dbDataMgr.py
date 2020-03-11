@@ -161,6 +161,11 @@ class DataManager:
     # ============================================================================================================== #
     # Data -> DB Upload 모듈
     # ============================================================================================================== #
+
+    def SaveProdScheduleRslt(self, prodScheduleRslt:list):
+        prodScheduleArr = prodScheduleRslt
+        self.UpdateSchedHourRslt(schedHourRsltArr=prodScheduleArr)
+
     # Prduction Scheduling Result (Hourly)
     def UpdateSchedHourRslt(self, schedHourRsltArr: list):
         '''
@@ -224,12 +229,10 @@ class DataManager:
         return flag, errCode
 
         # Engine Configuration Histroy(HT_CONFIG) DB에 저장
-
     def UpdateEngConfHistory(self, engConfArr: list):
         strTemplate: str = """ insert into TB_FS_PS_CONFIG(
                                     DATASET_ID, SIMUL_NUM, CONFIG_NAME, CONFIG_VALUE, CREATE_DATE
                                 )values(:1, :2, :3, :4, sysdate) """
-
         flag = False
         errCnt = 0
         sqlDel = ""
