@@ -73,6 +73,8 @@ class Machine(object):
                 self.Lot.set_location(location=self)
                 self.BfLotGrade = lot.Grade
 
+                self.BfLotGrade = lot.Grade
+
         # Bagging의 machine의 경우 Grade Change Cost가 없음
         elif self.Oper.Kind == "BAGGING":
             self._setStartTime(startTime=comUtility.Utility.runtime)

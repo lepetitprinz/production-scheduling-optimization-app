@@ -6,15 +6,19 @@ import pandas as pd
 import time
 
 from M02_DataManager import dbConMgr, fileConMgr
+from M03_Site import simFactoryMgr
 from M06_Utility import comUtility
 
 class DataManager:
 
-    def __init__(self, source: str = "db"):
+    def __init__(self, source: str = "db", dmdMonth: int = None):
 
         # 기본 정보
         self._source: str = source
         self._conMgr = None
+
+        #
+        self.dmdMonth: int = dmdMonth
 
         # 쿼리 및 파일 Read 결과를 담을 Array 변수들을 선언
         self.dbDemand: pd.DataFrame = None
@@ -60,7 +64,19 @@ class DataManager:
             self._conMgr.LoadConInfo()
             
             # DB에서 Data Load 하는 처리
-            demand = self._conMgr.GetDbData(self._conMgr.GetDpQtyDataSql())
+            if self.dmdMonth is None:
+                demand = self._conMgr.GetDbData(self._conMgr.GetDpQtyDataSql())
+            else:
+                from_yyyy: str = comUtility.Utility.PlanStartDay[:4]
+                from_mm: str = "%02d" % self.dmdMonth
+                from_yyyymm: str = from_yyyy + from_mm
+                to_dd: int = comUtility.Utility.GetMonthMaxDay(year=int(from_yyyy), month=self.dmdMonth)[-1]
+                demand = self._conMgr.GetDbData(self._conMgr.GetDpQtyDataSql_Custom(from_yyyymm, from_yyyymm))
+
+                comUtility.Utility.setDayStartDate(year=int(from_yyyy), month=int(from_mm), day=1)
+                comUtility.Utility.setDayHorizon(days=to_dd)
+                comUtility.Utility.calcDayEndDate()
+
             prodMst = self._conMgr.GetDbData(self._conMgr.GetProdMstDataSql())
             prodWheel = self._conMgr.GetDbData(self._conMgr.GetProdWheelDataSql())
             prodYield = self._conMgr.GetDbData(self._conMgr.GetFpCapaMstDataSql())
@@ -331,6 +347,7 @@ class DataManager:
         totLen = len(schedHourRsltArr)
         flag = False
         errCnt = 0
+        # sqlDel= ""
         sqlDel= "delete from SCMUSER.TB_FS_QTY_HH_DATA where FS_VRSN_ID = '{}'".format(comUtility.Utility.FsVerId)
         errCode = 0
         while flag == False:
@@ -366,6 +383,7 @@ class DataManager:
         totLen = len(schedDailyRsltArr)
         flag = False
         errCnt = 0
+        # sqlDel = ""
         sqlDel= "delete from SCMUSER.TB_FS_QTY_DD_DATA where FS_VRSN_ID = '{}'".format(comUtility.Utility.FsVerId)
         errCode = 0
         while flag == False:

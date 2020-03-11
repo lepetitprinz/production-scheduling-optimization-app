@@ -19,8 +19,8 @@ class Simulator:
         self._whNgr: objWarehouse.Warehouse = None
         self._facObjList: list = []
 
-    def SetupDbObject(self, source: str, day_start_time: str):
-        self.DataMgr = dbDataMgr.DataManager(source=source)
+    def SetupDbObject(self, source: str, day_start_time: str, dmdMonth: int = None):
+        self.DataMgr = dbDataMgr.DataManager(source=source, dmdMonth=dmdMonth)
         engConfData = self.DataMgr.SetupEngConfData()
         self._util.setupObject(simul=self, engConfig=engConfData)
 
@@ -56,8 +56,20 @@ class Simulator:
         print("=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=")
 
         # Factory 인스턴스 세팅
-        self._create_new_factory(factory_id="GS_CALTEX", day_start_time=day_start_time, year=year, month=month, day=day, horizon_days=horizon_days, silo_qty=siloCapa, nof_silo=SiloQty, silo_wait_hours=silo_wait_hours)
-
+        if self.DataMgr.dmdMonth is not None:
+            self._create_new_factory(factory_id="GS_CALTEX", day_start_time=day_start_time,
+                                     year=comUtility.Utility.DayStartDate.year,
+                                     month=comUtility.Utility.DayStartDate.month,
+                                     day=comUtility.Utility.DayStartDate.day,
+                                     horizon_days=comUtility.Utility.DayHorizon.days,
+                                     silo_qty=comUtility.Utility.SiloCapa,
+                                     nof_silo=SiloQty, silo_wait_hours=int(silo_wait_hours))
+        else:
+            self._create_new_factory(factory_id="GS_CALTEX", day_start_time=day_start_time, year=year, month=month,
+                                     day=day,
+                                     horizon_days=comUtility.Utility.DayHorizon.days,
+                                     silo_qty=comUtility.Utility.SiloCapa,
+                                     nof_silo=SiloQty, silo_wait_hours=silo_wait_hours)
         flag = self.SetupObject()
 
     def SetupObject(self):
