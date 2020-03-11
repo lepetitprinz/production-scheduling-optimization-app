@@ -90,6 +90,8 @@ class Operation(object):
             else:
                 if runTime < from_loc.FirstEventTime:
                     from_loc.setFstEventTime(runTime=runTime)
+                elif runTime > from_loc.FirstEventTime:
+                    from_loc.setFstEventTime(runTime=runTime)
                 # if runTime <= from_loc.FirstEventTime:
                 #     from_loc.setFstEventTime(runTime=runTime)
             # if runTime <= from_loc.FirstEventTime:

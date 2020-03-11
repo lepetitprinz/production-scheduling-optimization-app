@@ -306,22 +306,24 @@ class ConnectionManager(object):
                    FROM DUAL """
         return sql
 
+        # Production Ton/hour Data
+
     def GetFpCapaMstDataSql(self):
         sql = """ SELECT MST.OPER
-                       , MST.GRADE
-                       , J01.PROD_YIELD
-                    FROM (
-                          SELECT ITEM_CD
-                               , ITEM_NM AS GRADE
-                               , CASE WHEN ITEM_TYPE_CD = 'P01' THEN 'package'
-                                     WHEN ITEM_TYPE_CD = 'P02' THEN 'reactor'
-                                  END AS OPER
-                            FROM SCMUSER.TB_CM_ITEM_MST
-                         ) MST
-                   INNER JOIN (
-                               SELECT ITEM_CD
-                                    , CAPA_QTY AS PROD_YIELD
-                                 FROM SCMUSER.TB_FP_CAPA_MST
-                              ) J01
-                      ON MST.ITEM_CD = J01.ITEM_CD """
+                        , MST.GRADE
+                        , J01.PROD_YIELD
+                     FROM (
+                           SELECT ITEM_CD
+                                , ITEM_NM AS GRADE
+                                , CASE WHEN ITEM_TYPE_CD LIKE '%P01%' THEN 'package'
+                                      WHEN ITEM_TYPE_CD LIKE '%P02%' THEN 'reactor'
+                                   END AS OPER
+                             FROM SCMUSER.TB_CM_ITEM_MST
+                          ) MST
+                    INNER JOIN (
+                                SELECT ITEM_CD
+                                     , CAPA_QTY AS PROD_YIELD
+                                  FROM SCMUSER.TB_FP_CAPA_MST
+                               ) J01
+                       ON MST.ITEM_CD = J01.ITEM_CD """
         return sql
