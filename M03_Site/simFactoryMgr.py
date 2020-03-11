@@ -54,7 +54,7 @@ class Factory:
         self._utility.setDayHorizon(days=horizon_days)
         self._utility.calcDayEndDate()
 
-        self._utility.setSiloWaitTime(hours=silo_wait_hours)
+        self._utility.setSiloWaitTime(hours=float(silo_wait_hours))
 
         self._startTime = self._utility.DayStartDate
         self._buildFactory(silo_qty=silo_qty, nof_silo=nof_silo)    # Factory 기본 Configuration 정보 Setting

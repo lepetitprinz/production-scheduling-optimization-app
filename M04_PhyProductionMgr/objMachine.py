@@ -113,14 +113,50 @@ class Machine(object):
             lotProcStartTime += timedelta(hours=gradeChangeCost)
             lotProcEndTime += timedelta(hours=gradeChangeCost)
 
+            # Reactor Grade Chagnge Cost 주말 제약 확인
+            reactorGradeChngWkdConst = comUtility.Utility.ReactorGradeChngWkdConst
+            if (reactorGradeChngWkdConst == True) and (gradeChangeCost > 12):
+                # reactor 공정 시작 시간이 토 ~ 일 사이면 작동 안함
+                if lotProcStartTime.weekday() == 5:
+                    chkUnavailableToMac = True
+                    macStopDay = lotProcStartTime.date() + timedelta(days=2)
+                    macStopEndTime = macStopDay.strftime("%Y-%m-%d %H:%M:%S")
+                    return chkUnavailableToMac, macStopEndTime
+                elif lotProcStartTime.weekday() == 6:
+                    chkUnavailableToMac = True
+                    macStopDay = lotProcStartTime.date() + timedelta(days=1)
+                    macStopEndTime = macStopDay.strftime("%Y-%m-%d %H:%M:%S")
+                    return chkUnavailableToMac, macStopEndTime
+                else:
+                    return chkUnavailableToMac
+
+            # Shutdown 제약 확인
+            shutDownPeriodConst = comUtility.Utility.ShutDownPeriodConst
+            if reactorGradeChngWkdConst == True:
+                shutDownStartTime = comUtility.Utility.ShutDownStartTime
+                shutDownEndTime = comUtility.Utility.ShutDownEndTime
+                macShutDown = (shutDownStartTime, shutDownEndTime)
+                chkOverlap = self._chkOverlapToMacStopPeriod(
+                                    from_to_tuple = macShutDown,
+                                    start_time = lotProcStartTime,
+                                    end_time = lotProcEndTime
+                                    )
+                if chkOverlap:
+                    chkUnavailableToMac = True
+                    macStopEndTime = datetime.datetime.strptime(shutDownEndTime, "%Y%m%d%H%M%S")
+                    comUtility.Utility.ShutDownPointYn = True
+                    return chkUnavailableToMac, macStopEndTime
+
         macStopEndTime: datetime.datetime = None
 
+        # 제약 조건 없을 경우 Machine 비가용 계획 확인
         if self._calendar is None:
             return chkUnavailableToMac
         for macStop in self._calendar.macStopSeq:
             chkOverlap: bool = self._chkOverlapToMacStopPeriod(
                 from_to_tuple=macStop,
-                start_time=lotProcStartTime, end_time=lotProcEndTime
+                start_time=lotProcStartTime,
+                end_time=lotProcEndTime
             )
             if chkOverlap:
                 chkUnavailableToMac = True

@@ -65,12 +65,22 @@ class Utility:
     OptTimeLimit = 1
 
     # Time Constraint Cofiguration
-    GradeChangeFinishConst: bool = False    # Configuration DB화 필요
-    GradeGroupChangeConst: bool = False     # Configuration DB화 필요
-    BaggingOperTimeConst: bool = False      # Configuration DB화 필요
+    GradeChangeFinishConst: bool = False
+    GradeGroupChangeConst: bool = False
+    BaggingOperTimeConst: bool = False
 
     BaggingLeadTimeConst: bool = False
     BaggingLeadTime: int = 0
+
+    ReactorGradeChngWkdConst: bool = False
+
+    # Shutdown Constraint
+    ShutDownPeriodConst: bool = False
+    ShutDownStartTime: str = ''
+    ShutDownEndTime: str = ''
+    ShutDownAfGrade: str = ''
+
+    ShutDownPointYn: bool = False
 
     @staticmethod
     def setupObject(simul: PE_Simulator, engConfig: pd.DataFrame):
@@ -109,8 +119,29 @@ class Utility:
         Utility.BaggingLeadTimeConst = baggingLeadTimeConst
         Utility.BaggingLeadTime = engConfDict['BAGGING_LOT_CHANGE_TIME_LT']
 
+        # Reactor Grade Chagnge Cost 주말 제약
+        reactorGradeChngWkdYn = engConfDict['REACTOR_TYPE_CHANGE_HOLIDAY_YN']
+        if reactorGradeChngWkdYn == "Y":
+            reactorGradeChngWkdConst = True
+        else:
+            reactorGradeChngWkdConst = False
+        Utility.ReactorGradeChngWkdConst = reactorGradeChngWkdConst
+
+        # Shutdown Constraint
+        shutDownPeriodYn = engConfDict['SHUTDOWN_PERIOD_YN']
+        if shutDownPeriodYn == "Y":
+            shutDownPeriodConst = True
+        else:
+            shutDownPeriodConst = False
+        Utility.ShutDownPeriodConst = shutDownPeriodConst
+        Utility.ShutDownStartTime = engConfDict['SHUTDOWN_START_DATE']
+        Utility.ShutDownEndTime = engConfDict['SHUTDOWN_END_DATE']
+        Utility.ShutDownAfGrade = engConfDict['SHUTDOWN_PROD_ITEM']
+
+
     @staticmethod
     def setSiloWaitTime(hours: float):
+        hours = float(hours)
         Utility.SiloWait = datetime.timedelta(hours=hours)
 
     @staticmethod

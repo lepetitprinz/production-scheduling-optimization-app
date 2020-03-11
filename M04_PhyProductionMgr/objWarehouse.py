@@ -33,7 +33,7 @@ class Warehouse:
         # Lot Sequence Optimization 관련
         self.BeforeLotList: list = []
         self._prodWheelHour:dict = {}
-        self._seqOptTimeLimit: int = 0
+        self._seqOptTimeLimit: int = 1
 
         # flags
         self._waitFlag: bool = False
@@ -306,6 +306,19 @@ class Warehouse:
         self.CurCapa = int(self.Capacity)
 
     def _pickAvailableLot(self, rule: str = "FIRST"):
+        # Reactor 공정 졔약
+        if self.Kind == 'RM':
+            if comUtility.Utility.ShutDownPointYn == True:
+                shutDownAfGrade = comUtility.Utility.ShutDownAfGrade
+                for lot in self.LotObjList:
+                    lotObj:objLot.Lot = lot
+                    if lotObj.Grade == shutDownAfGrade:
+                        return lotObj
+                # Shut Down 이후 우선순위 Grade 제품이 없는 경우
+                comUtility.Utility.ShutDownPointYn = False
+                first_lot :objLot.Lot = self.LotObjList[0]
+                return first_lot
+
         if rule == "FIRST":
             first_lot: objLot.Lot = self.LotObjList[0]
             return first_lot
