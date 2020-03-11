@@ -12,7 +12,7 @@ def run_simulator(source: str, day_start_time: str):
     print("\nSIMULATION END")
 
     # Simulation 가동 종료 후 Scheduling 결과 저장
-    # simul.SaveSimulData()
+    simul.SaveSimulData()
 
 
 if __name__ == '__main__':

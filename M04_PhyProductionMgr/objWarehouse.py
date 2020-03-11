@@ -33,7 +33,7 @@ class Warehouse:
         # Lot Sequence Optimization 관련
         self.BeforeLotList: list = []
         self._prodWheelHour:dict = {}
-        self._seqOptTimeLimit: int = 0
+        self._seqOptTimeLimit: int = 1
 
         # flags
         self._waitFlag: bool = False

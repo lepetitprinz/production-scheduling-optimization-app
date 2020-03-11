@@ -100,16 +100,32 @@ class Factory:
         rmWh.setup_resume_data(dfDmdLotSizing)
         rmWhLotList: list = rmWh.LotObjList
 
-        # Grade Sequence Optimization using SCOP algorithm
-        lotSeqOptList = rmWh.SeqOptByScop(lotObjList=rmWhLotList, dueUom='nan')
-        rmWh.truncate_lot_list()   # 기존 RM Warehouse에 있는 Lot List 삭제
+        lotSeqOptList: list = []
+        # NONE >> 기존방식
+        # MONTHLY >>
+        if self._utility.ProdCycle == "MONTHLY":
+            for month in [3, 4, 5, 6]:
+                tmpRmWhLotList: list = [lot for lot in rmWhLotList
+                                        if lot.DueDate.month == month]
+                if len(tmpRmWhLotList) == 0:
+                    continue
+                # Grade Sequence Optimization using SCOP algorithm
+                tmpLotSeqOptList = rmWh.SeqOptByScop(lotObjList=tmpRmWhLotList, dueUom='nan')
+                lotSeqOptList.extend(tmpLotSeqOptList)
+        else:
+            lotSeqOptList = rmWh.SeqOptByScop(lotObjList=rmWhLotList, dueUom='nan')
+        rmWh.truncate_lot_list()  # 기존 RM Warehouse에 있는 Lot List 삭제
 
         # RM warehouse에 최적화 한 lot Sequence 등록
         for obj in lotSeqOptList:
             lotObj: objLot.Lot = obj
+            rmWh._registerLotObj(lotObj=lotObj)
             # for Debugging
             # lotObj.reduce_duration(by=10)
-            rmWh._registerLotObj(lotObj=lotObj)
+            # rmWh._registerLotObj(lotObj=lotObj)
+
+
+
 
         # # Grade Sequence Optimization using SCOP algorithm
         # gradeSeqOpt = self.SeqOptByScop(dmdLotList=rmWhLotList)

@@ -17,7 +17,7 @@ class Utility:
     DayStartTime: str = "00:00:00"
     DayStartDate: datetime.datetime = None
     DayEndDate: datetime.datetime = None
-    DayHorizon: datetime.timedelta = datetime.timedelta(days=60)
+    DayHorizon: datetime.timedelta = datetime.timedelta(days=92)
     MonthMaxDays: dict = {}
     runtime: datetime.datetime = None
     DueDateUom: str = 'nan'     # 고정생산주기(납기기준): nan / mon / day
@@ -159,7 +159,8 @@ class Utility:
 
     @staticmethod
     def setDayHorizon(days: int):
-        Utility.DayHorizon = datetime.timedelta(days=days)
+        pass
+        # Utility.DayHorizon = datetime.timedelta(days=days)
 
     @staticmethod
     def set_runtime(runtime: datetime.datetime):

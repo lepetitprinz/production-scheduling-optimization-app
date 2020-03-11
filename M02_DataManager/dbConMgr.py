@@ -283,49 +283,7 @@ class ConnectionManager(object):
                        , OG_OCCUR_QTY AS OG
                     FROM SCMUSER.TB_FP_PROD_WHEEL_MST
                    WHERE 1=1
-                     AND PROD_WHEEL_GRP_CD = 'PROD1'
-                   UNION ALL
-                  SELECT 'GRADE_A' AS GRADE_FROM
-                       , 'GRADE_A' AS GRADE_TO
-                       , 0 AS STOP_TIME
-                       , 0 AS OG
-                    FROM DUAL
-                   UNION ALL
-                  SELECT 'GRADE_B' AS GRADE_FROM
-                       , 'GRADE_B' AS GRADE_TO
-                       , 0 AS STOP_TIME
-                       , 0 AS OG
-                   FROM DUAL
-                  UNION ALL
-                 SELECT 'GRADE_C' AS GRADE_FROM
-                      , 'GRADE_C' AS GRADE_TO
-                      , 0 AS STOP_TIME
-                      , 0 AS OG
-                   FROM DUAL
-                  UNION ALL
-                 SELECT 'GRADE_D' AS GRADE_FROM
-                      , 'GRADE_D' AS GRADE_TO
-                      , 0 AS STOP_TIME
-                      , 0 AS OG
-                   FROM DUAL
-                  UNION ALL
-                 SELECT 'GRADE_E' AS GRADE_FROM
-                      , 'GRADE_E' AS GRADE_TO
-                      , 0 AS STOP_TIME
-                      , 0 AS OG
-                   FROM DUAL
-                  UNION ALL
-                 SELECT 'GRADE_F' AS GRADE_FROM
-                      , 'GRADE_F' AS GRADE_TO
-                      , 0 AS STOP_TIME
-                      , 0 AS OG
-                   FROM DUAL
-                  UNION ALL
-                 SELECT 'GRADE_G' AS GRADE_FROM
-                      , 'GRADE_G' AS GRADE_TO
-                      , 0 AS STOP_TIME
-                      , 0 AS OG
-                   FROM DUAL """
+                     AND PROD_WHEEL_GRP_CD = 'PROD1'"""
         return sql
 
     # Production Ton/hour Data
@@ -404,4 +362,57 @@ class ConnectionManager(object):
     #                             FROM SCMUSER.TB_CM_CUST_MST
     #                          ) J01
     #                  ON MST.CUST_CD = J01.CUST_CD """
+    #     return sql
+
+
+    # def GetProdWheelDataSql(self):
+    #     sql = """ SELECT FROM_MATRL_CD AS GRADE_FROM
+    #                    , TO_MATRL_CD AS GRADE_TO
+    #                    , OP_STOP_TIME AS STOP_TIME
+    #                    , OG_OCCUR_QTY AS OG
+    #                 FROM SCMUSER.TB_FP_PROD_WHEEL_MST
+    #                WHERE 1=1
+    #                  AND PROD_WHEEL_GRP_CD = 'PROD1'
+    #                UNION ALL
+    #               SELECT 'GRADE_A' AS GRADE_FROM
+    #                    , 'GRADE_A' AS GRADE_TO
+    #                    , 0 AS STOP_TIME
+    #                    , 0 AS OG
+    #                 FROM DUAL
+    #                UNION ALL
+    #               SELECT 'GRADE_B' AS GRADE_FROM
+    #                    , 'GRADE_B' AS GRADE_TO
+    #                    , 0 AS STOP_TIME
+    #                    , 0 AS OG
+    #                FROM DUAL
+    #               UNION ALL
+    #              SELECT 'GRADE_C' AS GRADE_FROM
+    #                   , 'GRADE_C' AS GRADE_TO
+    #                   , 0 AS STOP_TIME
+    #                   , 0 AS OG
+    #                FROM DUAL
+    #               UNION ALL
+    #              SELECT 'GRADE_D' AS GRADE_FROM
+    #                   , 'GRADE_D' AS GRADE_TO
+    #                   , 0 AS STOP_TIME
+    #                   , 0 AS OG
+    #                FROM DUAL
+    #               UNION ALL
+    #              SELECT 'GRADE_E' AS GRADE_FROM
+    #                   , 'GRADE_E' AS GRADE_TO
+    #                   , 0 AS STOP_TIME
+    #                   , 0 AS OG
+    #                FROM DUAL
+    #               UNION ALL
+    #              SELECT 'GRADE_F' AS GRADE_FROM
+    #                   , 'GRADE_F' AS GRADE_TO
+    #                   , 0 AS STOP_TIME
+    #                   , 0 AS OG
+    #                FROM DUAL
+    #               UNION ALL
+    #              SELECT 'GRADE_G' AS GRADE_FROM
+    #                   , 'GRADE_G' AS GRADE_TO
+    #                   , 0 AS STOP_TIME
+    #                   , 0 AS OG
+    #                FROM DUAL """
     #     return sql
