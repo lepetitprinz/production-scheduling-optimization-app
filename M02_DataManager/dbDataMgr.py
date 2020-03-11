@@ -210,7 +210,7 @@ class DataManager:
         totLen = len(schedHourRsltArr)
         flag = False
         errCnt = 0
-        sqlDel= "delete from SCMUSER.TB_FS_QTY_HH_DATA"
+        sqlDel= "delete from SCMUSER.TB_FS_QTY_HH_DATA where FS_VRSN_ID = '{}'".format(comUtility.Utility.FsVerId)
         errCode = 0
         while flag == False:
             flag, errCode = self._conMgr.BatchQuery(sqlTemplate=strTemplate, dataArr=schedHourRsltArr, sqlDel=sqlDel)
@@ -245,7 +245,7 @@ class DataManager:
         totLen = len(schedDailyRsltArr)
         flag = False
         errCnt = 0
-        sqlDel= "delete from SCMUSER.TB_FS_QTY_DD_DATA"
+        sqlDel= "delete from SCMUSER.TB_FS_QTY_DD_DATA where FS_VRSN_ID = '{}'".format(comUtility.Utility.FsVerId)
         errCode = 0
         while flag == False:
             flag, errCode = self._conMgr.BatchQuery(sqlTemplate=strTemplate, dataArr=schedDailyRsltArr, sqlDel=sqlDel)
