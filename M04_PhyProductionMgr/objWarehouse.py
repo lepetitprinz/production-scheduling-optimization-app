@@ -84,6 +84,8 @@ class Warehouse:
                 # self.setFstEventTime()
                 if self.Kind is not "RM":
                     self.resetFstEventTime()
+                elif len(self.LotObjList) == 0:
+                    self.resetFstEventTime()
             elif len(available_machines) == 0:
                 # is_in_break, break_end_time = to_oper.are_machines_in_break(lot=least_lpst_lot)
                 # if len(is_in_break)
@@ -498,7 +500,7 @@ class Warehouse:
                     reactOutStr,            # DATE_TO_TEXT
                     '',                     # COLOR
                     lotOjb.ReactDuration.seconds,   # DURATION
-                    'Y'                     # DELETE_KEY
+                    lotOjb.Qty                     # DELETE_KEY
                             ]
 
         # Bagging 공정 추가
@@ -519,7 +521,7 @@ class Warehouse:
                     baggingOutStr,          # DATE_TO_TEXT
                     '',                     # COLOR
                     lotOjb.PackDuration.seconds,    # DURATION
-                    'Y'                     # DELETE_KEY
+                    lotOjb.Qty                     # DELETE_KEY
                             ]
 
         self.ProdScheduleRsltArr.append(reactorScheduleRslt)

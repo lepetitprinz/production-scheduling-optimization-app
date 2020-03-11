@@ -183,7 +183,7 @@ class DataManager:
 
         strTemplate: str = """ insert into SCMUSER.TB_FS_QTY_HH_DATA(
                                     FS_VRSN_ID, PLANT_NAME, LINE_NAME, PLAN_CODE, SALE_MAN, PRODUCT, CUSTOMER,
-                                    LOT_NO, DATE_FROM, DATE_TO, DATE_FROM_TEXT, DATE_TO_TEXT, COLOR, DURATION, DELETE_KEY
+                                    LOT_NO, DATE_FROM, DATE_TO, DATE_FROM_TEXT, DATE_TO_TEXT, COLOR, DURATION, QTY
                                )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15) """
 
         totLen = len(schedHourRsltArr)

@@ -19,8 +19,8 @@ class Simulator:
         self._whNgr: objWarehouse.Warehouse = None
         self._facObjList: list = []
 
-    def SetupDbObject(self, year: int, month: int, day: int, day_start_time: str, horizon_days: int, silo_qty: int, nof_silo: int = 1):
-        self.DataMgr = dbDataMgr.DataManager(source="db")
+    def SetupDbObject(self, source: str, year: int, month: int, day: int, day_start_time: str, horizon_days: int, silo_qty: int, nof_silo: int = 1, silo_wait_hours: int = 0):
+        self.DataMgr = dbDataMgr.DataManager(source=source)
         self.DataMgr.SetupObject()
         self.DataMgr.build_demand_max_days_by_month()
         self._util.setup_object(simul=self)
@@ -30,7 +30,7 @@ class Simulator:
         print("=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=")
 
         # Factory 인스턴스 세팅
-        self._create_new_factory(factory_id="GS_CALTEX", day_start_time=day_start_time, year=year, month=month, day=day, horizon_days=horizon_days, silo_qty=silo_qty, nof_silo=nof_silo)
+        self._create_new_factory(factory_id="GS_CALTEX", day_start_time=day_start_time, year=year, month=month, day=day, horizon_days=horizon_days, silo_qty=silo_qty, nof_silo=nof_silo, silo_wait_hours=silo_wait_hours)
 
         flag = self.SetupObject()
 
@@ -70,7 +70,7 @@ class Simulator:
     def _run_multi_factory(self):
         pass
 
-    def _create_new_factory(self, factory_id: str, day_start_time: str, year: int, month: int, day: int, horizon_days: int, silo_qty: int, nof_silo: int):
+    def _create_new_factory(self, factory_id: str, day_start_time: str, year: int, month: int, day: int, horizon_days: int, silo_qty: int, nof_silo: int, silo_wait_hours: int = 0):
         facObj: simFactoryMgr = simFactoryMgr.Factory(simul=self, facID=factory_id)
         facObj.SetupObject(
             dayStartTime=day_start_time,
@@ -80,7 +80,7 @@ class Simulator:
             horizon_days=horizon_days,
             silo_qty=silo_qty,
             nof_silo=nof_silo,
-            silo_wait_hours=0
+            silo_wait_hours=silo_wait_hours
         )
         self._facObjList.append(facObj)
 
