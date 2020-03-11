@@ -172,7 +172,7 @@ class DataManager:
         '''
         Send Production Schedule Hourly Result Array to DB.
         '''
-        strTemplate: str = """ insert into TB_FS_QTY_HH_DATA(
+        strTemplate: str = """ insert into SCMUSER.TB_FS_QTY_HH_DATA(
                                     FS_VRSN_ID, PLANT_NAME, LINE_NAME, PLAN_CODE, SALE_MAN, PRODUCT, CUSTOMER,
                                     LOT_NO, DATE_FROM, DATE_TO, DATE_FROM_TEXT, DATE_TO_TEXT, COLOR, DURATION, DELETE_KEY
                                )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15) """
@@ -180,7 +180,7 @@ class DataManager:
         totLen = len(schedHourRsltArr)
         flag = False
         errCnt = 0
-        sqlDel = ""
+        sqlDel= "delete from SCMUSER.TB_FS_QTY_HH_DATA"
         errCode = 0
         while flag == False:
             flag, errCode = self._conMgr.BatchQuery(sqlTemplate=strTemplate, dataArr=schedHourRsltArr, sqlDel=sqlDel)
@@ -203,7 +203,7 @@ class DataManager:
         '''
         Send Production Schedule Daily Result Array to DB.
         '''
-        strTemplate: str = """ insert into TB_FS_QTY_DD_DATA(
+        strTemplate: str = """ insert into SCMUSER.TB_FS_QTY_DD_DATA(
                                     FS_VRSN_ID, PLANT_NAME, LINE_NAME, MATRL_CD, MATRL_DESCR, PROD_DATE, DAILY_QTY,
                                     DAILY_DURATION, DEMAND_TYPE, DELETE_KEY)
                                )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10)"""
@@ -211,7 +211,7 @@ class DataManager:
         totLen = len(schedDailyRsltArr)
         flag = False
         errCnt = 0
-        sqlDel = ""
+        sqlDel= "delete from SCMUSER.TB_FS_QTY_DD_DATA"
         errCode = 0
         while flag == False:
             flag, errCode = self._conMgr.BatchQuery(sqlTemplate=strTemplate, dataArr=schedDailyRsltArr, sqlDel=sqlDel)
@@ -231,7 +231,7 @@ class DataManager:
 
         # Engine Configuration Histroy(HT_CONFIG) DB에 저장
     def UpdateEngConfHistory(self, engConfArr: list):
-        strTemplate: str = """ insert into TB_FS_PS_CONFIG(
+        strTemplate: str = """ insert into SCMUSER.TB_FS_PS_CONFIG(
                                     DATASET_ID, SIMUL_NUM, CONFIG_NAME, CONFIG_VALUE, CREATE_DATE
                                 )values(:1, :2, :3, :4, sysdate) """
         flag = False

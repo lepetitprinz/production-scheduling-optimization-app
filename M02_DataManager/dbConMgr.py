@@ -231,6 +231,7 @@ class ConnectionManager(object):
     # ================================================================================= #
     # DB에서 Data 불러오는 처리
     # ================================================================================= #
+    # 공급 계획 정보
     def GetDpQtyDataSql(self):
         sql = """ SELECT MST.YYYYMM
                        , MST.PRODUCT
@@ -306,6 +307,7 @@ class ConnectionManager(object):
                    FROM DUAL """
         return sql
 
+    # Production Ton/hour Data
     def GetFpCapaMstDataSql(self):
         sql = """ SELECT MST.OPER
                        , MST.GRADE
@@ -313,8 +315,8 @@ class ConnectionManager(object):
                     FROM (
                           SELECT ITEM_CD
                                , ITEM_NM AS GRADE
-                               , CASE WHEN ITEM_TYPE_CD = 'P01' THEN 'package'
-                                     WHEN ITEM_TYPE_CD = 'P02' THEN 'reactor'
+                               , CASE WHEN ITEM_TYPE_CD LIKE '%P01%' THEN 'package'
+                                     WHEN ITEM_TYPE_CD LIKE '%P02%' THEN 'reactor'
                                   END AS OPER
                             FROM SCMUSER.TB_CM_ITEM_MST
                          ) MST
@@ -324,4 +326,30 @@ class ConnectionManager(object):
                                  FROM SCMUSER.TB_FP_CAPA_MST
                               ) J01
                       ON MST.ITEM_CD = J01.ITEM_CD """
+        return sql
+
+    # 엔진 Configuration Data
+    def GetEngineConfDataSql(self):
+        sql = """ SELECT PARAM_CD
+                , PARAM_NM
+                , PARAM_VAL
+            FROM SCMUSER.TB_FS_ENGINE_CONF """
+
+        return sql
+
+    # Machine 비가용 계획 Data
+    def GetMacUnAvlTimeDataSql(self):
+        sql = """
+        SELECT CASE WHEN RES_CD = 'M1' THEN 'reactor'
+                    WHEN RES_CD IN ('P2', 'P7', 'P9') THEN 'bagging'
+                END AS OPER_ID
+             , RES_CD AS MAC_ID
+             , PLAN_FROM_YYMMDD || FROM_TIME_VAL AS FROM_TIME
+             , PLAN_TO_YYMMDD || TO_TIME_VAL AS TO_TIME
+        FROM SCMUSER.TB_FP_CAL_MST
+        WHERE 1=1
+        ORDER BY OPER_ID
+               , MAC_ID
+               , FROM_TIME
+                """
         return sql

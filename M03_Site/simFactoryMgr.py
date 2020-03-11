@@ -522,8 +522,8 @@ class Factory:
         # gradeSeqOpt = self.SeqOptByScop(dmdLotList=dmdLotList)
 
         # Grade Sequence 별로 Lot을 grouping해서 List 변환
-        lotSeqOptList = self.GetLotSeqOptList(gradeSeqOpt=gradeSeqOpt, dmdLotList=dmdLotList, dueUom="nan")
-
+        # lotSeqOptList = self.GetLotSeqOptList(gradeSeqOpt=gradeSeqOpt, dmdLotList=dmdLotList, dueUom="nan")
+        pass
 
     def _optLotSeqMon(self, dmdLotList:list):
         facStartDate = comUtility.Utility.DayStartDate  # 공장 시작시간

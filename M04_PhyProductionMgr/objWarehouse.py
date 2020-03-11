@@ -492,8 +492,8 @@ class Warehouse:
                     lotOjb.Grade,           # PRODUCT
                     '',                     # CUSTOMER
                     lotOjb.Id,              # LOT_NO
-                    lotOjb.ReactIn,         # DATE_FROM
-                    lotOjb.ReactOut,        # DATE_TO
+                    '',                     # DATE_FROM
+                    '',                     # DATE_TO
                     reactInStr,             # DATE_FROM_TEXT
                     reactOutStr,            # DATE_TO_TEXT
                     '',                     # COLOR
@@ -513,8 +513,8 @@ class Warehouse:
                     lotOjb.Grade,           # PRODUCT
                     '',                     # CUSTOMER
                     lotOjb.Id,              # LOT_NO
-                    lotOjb.BaggingIn,       # DATE_FROM
-                    lotOjb.BaggingOut,      # DATE_TO
+                    '',                     # DATE_FROM
+                    '',                     # DATE_TO
                     baggingInStr,           # DATE_FROM_TEXT
                     baggingOutStr,          # DATE_TO_TEXT
                     '',                     # COLOR
