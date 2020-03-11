@@ -27,7 +27,6 @@ class Machine(object):
 
         # CURRENT PROCESSING LOT
         self.Lot: objLot.Lot = None
-        self.BfLotGrade:str = None
         self.BfLotGrade: str = None
 
     def setup_object(self, status: str, uom: str = "", need_calendar: bool = False,
@@ -62,7 +61,6 @@ class Machine(object):
                 self.BfLotGrade = lot.Grade     # Grade Chnage Cost 계산 후 update
 
                 runTime = comUtility.Utility.runtime
-                startTime = runTime + timedelta(hours=gradeChangeCost)
                 startTime = runTime + timedelta(hours=int(gradeChangeCost))
                 self._setStartTime(startTime=startTime)
                 self.Lot.ReactIn = self.StartTime
