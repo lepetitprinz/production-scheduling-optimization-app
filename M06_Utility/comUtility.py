@@ -89,9 +89,9 @@ class Utility:
         # 계획 기간정보
         Utility.ProdCycle = engConfDict['PROD_PERIOD']
         Utility.PlanStartTime = engConfDict['PROD_START_DATE']
-        Utility.PlanStartDay = engConfDict['PROD_START_DATE'][:6]
+        Utility.PlanStartDay = Utility.PlanStartTime[:6]
         Utility.PlanEndTime = engConfDict['PROD_END_DATE']
-        Utility.PlanEndDay = engConfDict['PROD_END_DATE'][:6]
+        Utility.PlanEndDay = Utility.PlanEndTime[:6]
 
         # Machine Lot Size 정보
         Utility.MinLotSize = int(engConfDict['REACTOR_LOT_MIN'])
