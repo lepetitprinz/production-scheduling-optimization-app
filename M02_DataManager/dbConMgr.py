@@ -4,6 +4,7 @@
 # encoding: utf-8
 import sys
 import os
+import time
 import argparse
 import enum
 import cx_Oracle
@@ -122,6 +123,40 @@ class ConnectionManager(object):
         raise Exception(
             f"Make Me !! from {self.__class__.loadData}"
         )
+
+    def BatchQuery(self, sqlTemplate: str, dataArr: list, sqlDel: str=""):
+        con = None
+        errCode = ""
+        try:
+            errCnt = 0
+            while errCnt < 11:
+                con = self._getConnection()
+                if con != None:
+                    break
+                else:
+                    errCnt += 1
+                    time.sleep(1)
+
+            cur = con.cursor()
+            if len(sqlDel) > 0:
+                cur.execute(sqlDel, None or ())
+
+            cur.executemany(sqlTemplate, dataArr)
+
+            return True, errCode
+        except cx_Oracle.DatabaseError as e:
+            print(e)
+            error, = e.args
+            errCode = error.code
+            # print(sqlTemplate)
+            if len(dataArr) < 11:
+                print(dataArr)
+            else:
+                print(dataArr[0])
+        finally:
+            self._releaseConnection(con)
+
+        return False, errCode
 
     def _getConnection(self):
         try:
