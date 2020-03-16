@@ -73,8 +73,6 @@ class Machine(object):
                 self.Lot.set_location(location=self)
                 self.BfLotGrade = lot.Grade
 
-                self.BfLotGrade = lot.Grade
-
         # Bagging의 machine의 경우 Grade Change Cost가 없음
         elif self.Oper.Kind == "BAGGING":
             self._setStartTime(startTime=comUtility.Utility.runtime)
@@ -107,13 +105,16 @@ class Machine(object):
 
         # Reactor 공정의 경우 Grade Change Cost를 반영
         if self.Oper.Kind == 'REACTOR':
+            if self.BfLotGrade is None:
+                self.BfLotGrade = lot.Grade
+
             bfLotGrade = self.BfLotGrade
             currLotGrade = lot.Grade
             gradeChangeCost = comUtility.Utility.ProdWheelHour[(bfLotGrade, currLotGrade)]
 
             # Lot이 Machine에 할당되는 시간에 Grade Chage Cost 반영
-            lotProcStartTime += timedelta(hours=gradeChangeCost)
-            lotProcEndTime += timedelta(hours=gradeChangeCost)
+            lotProcStartTime += timedelta(hours=int(gradeChangeCost))
+            lotProcEndTime += timedelta(hours=int(gradeChangeCost))
 
             # Reactor Grade Chagnge Cost 주말 제약 확인
             reactorGradeChngWkdConst = comUtility.Utility.ReactorGradeChngWkdConst
@@ -153,7 +154,7 @@ class Machine(object):
 
         # 제약 조건 없을 경우 Machine 비가용 계획 확인
         if self._calendar is None:
-            return chkUnavailableToMac
+            return chkUnavailableToMac, macStopEndTime
         for macStop in self._calendar.macStopSeq:
             chkOverlap: bool = self._chkOverlapToMacStopPeriod(
                 from_to_tuple=macStop,

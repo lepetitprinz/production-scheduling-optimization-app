@@ -134,8 +134,8 @@ class Utility:
         else:
             shutDownPeriodConst = False
         Utility.ShutDownPeriodConst = shutDownPeriodConst
-        Utility.ShutDownStartTime = engConfDict['SHUTDOWN_START_DATE']
-        Utility.ShutDownEndTime = engConfDict['SHUTDOWN_END_DATE']
+        Utility.ShutDownStartTime = datetime.datetime.strptime(engConfDict['SHUTDOWN_START_DATE'], "%Y%m%d")
+        Utility.ShutDownEndTime = datetime.datetime.strptime(engConfDict['SHUTDOWN_END_DATE'], "%Y%m%d")
         Utility.ShutDownAfGrade = engConfDict['SHUTDOWN_PROD_ITEM']
 
 
