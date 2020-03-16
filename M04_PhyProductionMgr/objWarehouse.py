@@ -287,7 +287,7 @@ class Warehouse:
         # Silo -> Bagging 전송 유예 처리 반영
         FirstEventTime = comUtility.Utility.runtime
         if self.Kind == "silo":
-            if comUtility.Utility.SiloWait.seconds > 0:
+            if comUtility.Utility.BaggingLeadTimeConst:
                 self._waitFlag = True
             FirstEventTime = comUtility.Utility.runtime + comUtility.Utility.SiloWait
         if self.FirstEventTime is None:

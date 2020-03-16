@@ -69,7 +69,7 @@ class Simulator:
                                      day=day,
                                      horizon_days=comUtility.Utility.DayHorizon.days,
                                      silo_qty=comUtility.Utility.SiloCapa,
-                                     nof_silo=SiloQty, silo_wait_hours=silo_wait_hours)
+                                     nof_silo=SiloQty, silo_wait_hours=int(silo_wait_hours))
         flag = self.SetupObject()
 
     def SetupObject(self):
