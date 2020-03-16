@@ -97,7 +97,7 @@ class Factory:
 
         # Lot Sizing
         dfDmdLotSizing = self._setDmdProdLotSizing(demand)
-        rmWh.setup_resume_data(dfDmdLotSizing)
+        rmWh.setupResumeData(dfDmdLotSizing)
         rmWhLotList: list = rmWh.LotObjList
 
         lotSeqOptList: list = []
@@ -114,7 +114,7 @@ class Factory:
                 lotSeqOptList.extend(tmpLotSeqOptList)
         else:
             lotSeqOptList = rmWh.SeqOptByScop(lotObjList=rmWhLotList, dueUom='nan')
-        rmWh.truncate_lot_list()  # 기존 RM Warehouse에 있는 Lot List 삭제
+        rmWh.RemoveLotList()  # 기존 RM Warehouse에 있는 Lot List 삭제
 
         # RM warehouse에 최적화 한 lot Sequence 등록
         for obj in lotSeqOptList:
@@ -160,17 +160,17 @@ class Factory:
         # hopper: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="HOPPER", kind="hopper", return_flag=True)
         fgi: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="FGI", kind="FGI", capacity=43000, return_flag=True)
 
-        rm.set_to_location(to_loc=reactor.Id)
+        rm.setToLoc(to_loc=reactor.Id)
         reactor.SetFromLocs(from_locs=[rm])
         reactor.SetFromLoc(from_loc=rm.Kind)
         reactor.SetToLoc(to_loc=silos[0].Kind)
         for silo in silos:
-            silo.set_to_location(to_loc=bagging.Id)
+            silo.setToLoc(to_loc=bagging.Id)
         # hopper.set_to_location(to_loc=fgi.Id)
         bagging.SetFromLocs(from_locs=silos)
         bagging.SetFromLoc(from_loc=silos[0].Kind)
         bagging.SetToLoc(to_loc=fgi.Id)
-        fgi.set_to_location(to_loc="Sales")     # Ternminal Status
+        fgi.setToLoc(to_loc="Sales")     # Ternminal Status
 
     def _base_first_event_time(self):
         for obj in self.OperList:
@@ -1091,7 +1091,7 @@ class Factory:
     def _register_new_warehouse(self, wh_id: str, kind: str, capacity: float = None, return_flag: bool = False):
 
         whObj: objWarehouse = objWarehouse.Warehouse(factory=self, whId=wh_id, kind=kind)
-        whObj.setup_object(capacity)
+        whObj.setupObject(capacity)
         self.WhouseObjList.append(whObj)
 
         if return_flag:

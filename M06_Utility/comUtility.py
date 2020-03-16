@@ -53,7 +53,9 @@ class Utility:
     SiloCapa: int = 4000
     SiloQty:int = 10
 
-    # Constraint 정보
+    # =============== #
+    # Constraint 정보 #
+    # =============== #
     AfterSdGrade: str = ""
 
     # Production Wheel 관련
@@ -98,7 +100,7 @@ class Utility:
         Utility.MaxLotSize = int(engConfDict['REACTOR_LOT_MAX'])
 
         # Shutdown 처리
-        # Utility.AfterSdGrade = engConfDict['PROD_ITEM_AFTER_SHUTDOWN']
+        Utility.AfterSdGrade = engConfDict['PROD_ITEM_AFTER_SHUTDOWN']
 
         # Time Constraint
         baggingLeadTimeYn = engConfDict['BAGGING_LOT_CHANGE_TIME_LT_YN']
