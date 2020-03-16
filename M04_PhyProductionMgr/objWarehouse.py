@@ -310,12 +310,16 @@ class Warehouse:
 
     # Warehouse에 있는 Lot List에서 필요한 lot을 가져오는 처리
     def _pickAvailableLot(self):
+        # Shut Down Constraint 반영 여부 체크
         if self.ShutDownFlag == True:
             afterShutdownGrade = comUtility.Utility.AfterSdGrade    # Shutdown 후 지정한 Grade
-            sdReorderedLotList = self._getSdReorderedLotList(grade=afterShutdownGrade)
+
+            # Shut Down 후 특정 Grade 우선 생산 조건 반영을 위한 setting
+            sdReorderedLotList = self._getSdReorderedLotList(grade=afterShutdownGrade)  # Lot List Reordering
             self.LotObjList = sdReorderedLotList    # Warehouse의 Lot List Update
             self.ShutDownFlag = False               # Shutdown Flag 초기화
             reorderedLotObj: objLot.Lot = self.LotObjList[0]
+
             return reorderedLotObj
 
         else:
