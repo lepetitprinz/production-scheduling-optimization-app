@@ -2,15 +2,10 @@
 
 import datetime
 
-from M03_Site import simFactoryMgr
 from M02_DataManager import dbDataMgr
 from M03_Site import simFactoryMgr, simOperMgr
-from M04_PhyProductionMgr import objWarehouse
-from M05_ProductManager import objLot
+from M04_PhyProductionMgr import objWarehouse, objMachine
 from M06_Utility import comUtility
-
-import numpy as np
-from itertools import permutations
 
 class Simulator:
     def __init__(self):
@@ -125,13 +120,30 @@ class Simulator:
 
     def SaveSimulData(self):
         # self.DataMgr.SaveEngConfig()
-        prodScheduleRslt = []
+        shortageLotObjList = []
 
         if len(self._facObjList) == 1:
             facObj: simFactoryMgr.Factory = self._facObjList[0]
             for wh in facObj.WhouseObjList:
                 whObj:objWarehouse.Warehouse = wh
+                # 최종 생산물 데이터 저장
                 if whObj.Kind == 'FGI':
                     prodScheduleRslt = whObj.ProdScheduleRsltArr
+                    self.DataMgr.SaveProdScheduleRslt(prodScheduleRslt=prodScheduleRslt)
 
-            self.DataMgr.SaveProdScheduleRslt(prodScheduleRslt=prodScheduleRslt)
+                if whObj.Kind == 'RM' or whObj.Kind == 'silo':
+                    shortageLotObjList.extend(whObj.LotObjList)
+
+            for oper in facObj.OperList:
+                operObj:simOperMgr.Operation = oper
+                if operObj.Kind == 'REACTOR':
+                    macObj: objMachine.Machine = operObj.MacObjList[0]
+                    if macObj.Lot != None:
+                        shortageLotObjList.append(macObj.Lot)
+                else:
+                    for mac in operObj.MacObjList:
+                        macObj:objMachine.Machine = mac
+                        if macObj.Lot != None:
+                            shortageLotObjList.append(macObj.Lot)
+
+            self.DataMgr.SaveShortageRslt(shortageLotList=shortageLotObjList)

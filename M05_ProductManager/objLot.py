@@ -48,6 +48,7 @@ class Lot(object):
         self.Qty: float = 0.0
 
         self.Location: object = loc
+        self.CurrLoc: str = ''
         self.ToLoc: str = ''
 
         # Silo 관련 속성
@@ -74,8 +75,9 @@ class Lot(object):
         self.StartTimeMax = self.DueDate - datetime.timedelta(hours=self.Duration)
         self.StartTimeMin = self.DueDate.replace(day=1, hour=8, minute=0, second=0)
 
-    def set_location(self, location: str):
+    def set_location(self, location: str, currLoc: str):
         self.Location = location
+        self.CurrLoc = currLoc
 
     def set_attr(self, attr: str, value: object):
         if not self._does_attr_exist(attr=attr):

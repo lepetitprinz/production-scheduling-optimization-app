@@ -45,7 +45,7 @@ class Warehouse:
         self.ProdScheduleRsltArr: list = []
         self.BagScheduleRsltArr: list = []
 
-    def setup_object(self, capacity: float = None):
+    def setupObject(self, capacity: float = None):
         self._fsVerId = comUtility.Utility.FsVerId
 
         self._setCapacity(capacity=capacity)
@@ -57,7 +57,7 @@ class Warehouse:
 
         self._prodWheelHour = comUtility.Utility.ProdWheelHour
 
-    def setup_resume_data(self, lotObjArr: pd.DataFrame):
+    def setupResumeData(self, lotObjArr: pd.DataFrame):
         for idx, row in lotObjArr.iterrows():
             print(row)
             prodId: str = row['product'][:row['product'].find("_", row['product'].find("_") + 1)]
@@ -71,7 +71,7 @@ class Warehouse:
             # lotObj: objLot = obj
             # self._register_lot_obj(lot_obj=lotObj)
 
-    def set_to_location(self, to_loc: object):
+    def setToLoc(self, to_loc: object):
         self.ToLoc = to_loc
 
     def SyncRunningTime(self):
@@ -79,7 +79,7 @@ class Warehouse:
 
         # 최종 생산완료 된 경우 출하 처리
         if self.ToLoc == "Sales":
-            self.shipping()
+            self.Shipping()
             self.resetFstEventTime()
 
         else:
@@ -87,7 +87,7 @@ class Warehouse:
             # 선택한 Lot에 대해 할당 가능한 Operation - Machine을 찾는 처리
             to_oper, available_machines = self._findAvailableNextOper(lot=lotObj)
             if len(available_machines) > 0:
-                self.lot_leave(to_loc=to_oper, lot=lotObj)
+                self.lotLeave(to_loc=to_oper, lot=lotObj)
                 # self.setFstEventTime()
                 if self.Kind is not "RM":
                     self.resetFstEventTime()
@@ -116,11 +116,11 @@ class Warehouse:
 
         print(f"\t\t{self.__class__.__name__}({self.Id}).shipping() >> {lot}")
 
-    def shipping(self):
+    def Shipping(self):
         for lot in self.LotObjList:
             self._shipping(lot=lot)
 
-    def lot_leave(self, to_loc: simOperMgr, lot: objLot):
+    def lotLeave(self, to_loc: simOperMgr, lot: objLot):
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
         current_time: datetime.datetime = comUtility.Utility.DayStartDate
 
@@ -308,10 +308,43 @@ class Warehouse:
     def resetCurCapa(self):
         self.CurCapa = int(self.Capacity)
 
-    def _pickAvailableLot(self, rule: str = "FIRST"):
-        if rule == "FIRST":
-            first_lot: objLot.Lot = self.LotObjList[0]
-            return first_lot
+    # Warehouse에 있는 Lot List에서 필요한 lot을 가져오는 처리
+    def _pickAvailableLot(self):
+        # Shut Down Constraint 반영 여부 체크
+        if self.ShutDownFlag == True:
+            afterShutdownGrade = comUtility.Utility.AfterSdGrade    # Shutdown 후 지정한 Grade
+
+            # Shut Down 후 특정 Grade 우선 생산 조건 반영을 위한 setting
+            sdReorderedLotList = self._getSdReorderedLotList(grade=afterShutdownGrade)  # Lot List Reordering
+            self.LotObjList = sdReorderedLotList    # Warehouse의 Lot List Update
+            self.ShutDownFlag = False               # Shutdown Flag 초기화
+            reorderedLotObj: objLot.Lot = self.LotObjList[0]
+
+            return reorderedLotObj
+
+        else:
+            firstLotObj: objLot.Lot = self.LotObjList[0]
+            return firstLotObj
+
+    # Shut Down 후 특정 Grade 제품을 먼저 생산하기 위해 Lot List 순서를 reorder 하는 처리
+    def _getSdReorderedLotList(self, grade:str):
+        whLotList = self.LotObjList.copy()
+        GradeLotList = []
+        exceptGradeLotList = []
+        reorderedLotList = []
+
+        for lot in whLotList:
+            lotObj:objLot.Lot = lot
+            if lotObj.Grade == grade:
+                GradeLotList.append(lotObj)
+            else:
+                exceptGradeLotList.append(lotObj)
+
+        # Grade Lot - 나머지 Lot 순서로 재배열
+        reorderedLotList.extend(GradeLotList)
+        reorderedLotList.extend(exceptGradeLotList)
+
+        return reorderedLotList
 
     def _updateCurrCapa(self, lot: objLot, in_flag: bool):
         rslt: float = 0.0
@@ -341,7 +374,7 @@ class Warehouse:
         #             rsltOper = operObj
         #             rsltMachines = available_machines
 
-    def truncate_lot_list(self):
+    def RemoveLotList(self):
         self.LotObjList.clear()
         self._factory._lot_obj_list.clear()
 
@@ -392,7 +425,7 @@ class Warehouse:
                 "Lot 객체가 아닌것을 Lot 객체 리스트에 Append 하려 하고 있습니다."
             )
         lotObj: objLot.Lot = lotObj
-        lotObj.set_location(self)
+        lotObj.set_location(self, self.Id)
         self.LotObjList.append(lotObj)
         self._factory._register_lot_to(lot_obj=lotObj, to="self")
 
