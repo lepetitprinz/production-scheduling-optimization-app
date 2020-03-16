@@ -328,10 +328,11 @@ class ConnectionManager(object):
              , PLAN_TO_YYMMDD || TO_TIME_VAL AS TO_TIME
         FROM SCMUSER.TB_FP_CAL_MST
         WHERE 1=1
+          AND PLAN_FROM_YYMMDD BETWEEN '{}' AND '{}'
         ORDER BY OPER_ID
                , MAC_ID
                , FROM_TIME
-                """
+                """.format(Utility.PlanStartTime, Utility.PlanEndTime)
         return sql
 
     def GetProdMstDataSql(self):

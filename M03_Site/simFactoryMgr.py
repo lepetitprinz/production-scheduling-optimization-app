@@ -124,9 +124,6 @@ class Factory:
             # lotObj.reduce_duration(by=10)
             # rmWh._registerLotObj(lotObj=lotObj)
 
-
-
-
         # # Grade Sequence Optimization using SCOP algorithm
         # gradeSeqOpt = self.SeqOptByScop(dmdLotList=rmWhLotList)
         #

@@ -421,7 +421,7 @@ class Warehouse:
                 "Lot 객체가 아닌것을 Lot 객체 리스트에 Append 하려 하고 있습니다."
             )
         lotObj: objLot.Lot = lotObj
-        lotObj.set_location(self)
+        lotObj.set_location(self, self.Id)
         self.LotObjList.append(lotObj)
         self._factory._register_lot_to(lot_obj=lotObj, to="self")
 

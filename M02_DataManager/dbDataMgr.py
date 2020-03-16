@@ -7,6 +7,7 @@ import time
 
 from M02_DataManager import dbConMgr, fileConMgr
 from M03_Site import simFactoryMgr
+from M05_ProductManager import objLot
 from M06_Utility import comUtility
 
 class DataManager:
@@ -18,6 +19,7 @@ class DataManager:
         self._conMgr = None
 
         #
+        self._fsVerId: str = ''
         self.dmdMonth: int = dmdMonth
 
         # 쿼리 및 파일 Read 결과를 담을 Array 변수들을 선언
@@ -30,7 +32,8 @@ class DataManager:
         self.dbEngConf: pd.DataFrame = None  # Engine Configuration 정보
         self.dbMacUnAvlTime: pd.DataFrame = None
 
-        # Dictionary 변수 선언
+        # Dictionary
+        self._dmdToQtyDict: dict = {}
         self._prodYieldDict: dict = {}
         self._dict_days_by_month: dict = {}
         self._prodToYieldDict: dict = {}
@@ -89,7 +92,6 @@ class DataManager:
             prodMstColName = ['prodCode', 'prodName']
             prodWheelColName = ['grade_from', 'grade_to', 'hour', 'og']
             prodYieldColName = ['oper', 'prodCode', 'grade', 'prod_yield']
-
             macUnAvlColName = ['operId', 'macId', 'fromTime', 'toTIme']
             # engConfigColName = ['paramCode', 'paramName', 'paramVal']
 
@@ -97,7 +99,6 @@ class DataManager:
             self.dbProdMst = pd.DataFrame(prodMst, columns=prodMstColName)
             self.dbProdWheel = pd.DataFrame(prodWheel, columns=prodWheelColName)
             self.dbProdYield = pd.DataFrame(prodYield, columns=prodYieldColName)
-
             self.dbMacUnAvlTime =  pd.DataFrame(macUnAvlTime, columns=macUnAvlColName)
 
             # self.dbEngConf = pd.DataFrame(engConfig, columns=engConfigColName)
@@ -108,8 +109,11 @@ class DataManager:
 
         # self._preprocessing()
         self._getProdMstDict()
+        self._getDmdQtyDict()
         self._getProdYieldDict()
 
+        self._fsVerId = comUtility.Utility.FsVerId
+        comUtility.Utility.DmdQtyDict = self._dmdToQtyDict.copy()
         comUtility.Utility.ProdWheelDf = self.dbProdWheel.copy()
         # comUtility.Utility.SetRootPath(rootPath=self._conMgr.RootPath)
         # comUtility.Utility.SetConfPath(confPath=self._conMgr.conf_path)
@@ -118,22 +122,20 @@ class DataManager:
         self._conMgr.CloseConnection()
         self.__init__()
 
-    def SaveEngConfig(self):
-        confArr = self._getEngConfDataArr()
+    # def SaveEngConfig(self):
+    #     confArr = self._getEngConfDataArr()
         # self.UpdateEngConfHistory(dataArr=confArr, useTmpFlag=comUtility.Utility.TempTblUseFlag)
 
-    def _getEngConfDataArr(self):
-        # datasetId = comUtility.Utility.DataSetID
-        # simulNum = comUtility.Utility.SimulNumber
-        confHdr = ("PLAN_HORIZON", "PLAN_START_TIME", "HISTORY_SAVE_YN", "UOM_HORIZON", "ORP_DMD_LEVELING",
-                   "ENGINE_MODE", "ORP_VER", "AI_MOD_YN", "EVENT_LEVEL", "LOG_LEVEL", "ORP_CONFIRM_PLAN_YN")
-        rslt = []
-
-        for i in range(len(self.dbEngConfArr)):
-            rslt.append((confHdr[i], str(self.dbEngConfArr[i])))
-            # rslt.append((datasetId, simulNum, confHdr[i], str(self.dbEngConfArr[i])))
-
-        return rslt
+    # def _getEngConfDataArr(self):
+    #     confHdr = ("PLAN_HORIZON", "PLAN_START_TIME", "HISTORY_SAVE_YN", "UOM_HORIZON", "ORP_DMD_LEVELING",
+    #                "ENGINE_MODE", "ORP_VER", "AI_MOD_YN", "EVENT_LEVEL", "LOG_LEVEL", "ORP_CONFIRM_PLAN_YN")
+    #     rslt = []
+    #
+    #     for i in range(len(self.dbEngConfArr)):
+    #         rslt.append((confHdr[i], str(self.dbEngConfArr[i])))
+    #         # rslt.append((datasetId, simulNum, confHdr[i], str(self.dbEngConfArr[i])))
+    #
+    #     return rslt
 
     def build_demand_max_days_by_month(self):
         yyyy_mm_list: list = []
@@ -157,8 +159,16 @@ class DataManager:
     def _get_dict_prod_yield(self):
         return self._prodYieldDict
 
+    # ================================================================================================ #
+    # Data Dictionary 만드는 처리
+    # ================================================================================================ #
+    def _getDmdQtyDict(self):
+        dmdToQtyDict = {}
+        for idx, row in self.dbDemand.iterrows():
+            dmdToQtyDict[(row['yyyymm'], row['prodCode'])] = row['qty']
+
     def _getProdYieldDict(self):
-        self._prodYieldDict: dict = {}
+
         prodToYieldDict = {}
         for idx, row in self.dbProdYield.iterrows():
             if row['oper'] not in self._prodYieldDict.keys():
@@ -184,49 +194,8 @@ class DataManager:
         self._prodMstDict = prodMstDict
         comUtility.Utility.ProdMstDict = prodMstDict
 
-    def _preprocessing(self):
-        # Changing dtypes
-        self._change_column_dtype(df_name="demand", col_name="yyyymm", dtype="str")
-        self._change_column_dtype(df_name="demand", col_name="qty", dtype="float")
-
-    def _change_column_dtype(self, df_name: str, col_name: str, dtype: str):
-        if not self._chk_column_name(column_name=col_name, df_name=df_name):
-            raise KeyError(
-                f"데이터 프레임 {df_name} 에는 칼럼 [{col_name}] 가 존재하지 않습니다."
-            )
-        df: pd.DataFrame = self._get_attr(df_name)
-        df[col_name] = df[col_name].astype(dtype)
-
-    def _chk_column_name(self, column_name: str, df_name: str = "_df"):
-        does_exists: bool = False
-        if not self._check_is_df(df_name=df_name):
-            return does_exists
-        df: pd.DataFrame = self._get_attr(attr=df_name)
-        if column_name in df.columns:
-            does_exists = True
-        return does_exists
-
-    def _check_is_df(self, df_name: str):
-        is_df: bool = False
-        if not self._chk_exists(attr=df_name):
-            return is_df
-        attr = self._get_attr(attr=df_name)
-        if type(attr) is pd.DataFrame:
-            is_df = True
-        return is_df
-
-    def _get_attr(self, attr: str):
-        attr_obj = None
-        if self._chk_exists(attr=attr):
-            attr_obj = self.__getattribute__(attr)
-        return attr_obj
-
-    def _chk_exists(self, attr: str):
-        existence: bool = attr in self.__dict__.keys()
-        return existence
-
     # ============================================================================================================== #
-    # Data -> DB Upload 모듈
+    # Data -> DB Upload Module
     # ============================================================================================================== #
 
     def SaveProdScheduleRslt(self, prodScheduleRslt:list):
@@ -336,9 +305,6 @@ class DataManager:
         Send Production Schedule Hourly Result Array to DB.
         '''
 
-        # self._conMgr = dbConMgr.ConnectionManager()
-        # self._conMgr.LoadConInfo()
-
         strTemplate: str = """ insert into SCMUSER.TB_FS_QTY_HH_DATA(
                                     FS_VRSN_ID, PLANT_NAME, LINE_NAME, PLAN_CODE, SALE_MAN, PRODUCT, CUSTOMER,
                                     LOT_NO, DATE_FROM, DATE_TO, DATE_FROM_TEXT, DATE_TO_TEXT, COLOR, DURATION, QTY
@@ -372,9 +338,6 @@ class DataManager:
         Send Production Schedule Daily Result Array to DB.
         '''
 
-        # self._conMgr = dbConMgr.ConnectionManager()
-        # self._conMgr.LoadConInfo()
-
         strTemplate: str = """ insert into SCMUSER.TB_FS_QTY_DD_DATA(
                                     FS_VRSN_ID, PLANT_NAME, LINE_NAME, MATRL_CD, MATRL_DESCR, 
                                     PROD_DATE, DAILY_QTY, DAILY_DURATION, DEMAND_TYPE)
@@ -383,7 +346,6 @@ class DataManager:
         totLen = len(schedDailyRsltArr)
         flag = False
         errCnt = 0
-        # sqlDel = ""
         sqlDel= "delete from SCMUSER.TB_FS_QTY_DD_DATA where FS_VRSN_ID = '{}'".format(comUtility.Utility.FsVerId)
         errCode = 0
         while flag == False:
@@ -402,15 +364,61 @@ class DataManager:
 
         return flag, errCode
 
-        # Engine Configuration Histroy(HT_CONFIG) DB에 저장
+    def SaveShortageRslt(self, shortageLotList):
+        strTemplate: str = """ insert into SCMUSER.TB_FS_SHORTAGE_DATA(
+                                    FS_VRSN_ID, PLAN_YYMM, PROD_CODE, LOT_ID, GRADE, PACK_SIZE, PACK_KIND, 
+                                    LOT_QTY, INPUT_QTY, OUTPUT_QTY, LOCATION, CREATE_DATE
+                                )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, sysdate) """
+
+        shortageRsltArr = self._getShortageLotArr(shortageLotList=shortageLotList)
+
+        flag = False
+        errCnt = 0
+        sqlDel = "delete from SCMUSER.TB_FS_SHORTAGE_DATA where FS_VRSN_ID = '{}'".format(comUtility.Utility.FsVerId)
+        errCode = 0
+        while flag == False:
+            flag, errCode = self._conMgr.BatchQuery(sqlTemplate=strTemplate, dataArr=shortageRsltArr, sqlDel=sqlDel)
+            if flag == True:
+                if errCnt > 0:
+                    print("success - [재전송]")
+                else:
+                    print("success")
+                errCnt = 0
+                break
+            else:
+                errCnt += 1
+                print("fail")
+
+    def _getShortageLotArr(self, shortageLotList: list):
+        shortageRsltArr = []
+
+        for lot in shortageLotList:
+            lotObj:objLot.Lot = lot
+            lotDueDateStr = lotObj.DueDate.strftime('%Y%m%d')
+            inputQty = comUtility.Utility.DmdQtyDict[(lotDueDateStr, lotObj.ProdCode)]
+            shortageLot = [
+                self._fsVerId,      # FS Version Id
+                lotDueDateStr,      # Due DaTE(YYYYMM)
+                lotObj.ProdCode,    # Product Code
+                lotObj.Id,          # Lot Id
+                lotObj.Grade,       # Grade
+                lotObj.PackSize,    # Package Size
+                lotObj.PackType,    # Package Type
+                lotObj.Qty,         # Lot Qty
+                inputQty,           # Demand Qty
+                '',                 # Output Qty
+                lotObj.CurrLoc      # Current Location
+            ]
+            shortageRsltArr.append(shortageLot)
+
+        return shortageRsltArr
+
+    # Engine Configuration Histroy(HT_CONFIG) DB에 저장
     def UpdateEngConfHistory(self, engConfArr: list):
 
-        # self._conMgr = dbConMgr.ConnectionManager()
-        # self._conMgr.LoadConInfo()
-
         strTemplate: str = """ insert into SCMUSER.TB_FS_PS_CONFIG(
-                                    DATASET_ID, SIMUL_NUM, CONFIG_NAME, CONFIG_VALUE, CREATE_DATE
-                                )values(:1, :2, :3, :4, sysdate) """
+                                    CONFIG_NAME, CONFIG_VALUE, CREATE_DATE
+                                )values(:1, :2, :3) """
         flag = False
         errCnt = 0
         sqlDel = ""
@@ -436,3 +444,45 @@ class DataManager:
         else:
             self.CloseDataMgr()
             assert errCnt < 31, "[DataManager.{}] Send Machine history to DB failed. stop program.".format(fnName)
+
+
+    # def _preprocessing(self):
+    #     # Changing dtypes
+    #     self._change_column_dtype(df_name="demand", col_name="yyyymm", dtype="str")
+    #     self._change_column_dtype(df_name="demand", col_name="qty", dtype="float")
+    #
+    # def _change_column_dtype(self, df_name: str, col_name: str, dtype: str):
+    #     if not self._chk_column_name(column_name=col_name, df_name=df_name):
+    #         raise KeyError(
+    #             f"데이터 프레임 {df_name} 에는 칼럼 [{col_name}] 가 존재하지 않습니다."
+    #         )
+    #     df: pd.DataFrame = self._get_attr(df_name)
+    #     df[col_name] = df[col_name].astype(dtype)
+    #
+    # def _chk_column_name(self, column_name: str, df_name: str = "_df"):
+    #     does_exists: bool = False
+    #     if not self._check_is_df(df_name=df_name):
+    #         return does_exists
+    #     df: pd.DataFrame = self._get_attr(attr=df_name)
+    #     if column_name in df.columns:
+    #         does_exists = True
+    #     return does_exists
+    #
+    # def _check_is_df(self, df_name: str):
+    #     is_df: bool = False
+    #     if not self._chk_exists(attr=df_name):
+    #         return is_df
+    #     attr = self._get_attr(attr=df_name)
+    #     if type(attr) is pd.DataFrame:
+    #         is_df = True
+    #     return is_df
+    #
+    # def _get_attr(self, attr: str):
+    #     attr_obj = None
+    #     if self._chk_exists(attr=attr):
+    #         attr_obj = self.__getattribute__(attr)
+    #     return attr_obj
+    #
+    # def _chk_exists(self, attr: str):
+    #     existence: bool = attr in self.__dict__.keys()
+    #     return existence
