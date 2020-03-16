@@ -29,15 +29,17 @@ class Machine(object):
         self.Lot: objLot.Lot = None
         self.BfLotGrade: str = None
 
-    def setup_object(self, status: str, uom: str = "", need_calendar: bool = False,
+    def setup_object(self, status: str, uom: str = "", use_work_hour: bool = False,
                      work_start_hour: int = None, work_end_hour: int = None):
         self.Status = status
 
         # PACKAGING MACHINE PROPERTIES
         self.Uom = uom
 
+        need_calendar: bool = use_work_hour and not (work_start_hour is None or work_end_hour is None)
+
         # Setup Calendar
-        if need_calendar or sum([hour is not None for hour in [work_start_hour, work_end_hour]]) >= 2:
+        if need_calendar:
             self.hasCalendar = True
             self._calendar = comCalMgr.CalendarManager()
             self._calendar.SetupObject(factory=self._factory, machine=self,
@@ -109,17 +111,21 @@ class Machine(object):
         if self.Oper.Kind == 'REACTOR':
             bfLotGrade = self.BfLotGrade
             currLotGrade = lot.Grade
+
+            if bfLotGrade is None:
+                bfLotGrade = lot.Grade
+
             gradeChangeCost = comUtility.Utility.ProdWheelHour[(bfLotGrade, currLotGrade)]
 
             # Lot이 Machine에 할당되는 시간에 Grade Chage Cost 반영
-            lotProcStartTime += timedelta(hours=gradeChangeCost)
-            lotProcEndTime += timedelta(hours=gradeChangeCost)
+            lotProcStartTime += timedelta(hours=int(gradeChangeCost))
+            lotProcEndTime += timedelta(hours=int(gradeChangeCost))
 
         macStopEndTime: datetime.datetime = None
 
         if self._calendar is None:
-            return chkUnavailableToMac
-        for macStop in self._calendar.macStopSeq:
+            return chkUnavailableToMac, macStopEndTime
+        for macStop in self._calendar.seq_full:
             chkOverlap: bool = self._chkOverlapToMacStopPeriod(
                 from_to_tuple=macStop,
                 start_time=lotProcStartTime, end_time=lotProcEndTime
@@ -132,9 +138,9 @@ class Machine(object):
         return chkUnavailableToMac, macStopEndTime
 
     def getMacStopEndTime(self):
-        seq: list = self._calendar.macStopSeq
+        seq: list = self._calendar.seq_full
         seq_end: list = [tup[1] for tup in seq if tup[1] >= comUtility.Utility.runtime]
-        break_end = min(seq_end)
+        break_end = min(seq_end) if len(seq_end) > 0 else comUtility.Utility.runtime
         return break_end
 
     def power_on(self):
@@ -152,13 +158,22 @@ class Machine(object):
         self._setStartTime(startTime=downtime[0])
         self._setEndTime(end_time=downtime[1])
 
-    def append_downtime(self, from_date: datetime.datetime, to_date: datetime.datetime):
+    def append_downtime(self, from_date: datetime.datetime, to_date: datetime.datetime,
+                        to_which: str = "shutdown"):
         if self.hasCalendar:
-            self._calendar.append_downtime(from_date=from_date, to_date=to_date)
+            self._calendar.append_downtime(from_date=from_date, to_date=to_date, to_which=to_which)
+        else:
+            self.hasCalendar = True
+            self._calendar = comCalMgr.CalendarManager()
+            self._calendar.SetupObject(factory=self._factory, machine=self,
+                                       start_date=comUtility.Utility.DayStartDate,
+                                       end_date=comUtility.Utility.DayEndDate
+                                       )
+            self._calendar.append_downtime(from_date=from_date, to_date=to_date, to_which=to_which)
 
     def get_current_downtime(self):
         downtime: tuple = None
-        for downtime in self._calendar.macStopSeq:
+        for downtime in self._calendar.seq_full:
             is_between = self._is_between(
                 from_to_tuple=downtime,
                 value=comUtility.Utility.runtime
@@ -200,27 +215,27 @@ class Machine(object):
         return duration
 
 
-def test():
-
-    from PE_Simulator import Simulator
-
-    simulator: Simulator = Simulator()
-
-    factory: simFactoryMgr.Factory = simFactoryMgr.Factory(
-        simul=simulator, facID="IM_FACTORY"
-    )
-
-    oper: simOperMgr.Operation = simOperMgr.Operation(
-        factory=factory, oper_id="BAG", kind="BAGGING"
-    )
-
-    macObj: Machine = Machine(factory=simulator, operation=oper, mac_id="BEGGAR")
-    macObj.setup_object(status="IDLE", uom="UnitOfMeasure",
-                        work_start_hour=8, work_end_hour=20)
-
-    macObj.append()
-
-    print("DEBUGGING")
+# def test():
+#
+#     from PE_Simulator import Simulator
+#
+#     simulator: Simulator = Simulator()
+#
+#     factory: simFactoryMgr.Factory = simFactoryMgr.Factory(
+#         simul=simulator, facID="IM_FACTORY"
+#     )
+#
+#     oper: simOperMgr.Operation = simOperMgr.Operation(
+#         factory=factory, oper_id="BAG", kind="BAGGING"
+#     )
+#
+#     macObj: Machine = Machine(factory=simulator, operation=oper, mac_id="BEGGAR")
+#     macObj.setup_object(status="IDLE", uom="UnitOfMeasure",
+#                         work_start_hour=8, work_end_hour=20)
+#
+#     macObj.append()
+#
+#     print("DEBUGGING")
 
 
 if __name__ == '__main__':

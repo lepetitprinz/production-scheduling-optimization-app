@@ -32,11 +32,14 @@ class Warehouse:
 
         # Lot Sequence Optimization 관련
         self.BeforeLotList: list = []
-        self._prodWheelHour:dict = {}
+        self._prodWheelHour: dict = {}
         self._seqOptTimeLimit: int = 1
 
         # flags
         self._waitFlag: bool = False
+
+        # Constraint Flag
+        self.ShutDownFlag: bool = False
 
         # Production Scheduling 결과 저장
         self.ProdScheduleRsltArr: list = []
@@ -94,7 +97,7 @@ class Warehouse:
                 # is_in_break, break_end_time = to_oper.are_machines_in_break(lot=least_lpst_lot)
                 # if len(is_in_break)
                 print(f"\t\t{to_oper.__class__.__name__}({to_oper.Id}) No Machines Avaiable. Waiting for Processing...\n"
-                      f"\t\t{lotObj.Id, lotObj.Lpst, lotObj.ReactDuration, lotObj.PackDuration}>> ")
+                      f"\t\t{lotObj.Id, lotObj.Qty, lotObj.ReactDuration, lotObj.PackDuration}>> ")
                 to_oper.ResetFstEventTime()
                 to_oper.inform_to(from_obj=self, runTime=to_oper.FirstEventTime, downFlag=True)
                 # to_oper.set_first_event_time()
@@ -121,7 +124,7 @@ class Warehouse:
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
         current_time: datetime.datetime = comUtility.Utility.DayStartDate
 
-        print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {(lot.Id, lot.Lpst, lot.ReactDuration, lot.PackDuration)}")
+        print(f"\t\t{self.__class__.__name__}({self.Id}).lot_leave() >> {(lot.Id, lot.Qty, lot.ReactDuration, lot.PackDuration)}")
 
         to_loc.lotArrive(lot)
         self._removeLot(lot=lot)
@@ -475,7 +478,7 @@ class Warehouse:
     # Bagging Time Constraint
     def ChkAssignableToBagging(self, lot: objLot):
 
-        if self.BaggingOperTimeConst == True:
+        if self.BaggingOperTimeConst is True:
             self._chkBaggingOperTime(lot=lot)
 
         return True

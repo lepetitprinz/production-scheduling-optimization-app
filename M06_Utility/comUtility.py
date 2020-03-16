@@ -72,6 +72,15 @@ class Utility:
     BaggingLeadTimeConst: bool = False
     BaggingLeadTime: int = 0
 
+    #
+    BaggingWorkCalendarUse: bool = False
+    BaggingWorkStartHour: int = 0
+    BaggingWorkEndHour: int = 24
+
+    # Reactor Shutdown 일정 변수
+    ReactorShutdownStartDate: datetime.datetime = None
+    ReactorShutdownEndDate: datetime.datetime = None
+
     @staticmethod
     def setupObject(simul: PE_Simulator, engConfig: pd.DataFrame):
         Utility._simul = simul
@@ -108,6 +117,17 @@ class Utility:
             baggingLeadTimeConst = False
         Utility.BaggingLeadTimeConst = baggingLeadTimeConst
         Utility.BaggingLeadTime = engConfDict['BAGGING_LOT_CHANGE_TIME_LT']
+
+        # 일별 가동 시간 정보 등록
+        Utility.BaggingWorkCalendarUse = engConfDict['BAGGING_LOT_CHANGE_TIME_YN'] == 'Y'
+        Utility.BaggingWorkStartHour = int(engConfDict['BAGGING_LOT_CHANGE_TIME_START'])
+        Utility.BaggingWorkEndHour = int(engConfDict['BAGGING_LOT_CHANGE_TIME_END'])
+
+        # Reactor Shutdown Time 정보 세팅
+        Utility.ReactorShutdownStartDate = datetime.datetime.strptime(engConfDict['SHUTDOWN_START_DATE'], "%Y%m%d")
+        Utility.ReactorShutdownStartDate = Utility.ReactorShutdownStartDate.replace(hour=0, minute=0, second=0, microsecond=0)
+        Utility.ReactorShutdownEndDate = datetime.datetime.strptime(engConfDict['SHUTDOWN_END_DATE'], "%Y%m%d")
+        Utility.ReactorShutdownEndDate = Utility.ReactorShutdownEndDate.replace(hour=23, minute=59, second=59, microsecond=0)
 
     @staticmethod
     def setSiloWaitTime(hours: float):

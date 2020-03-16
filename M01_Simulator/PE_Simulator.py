@@ -34,7 +34,7 @@ class Simulator:
         schedEndDateTime = datetime.datetime.strptime(schedEndTime, '%Y%m%d')
         schedPeriod = str(schedEndDateTime - schedStartDateTime)
         schedPeriodDays = int(schedPeriod.split()[0]) + 1
-        horizon_days = schedPeriodDays  # 고정값 처리 가능
+        # horizon_days = schedPeriodDays  # 고정값 처리 가능
 
         siloCapa = self._util.SiloCapa
         SiloQty = self._util.SiloQty
@@ -48,7 +48,7 @@ class Simulator:
         # DB에 있는 Data 정보 받아오는 처리
         self.DataMgr.SetupObject()
         self.DataMgr.build_demand_max_days_by_month()
-        engConfig = self.DataMgr.dbEngConf
+        # engConfig = self.DataMgr.dbEngConf
         #self._util.setupObject(simul=self, engConfig=engConfig)
         # self._util.set_runtime(runtime=0)
 
@@ -70,16 +70,17 @@ class Simulator:
                                      horizon_days=comUtility.Utility.DayHorizon.days,
                                      silo_qty=comUtility.Utility.SiloCapa,
                                      nof_silo=SiloQty, silo_wait_hours=int(silo_wait_hours))
-        flag = self.SetupObject()
 
-    def SetupObject(self):
+        self.SetupObject(use_mac_down_cal_db=False)
+
+    def SetupObject(self, use_mac_down_cal_db: bool = False):
 
         operObj: simOperMgr = None
         facID: str = ""
 
         for obj in self._facObjList:
             facObj: simFactoryMgr = obj
-            facObj.SetupResumeData()    # 현재 RM warehouse만 setting
+            facObj.SetupResumeData(use_mac_down_cal_db=use_mac_down_cal_db)    # 현재 RM warehouse만 setting
             facObj.sendInitEvent()      # 공장 객체 초기화 정보를 DB에 전달(미구현)
 
     def run_simulator(self):

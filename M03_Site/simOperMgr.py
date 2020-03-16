@@ -108,7 +108,7 @@ class Operation(object):
 
                 # 할당 가능한 warehouse가 있는 경우 lot을 그 warehouse로 보내는 처리
                 if assignWh != None:
-                    print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() >> {(lotObj.Id, lotObj.Lpst, lotObj.ReactDuration, lotObj.PackDuration)}")
+                    print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() >> {(lotObj.Id, lotObj.Qty, lotObj.ReactDuration, lotObj.PackDuration)}")
                     assignWh.lotArrive(from_loc=macObj, lot=lotObj)
                     if self.Kind == "REACTOR":
                         lotObj.ReactOut = comUtility.Utility.runtime

@@ -90,7 +90,7 @@ class DataManager:
             prodWheelColName = ['grade_from', 'grade_to', 'hour', 'og']
             prodYieldColName = ['oper', 'prodCode', 'grade', 'prod_yield']
 
-            macUnAvlColName = ['operId', 'macId', 'fromTime', 'toTIme']
+            macUnAvlColName = ['operId', 'macId', 'fromTime', 'toTime']
             # engConfigColName = ['paramCode', 'paramName', 'paramVal']
 
             self.dbDemand = pd.DataFrame(demand, columns=dmdColName)
@@ -98,7 +98,7 @@ class DataManager:
             self.dbProdWheel = pd.DataFrame(prodWheel, columns=prodWheelColName)
             self.dbProdYield = pd.DataFrame(prodYield, columns=prodYieldColName)
 
-            self.dbMacUnAvlTime =  pd.DataFrame(macUnAvlTime, columns=macUnAvlColName)
+            self.dbMacUnAvlTime = pd.DataFrame(macUnAvlTime, columns=macUnAvlColName)
 
             # self.dbEngConf = pd.DataFrame(engConfig, columns=engConfigColName)
 

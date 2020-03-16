@@ -71,9 +71,15 @@ class Factory:
         # self._register_new_warehouse(wh_id="WH01")
         # self.OperMgrList = self._facUtil.GetOperMgrObjList()
 
-    def SetupResumeData(self):
+    def SetupResumeData(self, use_mac_down_cal_db: bool = False):
         # RM Warehouse 의 Lot을 배정하는 처리.
         self.setupRmWh()
+
+        # DB 에 등록된 머신별 비가용 시간 정보를 실제 머신에 할당하는 처리
+        if use_mac_down_cal_db:
+            self.setupMacDownCal()
+
+        self.rebuildMacDownCal()
 
         # facID = self.ID
         # totalWipList = []
@@ -90,6 +96,54 @@ class Factory:
         #         macObj.SetupResumeData(operLotDict[macObj.ID])
         #     # Machine SetupType 셋팅 오류 수정
         #     oper.FixMachineSetupTypeError()
+
+    def rebuildMacDownCal(self):
+        for obj in self.MachineList:
+            macObj: objMachine.Machine = obj
+            if not macObj.hasCalendar:
+                continue
+            macObj._calendar.rebuild_break_sequence(which_seq="daily")
+            macObj._calendar.sort_seq(which_seq="daily")
+            macObj._calendar.rebuild_break_sequence(which_seq="shutdown")
+            macObj._calendar.sort_seq(which_seq="shutdown")
+            macObj._calendar.rebuild_break_sequence(which_seq="breakdown")
+            macObj._calendar.sort_seq(which_seq="breakdown")
+            macObj._calendar.build_full_sequence()
+            macObj._calendar.rebuild_break_sequence(which_seq="full")
+            macObj._calendar.sort_seq(which_seq="full")
+
+    def setupMacDownCal(self):
+        MacUnAvlTime: pd.DataFrame = self._dataMgr.dbMacUnAvlTime
+
+        print("\nSetting Down Time Calendar from DB...\n")
+        for _, row in MacUnAvlTime.iterrows():
+            macObj: objMachine.Machine = [obj for obj in self.MachineList if obj.Id == row['macId']][0]
+
+            from_date_str: str = row['fromTime']
+            to_date_str: str = row['toTime']
+
+            if not (len(from_date_str) == 14 and len(to_date_str) == 14):
+                raise ValueError
+            else:
+                from_date_str_hh: int = int(from_date_str[8:8 + 1 + 1])
+                to_date_str_hh: int = int(to_date_str[8:8 + 1 + 1])
+                if not (from_date_str_hh in [i for i in range(0, 1 + 23)] and
+                        to_date_str_hh in [i for i in range(0, 1 + 23)]):
+                    # print(f"STRPTIME ERROR {from_date_str} / {to_date_str}")
+                    from_date_str_hh = from_date_str_hh if from_date_str_hh in [i for i in range(0, 1 + 23)] else 0
+                    to_date_str_hh = to_date_str_hh if to_date_str_hh in [i for i in range(0, 1 + 23)] else 0
+
+                from_yymmdd, from_hh, from_mmss = from_date_str[:8], '%02d' % from_date_str_hh, from_date_str[
+                                                                                                8 + 1 + 1:]
+                from_date_str = f"{datetime.datetime.strftime(datetime.datetime.strptime(from_yymmdd, '%Y%m%d') + datetime.timedelta(days=1), '%Y%m%d')}" \
+                                f"{from_hh}{from_mmss}"
+                to_yymmdd, to_hh, to_mmss = to_date_str[:8], '%02d' % to_date_str_hh, to_date_str[8 + 1 + 1:]
+                to_date_str = f"{datetime.datetime.strftime(datetime.datetime.strptime(to_yymmdd, '%Y%m%d') + datetime.timedelta(days=1), '%Y%m%d')}" \
+                              f"{to_hh}{to_mmss}"
+
+            from_date: datetime.datetime = datetime.datetime.strptime(from_date_str, "%Y%m%d%H%M%S")
+            to_date: datetime.datetime = datetime.datetime.strptime(to_date_str, "%Y%m%d%H%M%S")
+            macObj.append_downtime(from_date=from_date, to_date=to_date, to_which="shutdown")
 
     def setupRmWh(self):
         rmWh: objWarehouse.Warehouse = self._findWhById(wh_id="RM")
@@ -124,9 +178,6 @@ class Factory:
             # lotObj.reduce_duration(by=10)
             # rmWh._registerLotObj(lotObj=lotObj)
 
-
-
-
         # # Grade Sequence Optimization using SCOP algorithm
         # gradeSeqOpt = self.SeqOptByScop(dmdLotList=rmWhLotList)
         #
@@ -136,12 +187,24 @@ class Factory:
 
     def _buildFactory(self, silo_qty: float, nof_silo: int = 1):
         reactor: simOperMgr.Operation = self._register_new_oper(oper_id="REACTOR", kind="REACTOR", return_flag=True)
-        self._register_new_machine(mac_id="M1", oper=reactor, uom="")
+        m1: objMachine.Machine = self._register_new_machine(mac_id="M1", oper=reactor, uom="", return_flag=True)
 
         bagging: simOperMgr.Operation = self._register_new_oper(oper_id="BAGGING", kind="BAGGING", return_flag=True)
-        self._register_new_machine(mac_id="P2", oper=bagging, uom="25 KG")
-        self._register_new_machine(mac_id="P7", oper=bagging, uom="750 KG")
-        self._register_new_machine(mac_id="P9", oper=bagging, uom="BULK")
+        p2: objMachine.Machine = self._register_new_machine(mac_id="P2", oper=bagging, uom="25 KG",
+                                                            work_start_hour=comUtility.Utility.BaggingWorkStartHour,
+                                                            work_end_hour=comUtility.Utility.BaggingWorkEndHour,
+                                                            use_work_hour=comUtility.Utility.BaggingOperTimeConst,
+                                                            return_flag=True)
+        p7: objMachine.Machine = self._register_new_machine(mac_id="P7", oper=bagging, uom="750 KG",
+                                                            work_start_hour=comUtility.Utility.BaggingWorkStartHour,
+                                                            work_end_hour=comUtility.Utility.BaggingWorkEndHour,
+                                                            use_work_hour=comUtility.Utility.BaggingOperTimeConst,
+                                                            return_flag=True)
+        p9: objMachine.Machine = self._register_new_machine(mac_id="P9", oper=bagging, uom="BULK",
+                                                            work_start_hour=comUtility.Utility.BaggingWorkStartHour,
+                                                            work_end_hour=comUtility.Utility.BaggingWorkEndHour,
+                                                            use_work_hour=comUtility.Utility.BaggingOperTimeConst,
+                                                            return_flag=True)
         # self._register_new_machine(mac_id="P2", oper=bagging, uom="25 KG", need_calendar=True,
         #                            work_start_hour=8, work_end_hour=20)
         # self._register_new_machine(mac_id="P7", oper=bagging, uom="750 KG", need_calendar=True,
@@ -171,6 +234,19 @@ class Factory:
         bagging.SetFromLoc(from_loc=silos[0].Kind)
         bagging.SetToLoc(to_loc=fgi.Id)
         fgi.set_to_location(to_loc="Sales")     # Ternminal Status
+
+        # 머신 가동 제약 등록
+        m1.append_downtime(from_date=self._utility.ReactorShutdownStartDate,
+                           to_date=self._utility.ReactorShutdownEndDate,
+                           to_which="shutdown")
+        # p2.append_downtime(from_date=, to_date=)
+        # p7.append_downtime(from_date=, to_date=)
+        # p9.append_downtime(from_date=, to_date=)
+
+        # m1._calendar.build_full_sequence()
+        # p2._calendar.build_full_sequence()
+        # p7._calendar.build_full_sequence()
+        # p9._calendar.build_full_sequence()
 
     def _base_first_event_time(self):
         for obj in self.OperList:
@@ -1075,18 +1151,24 @@ class Factory:
         if return_flag:
             return operObj
 
-    def _register_new_machine(self, mac_id: str, oper: simOperMgr, uom="", need_calendar: bool = False,
-                              work_start_hour: int = None, work_end_hour: int = None
+    def _register_new_machine(self, mac_id: str, oper: simOperMgr, uom="",
+                              work_start_hour: int = None,
+                              work_end_hour: int = None,
+                              use_work_hour: bool = False,
+                              return_flag: bool = False
                               ):
 
         macObj: objMachine = objMachine.Machine(factory=self, operation=oper, mac_id=mac_id)
-        macObj.setup_object(status="IDLE", uom=uom, need_calendar=need_calendar,
+        macObj.setup_object(status="IDLE", uom=uom, use_work_hour=use_work_hour,
                             work_start_hour=work_start_hour, work_end_hour=work_end_hour)
 
         operObj: simOperMgr.Operation = oper
         operObj.MacObjList.append(macObj)
 
         self.MachineList.append(macObj)
+
+        if return_flag:
+            return macObj
 
     def _register_new_warehouse(self, wh_id: str, kind: str, capacity: float = None, return_flag: bool = False):
 
