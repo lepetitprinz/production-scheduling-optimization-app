@@ -79,8 +79,11 @@ class Operation(object):
                 else:
                     self.inform_to(from_obj=whObj, runTime=runTime)
 
-    def inform_to(self, from_obj: objWarehouse.Warehouse, runTime: datetime.datetime, downFlag: bool = False):
+    def inform_to(self, from_obj: objWarehouse.Warehouse, runTime: datetime.datetime,
+                  down_cause: str = "", downFlag: bool = False):
         from_loc: objWarehouse.Warehouse = from_obj
+        if from_loc.Kind == "RM":
+            from_loc.ShutDownFlag = ()
         if from_loc.FirstEventTime is None:
             if len(from_loc.LotObjList) > 0:
                 from_loc.setFstEventTime(runTime=runTime)
@@ -121,7 +124,7 @@ class Operation(object):
                     print("{} Lot 할당 가능한 Warehouse가 현재 없음".format(lotObj.Id))
 
     def lotArrive(self, lot: objLot.Lot):
-        is_assignable, machines = self.GetAssignableFlag(lot=lot)
+        is_assignable, machines, _ = self.GetAssignableFlag(lot=lot)
         if not is_assignable:
             print(f"\t\t{self.__class__.__name__}({self.Id}).lot_arrive() >> <{'No Machines Available'}> / {machines}")
             return False
@@ -284,12 +287,13 @@ class Operation(object):
     # - Reactor Machine Grade Change Cost(Hour) 반영 (완료)
     # ==============================================================================================#
     def GetAssignableFlag(self, lot: objLot.Lot):
-        availableMacList: list = self._getAvailableMac(lot=lot)
-        return len(availableMacList) > 0, availableMacList
+        availableMacList, notAvailableMacList = self._getAvailableMac(lot=lot)
+        return len(availableMacList) > 0, availableMacList, notAvailableMacList
 
     # 공정에서 할당 가능한 machine을 찾는 처리
     def _getAvailableMac(self, lot: objLot.Lot):
         availableMacs: list = []
+        notAvailableMacs: list = []
 
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
@@ -298,9 +302,11 @@ class Operation(object):
             if macObj.Oper.Kind == "REACTOR":
                 if macObj.Status == "IDLE":     # Machine이 IDLE 상태일때 이용가능
                     if macObj.hasCalendar:      # Machine의 가용계획 check
-                        isUnavailable, _ = macObj.chkMacAvailable(lot=lot)
+                        isUnavailable, _, not_available_cause = macObj.chkMacAvailable(lot=lot)
                         if not isUnavailable:
                             availableMacs.append(macObj)
+                        else:
+                            notAvailableMacs.append((macObj, not_available_cause))
                     else:
                         availableMacs.append(macObj)
 
@@ -308,14 +314,16 @@ class Operation(object):
             elif macObj.Oper.Kind == "BAGGING":
                 if macObj.Status == "IDLE":     # Machine이 IDLE 상태일때 이용가능
                     if macObj.hasCalendar:      # Machine의 가용계획 check
-                        isUnavailable, _ = macObj.chkMacAvailable(lot=lot)
+                        isUnavailable, _, not_available_cause = macObj.chkMacAvailable(lot=lot)
                         if (not isUnavailable) & (macObj.Id == lot.PackSize):
                             availableMacs.append(macObj)
+                        else:
+                            notAvailableMacs.append((macObj, not_available_cause))
                     else:
                         if macObj.Id == lot.PackSize:
                             availableMacs.append(macObj)
 
-        return availableMacs
+        return availableMacs, notAvailableMacs
 
     # def _find_available_to_wh_list(self, lot: objLot):
     #     rsltWhs: list = []

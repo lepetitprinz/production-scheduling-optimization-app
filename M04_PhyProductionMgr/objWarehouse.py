@@ -85,7 +85,8 @@ class Warehouse:
         else:
 
             # 선택한 Lot에 대해 할당 가능한 Operation - Machine을 찾는 처리
-            to_oper, available_machines = self._findAvailableNextOper(lot=lotObj)
+            to_oper, available_machines, not_available_machines = \
+                self._findAvailableNextOper(lot=lotObj)
             if len(available_machines) > 0:
                 self.lotLeave(to_loc=to_oper, lot=lotObj)
                 # self.setFstEventTime()
@@ -363,8 +364,9 @@ class Warehouse:
         targetOper: simOperMgr.Operation = targetOperList[0]    # targetOper : reactor / bagging
 
         # Target으로 하는 공정에 대해애서 가능한 machine들을 찾는 처리
-        is_oper_assignable, available_machines = targetOper.GetAssignableFlag(lot=lot)
-        return targetOper, available_machines
+        is_oper_assignable, available_machines, not_available_machines = \
+            targetOper.GetAssignableFlag(lot=lot)
+        return targetOper, available_machines, not_available_machines
 
         # if self.Id == "RM":
         #     for obj in self._factory.OperList:

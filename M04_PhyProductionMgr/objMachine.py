@@ -103,6 +103,7 @@ class Machine(object):
     # Machine의 비가용 계획 구간에 포함되는지 확인하는 처리
     def chkMacAvailable(self, lot: objLot.Lot):
         chkUnavailableToMac: bool = False
+        not_available_cause: str = ""
         duration: datetime.timedelta = self._getLotProcTime(lot=lot)
         lotProcStartTime: datetime.datetime = comUtility.Utility.runtime
         lotProcEndTime: datetime.datetime = lotProcStartTime + duration
@@ -125,17 +126,26 @@ class Machine(object):
 
         if self._calendar is None:
             return chkUnavailableToMac, macStopEndTime
+
         for macStop in self._calendar.seq_full:
             chkOverlap: bool = self._chkOverlapToMacStopPeriod(
                 from_to_tuple=macStop,
                 start_time=lotProcStartTime, end_time=lotProcEndTime
             )
             if chkOverlap:
+                for macShutDown in self._calendar.seq_shutdown:
+                    chkOverLapShutDown: bool = self._chkOverlapToMacStopPeriod(
+                        from_to_tuple=macShutDown,
+                        start_time=lotProcStartTime, end_time=lotProcEndTime
+                    )
+                    if chkOverLapShutDown:
+                        not_available_cause = "shutdown"
+
                 chkUnavailableToMac = True
                 macStopEndTime = macStop[1]
                 break
 
-        return chkUnavailableToMac, macStopEndTime
+        return chkUnavailableToMac, macStopEndTime, not_available_cause
 
     def getMacStopEndTime(self):
         seq: list = self._calendar.seq_full
