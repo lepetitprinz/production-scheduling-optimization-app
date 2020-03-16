@@ -1,7 +1,7 @@
-# reading data ... done: 0.01(s)
-penalty = 3/155 (hard/soft), time = 0.01(s), iteration = 0
+# reading data ... done: 0.00(s)
+penalty = 3/155 (hard/soft), time = 0.00(s), iteration = 0
 # improving the initial solution greedily
-penalty = 0/118 (hard/soft), time = 0.01(s), iteration = 0
+penalty = 0/118 (hard/soft), time = 0.00(s), iteration = 0
 # start tabu search
 penalty = 0/111 (hard/soft), time = 0.01(s), iteration = 4
 penalty = 0/108 (hard/soft), time = 0.01(s), iteration = 6
@@ -11,7 +11,7 @@ penalty = 0/75 (hard/soft), time = 0.01(s), iteration = 12
 
 
 # penalty = 0/75 (hard/soft)
-# cpu time = 0.01/0.38(s)
+# cpu time = 0.01/0.39(s)
 # iteration = 12/108927
 
 [best solution]
