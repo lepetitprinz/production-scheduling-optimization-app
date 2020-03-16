@@ -166,6 +166,7 @@ class DataManager:
         dmdToQtyDict = {}
         for idx, row in self.dbDemand.iterrows():
             dmdToQtyDict[(row['yyyymm'], row['prodCode'])] = row['qty']
+        self._dmdToQtyDict = dmdToQtyDict
 
     def _getProdYieldDict(self):
 
@@ -322,7 +323,7 @@ class DataManager:
                 if errCnt > 0:
                     print("success - [재전송]")
                 else:
-                    print("success")
+                    print("Saving Hourly Schedule : success")
                 errCnt = 0
                 break
             else:
@@ -354,7 +355,7 @@ class DataManager:
                 if errCnt > 0:
                     print("success - [재전송]")
                 else:
-                    print("success")
+                    print("Saving Daily Schedule : success")
                 errCnt = 0
                 break
             else:
@@ -367,8 +368,8 @@ class DataManager:
     def SaveShortageRslt(self, shortageLotList):
         strTemplate: str = """ insert into SCMUSER.TB_FS_SHORTAGE_DATA(
                                     FS_VRSN_ID, PLAN_YYMM, PROD_CODE, LOT_ID, GRADE, PACK_SIZE, PACK_KIND, 
-                                    LOT_QTY, INPUT_QTY, OUTPUT_QTY, LOCATION, CREATE_DATE
-                                )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, sysdate) """
+                                    LOT_QTY, INPUT_QTY, LOCATION, CREATE_DATE
+                                )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, sysdate) """
 
         shortageRsltArr = self._getShortageLotArr(shortageLotList=shortageLotList)
 
@@ -382,7 +383,7 @@ class DataManager:
                 if errCnt > 0:
                     print("success - [재전송]")
                 else:
-                    print("success")
+                    print("Saving Shortage Result : success")
                 errCnt = 0
                 break
             else:
@@ -394,7 +395,7 @@ class DataManager:
 
         for lot in shortageLotList:
             lotObj:objLot.Lot = lot
-            lotDueDateStr = lotObj.DueDate.strftime('%Y%m%d')
+            lotDueDateStr = lotObj.DueDate.strftime('%Y%m%d')[:-2]
             inputQty = comUtility.Utility.DmdQtyDict[(lotDueDateStr, lotObj.ProdCode)]
             shortageLot = [
                 self._fsVerId,      # FS Version Id
@@ -406,7 +407,6 @@ class DataManager:
                 lotObj.PackType,    # Package Type
                 lotObj.Qty,         # Lot Qty
                 inputQty,           # Demand Qty
-                '',                 # Output Qty
                 lotObj.CurrLoc      # Current Location
             ]
             shortageRsltArr.append(shortageLot)

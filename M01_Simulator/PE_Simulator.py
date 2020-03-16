@@ -2,15 +2,10 @@
 
 import datetime
 
-from M03_Site import simFactoryMgr
 from M02_DataManager import dbDataMgr
 from M03_Site import simFactoryMgr, simOperMgr
 from M04_PhyProductionMgr import objWarehouse, objMachine
-from M05_ProductManager import objLot
 from M06_Utility import comUtility
-
-import numpy as np
-from itertools import permutations
 
 class Simulator:
     def __init__(self):
@@ -140,10 +135,14 @@ class Simulator:
 
             for oper in facObj.OperList:
                 operObj:simOperMgr.Operation = oper
-                for macList in operObj.MacObjList:
-                    for mac in macList:
+                if operObj.Kind == 'REACTOR':
+                    macObj: objMachine.Machine = operObj.MacObjList[0]
+                    if macObj.Lot != None:
+                        shortageLotObjList.append(macObj.Lot)
+                else:
+                    for mac in operObj.MacObjList:
                         macObj:objMachine.Machine = mac
                         if macObj.Lot != None:
-                            shortageLotObjList.extend(macObj.Lot)
+                            shortageLotObjList.append(macObj.Lot)
 
             self.DataMgr.SaveShortageRslt(shortageLotList=shortageLotObjList)
