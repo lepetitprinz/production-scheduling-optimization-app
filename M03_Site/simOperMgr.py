@@ -297,20 +297,7 @@ class Operation(object):
             # Reactor의 경우 단일 machine이므로 machine의 상태만 판단
             if macObj.Oper.Kind == "REACTOR":
                 if macObj.Status == "IDLE":     # Machine이 IDLE 상태일때 이용가능
-                    # Reactor Machine의 비가용계획 확인
-                    if macObj.hasCalendar:
-                        isUnavailable, _ = macObj.chkMacAvailable(lot=lot)
-                        if not isUnavailable:
-                            availableMacs.append(macObj)
-
-                    # Reactor ShutDown 제약 확인
-                    elif comUtility.Utility.ShutDownPeriodConst == True:
-                        isUnavailable, _ = macObj.chkMacAvailable(lot=lot)
-                        if not isUnavailable:
-                            availableMacs.append(macObj)
-
-                    # Reactor Grade Change Cost 주말 졔약
-                    elif comUtility.Utility.ReactorGradeChngWkdConst == True:
+                    if macObj.hasCalendar:      # Machine의 가용계획 check
                         isUnavailable, _ = macObj.chkMacAvailable(lot=lot)
                         if not isUnavailable:
                             availableMacs.append(macObj)
