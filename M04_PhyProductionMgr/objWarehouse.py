@@ -100,7 +100,15 @@ class Warehouse:
                 print(f"\t\t{to_oper.__class__.__name__}({to_oper.Id}) No Machines Avaiable. Waiting for Processing...\n"
                       f"\t\t{lotObj.Id, lotObj.Qty, lotObj.ReactDuration, lotObj.PackDuration}>> ")
                 to_oper.ResetFstEventTime()
-                to_oper.inform_to(from_obj=self, runTime=to_oper.FirstEventTime, downFlag=True)
+                if self.Id != "RM":
+                    to_oper.inform_to(from_obj=self, runTime=to_oper.FirstEventTime, downFlag=True)
+                else:
+                    if len(not_available_machines) == 0:
+                        to_oper.inform_to(from_obj=self, runTime=to_oper.FirstEventTime, downFlag=True)
+                    else:
+                        to_oper.inform_to(from_obj=self, runTime=to_oper.FirstEventTime,
+                                          down_cause=not_available_machines[0][-1], downFlag=True)
+
                 # to_oper.set_first_event_time()
                 # self.set_first_event_time(break_end_time)
 

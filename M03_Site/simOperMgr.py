@@ -82,8 +82,8 @@ class Operation(object):
     def inform_to(self, from_obj: objWarehouse.Warehouse, runTime: datetime.datetime,
                   down_cause: str = "", downFlag: bool = False):
         from_loc: objWarehouse.Warehouse = from_obj
-        if from_loc.Kind == "RM":
-            from_loc.ShutDownFlag = ()
+        if down_cause != "":
+            from_loc.ShutDownFlag = down_cause == "shutdown"
         if from_loc.FirstEventTime is None:
             if len(from_loc.LotObjList) > 0:
                 from_loc.setFstEventTime(runTime=runTime)
