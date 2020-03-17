@@ -226,8 +226,8 @@ def test():
     )
 
     comUtility.Utility.setDayStartDate(year=2020, month=3, day=9, hour=9)
-    comUtility.Utility.setDayHorizon(days=10)
-    comUtility.Utility.calcDayEndDate()
+    comUtility.Utility.SetDayHorizon(days=10)
+    comUtility.Utility.CalcDayEndDate()
     print(f"DayStartDate = {comUtility.Utility.DayStartDate}")
     print(f"DayEndDate = {comUtility.Utility.DayEndDate}")
 

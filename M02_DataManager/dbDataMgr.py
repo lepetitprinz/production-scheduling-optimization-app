@@ -47,7 +47,7 @@ class DataManager:
 
         return self.dbEngConf
 
-    def SetupObject(self):    # or source = "db"
+    def SetupObject(self):
         # if self._source == "db":
         #     self._setup_db_connection()
         # elif self._source == "file":
@@ -77,8 +77,8 @@ class DataManager:
                 demand = self._conMgr.GetDbData(self._conMgr.GetDpQtyDataSql_Custom(from_yyyymm, from_yyyymm))
 
                 comUtility.Utility.setDayStartDate(year=int(from_yyyy), month=int(from_mm), day=1)
-                comUtility.Utility.setDayHorizon(days=to_dd)
-                comUtility.Utility.calcDayEndDate()
+                comUtility.Utility.SetDayHorizon(days=to_dd)
+                comUtility.Utility.CalcDayEndDate()
 
             prodMst = self._conMgr.GetDbData(self._conMgr.GetProdMstDataSql())
             prodWheel = self._conMgr.GetDbData(self._conMgr.GetProdWheelDataSql())
@@ -123,21 +123,6 @@ class DataManager:
     def CloseDataMgr(self):
         self._conMgr.CloseConnection()
         self.__init__()
-
-    # def SaveEngConfig(self):
-    #     confArr = self._getEngConfDataArr()
-        # self.UpdateEngConfHistory(dataArr=confArr, useTmpFlag=comUtility.Utility.TempTblUseFlag)
-
-    # def _getEngConfDataArr(self):
-    #     confHdr = ("PLAN_HORIZON", "PLAN_START_TIME", "HISTORY_SAVE_YN", "UOM_HORIZON", "ORP_DMD_LEVELING",
-    #                "ENGINE_MODE", "ORP_VER", "AI_MOD_YN", "EVENT_LEVEL", "LOG_LEVEL", "ORP_CONFIRM_PLAN_YN")
-    #     rslt = []
-    #
-    #     for i in range(len(self.dbEngConfArr)):
-    #         rslt.append((confHdr[i], str(self.dbEngConfArr[i])))
-    #         # rslt.append((datasetId, simulNum, confHdr[i], str(self.dbEngConfArr[i])))
-    #
-    #     return rslt
 
     def build_demand_max_days_by_month(self):
         yyyy_mm_list: list = []

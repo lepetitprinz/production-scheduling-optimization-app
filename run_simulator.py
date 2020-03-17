@@ -8,7 +8,7 @@ def run_simulator(source: str, day_start_time: str):
     simul.SetupDbObject(source=source, day_start_time=day_start_time)
 
     # Simulation 구동
-    simul.run_simulator()
+    simul.runSimulator()
     print("\nSIMULATION END")
 
     # Simulation 가동 종료 후 Scheduling 결과 저장

@@ -2,7 +2,6 @@
 import pandas as pd
 import datetime
 import calendar
-import openpyxl
 from scop import Model, Alldiff, Quadratic
 
 from M01_Simulator import PE_Simulator
@@ -11,7 +10,6 @@ from M03_Site import simOperMgr
 from M04_PhyProductionMgr import objWarehouse, objMachine
 from M05_ProductManager import objLot
 from M06_Utility import comUtility
-
 
 class Factory:
     def __init__(self, simul: PE_Simulator, facID: str):
@@ -49,10 +47,10 @@ class Factory:
     def SetupObject(self,
                     dayStartTime: str, year: int, month: int, day: int, horizon_days: int,
                     silo_qty: int, nof_silo: int = 1, silo_wait_hours: int = 0):
-        self._utility.setDayStartTime(value=dayStartTime)
+        self._utility.SetDayStartTime(value=dayStartTime)
         self._utility.setDayStartDate(year=year, month=month, day=day)
-        self._utility.setDayHorizon(days=horizon_days)
-        self._utility.calcDayEndDate()
+        self._utility.SetDayHorizon(days=horizon_days)
+        self._utility.CalcDayEndDate()
 
         self._utility.setSiloWaitTime(hours=int(silo_wait_hours))
 
@@ -186,25 +184,25 @@ class Factory:
         # rmWh.truncate_lot_list()   # 기존 RM Warehouse에 있는 Lot List 삭제
 
     def _buildFactory(self, silo_qty: float, nof_silo: int = 1):
-        reactor: simOperMgr.Operation = self._register_new_oper(oper_id="REACTOR", kind="REACTOR", return_flag=True)
-        m1: objMachine.Machine = self._register_new_machine(mac_id="M1", oper=reactor, uom="", return_flag=True)
+        reactor: simOperMgr.Operation = self._registerNewOper(oper_id="REACTOR", kind="REACTOR", return_flag=True)
+        m1: objMachine.Machine = self._registerNewMac(mac_id="M1", oper=reactor, uom="", return_flag=True)
 
-        bagging: simOperMgr.Operation = self._register_new_oper(oper_id="BAGGING", kind="BAGGING", return_flag=True)
-        p2: objMachine.Machine = self._register_new_machine(mac_id="P2", oper=bagging, uom="25 KG",
-                                                            work_start_hour=comUtility.Utility.BaggingWorkStartHour,
-                                                            work_end_hour=comUtility.Utility.BaggingWorkEndHour,
-                                                            use_work_hour=comUtility.Utility.BaggingOperTimeConst,
-                                                            return_flag=True)
-        p7: objMachine.Machine = self._register_new_machine(mac_id="P7", oper=bagging, uom="750 KG",
-                                                            work_start_hour=comUtility.Utility.BaggingWorkStartHour,
-                                                            work_end_hour=comUtility.Utility.BaggingWorkEndHour,
-                                                            use_work_hour=comUtility.Utility.BaggingOperTimeConst,
-                                                            return_flag=True)
-        p9: objMachine.Machine = self._register_new_machine(mac_id="P9", oper=bagging, uom="BULK",
-                                                            work_start_hour=comUtility.Utility.BaggingWorkStartHour,
-                                                            work_end_hour=comUtility.Utility.BaggingWorkEndHour,
-                                                            use_work_hour=comUtility.Utility.BaggingOperTimeConst,
-                                                            return_flag=True)
+        bagging: simOperMgr.Operation = self._registerNewOper(oper_id="BAGGING", kind="BAGGING", return_flag=True)
+        p2: objMachine.Machine = self._registerNewMac(mac_id="P2", oper=bagging, uom="25 KG",
+                                                      work_start_hour=comUtility.Utility.BaggingWorkStartHour,
+                                                      work_end_hour=comUtility.Utility.BaggingWorkEndHour,
+                                                      use_work_hour=comUtility.Utility.BaggingOperTimeConst,
+                                                      return_flag=True)
+        p7: objMachine.Machine = self._registerNewMac(mac_id="P7", oper=bagging, uom="750 KG",
+                                                      work_start_hour=comUtility.Utility.BaggingWorkStartHour,
+                                                      work_end_hour=comUtility.Utility.BaggingWorkEndHour,
+                                                      use_work_hour=comUtility.Utility.BaggingOperTimeConst,
+                                                      return_flag=True)
+        p9: objMachine.Machine = self._registerNewMac(mac_id="P9", oper=bagging, uom="BULK",
+                                                      work_start_hour=comUtility.Utility.BaggingWorkStartHour,
+                                                      work_end_hour=comUtility.Utility.BaggingWorkEndHour,
+                                                      use_work_hour=comUtility.Utility.BaggingOperTimeConst,
+                                                      return_flag=True)
         # self._register_new_machine(mac_id="P2", oper=bagging, uom="25 KG", need_calendar=True,
         #                            work_start_hour=8, work_end_hour=20)
         # self._register_new_machine(mac_id="P7", oper=bagging, uom="750 KG", need_calendar=True,
@@ -213,15 +211,15 @@ class Factory:
         #                            work_start_hour=8, work_end_hour=20)
 
         # self.StockList = self._facUtil.GetStockObjList()
-        rm: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="RM", kind="RM", return_flag=True)     # RM / WareHouse / silo / hopper
+        rm: objWarehouse.Warehouse = self._registerNewWarehouse(wh_id="RM", kind="RM", return_flag=True)     # RM / WareHouse / silo / hopper
         # rm.assign_random_lpst()
         silo_qty /= nof_silo
         silos: list = []
         for i in range(1, 1 + nof_silo):
-            silo: objWarehouse.Warehouse = self._register_new_warehouse(wh_id=f"SILO{'%02d' % i}", kind="silo", capacity=silo_qty, return_flag=True)
+            silo: objWarehouse.Warehouse = self._registerNewWarehouse(wh_id=f"SILO{'%02d' % i}", kind="silo", capacity=silo_qty, return_flag=True)
             silos.append(silo)
         # hopper: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="HOPPER", kind="hopper", return_flag=True)
-        fgi: objWarehouse.Warehouse = self._register_new_warehouse(wh_id="FGI", kind="FGI", capacity=43000, return_flag=True)
+        fgi: objWarehouse.Warehouse = self._registerNewWarehouse(wh_id="FGI", kind="FGI", capacity=43000, return_flag=True)
 
         rm.setToLoc(to_loc=reactor.Id)
         reactor.SetFromLocs(from_locs=[rm])
@@ -263,7 +261,7 @@ class Factory:
         """공장 객체 초기화 정보를 DB에 전달하는 메서드"""
         pass
 
-    def run_factory(self):
+    def RunFactory(self):
         print(f"\n\nFactory {self.ID} is Running.")
 
         endFlag: bool = False
@@ -284,7 +282,7 @@ class Factory:
 
             elif runTime >= end_date:
                 endFlag = True
-                self._utility.set_runtime(runtime=end_date)
+                self._utility.SetRuntime(runtime=end_date)
                 continue
 
             # if len(tgtArr) < 1:
@@ -306,7 +304,7 @@ class Factory:
             endRTime = 0
 
             if runTime != self._utility.runtime:
-                self._utility.set_runtime(runTime)
+                self._utility.SetRuntime(runTime)
 
             tgtCnt = len(tgtArr)
             for obj in tgtArr:
@@ -560,102 +558,6 @@ class Factory:
 
         return dmdProdLot
 
-    # ============================================================================================================== #
-    # Lot Sequencing Optimization
-    # ============================================================================================================== #
-    # Logic
-    # 1.RM Warehouse 에서 LotObjList 받아오기
-    # 2.Production Cycle 기준으로 Lot Sequencing 최적화(dueDataUom 기준)
-    #   - nan: 고정생산주기가 없는 경우, Grade Sequencing (Production Wheel만 고려)
-    #   - mon: 월 단위의 납기인 경
-    #          우선순위
-    #           - 월 생산 Capa > 월 수요 총 Capa : Production Wheel 고려)
-    #           - 월 생산 Capa < 월 수요 총 Capa : Demand Priority(내수/수출) 고려)
-    #   - day: 납기일을 최우선 기준으로하여 lot Sequencing (우선순위: Demand Priority > 납기일 > prodcution wheel cost)
-    # 3.SCOP algorithms을 이용하여 Grade Sequence Optimization
-    # ============================================================================================================== #
-    # 4.제약 반영
-    # ============================================================================================================== #
-    # 4-1.Capacity 제약 Module (Warehouse에 적용)
-    # objWarehouse 에서 Check
-    # - Silo Warehouse
-    # - FGI Warehouse
-    # ============================================================================================================== #
-    # 4-2.Time 제약 Module - Operation의 Machine에 적용
-    # somOperMgr 에서 Check
-    # - 중합공정 (Reactor)
-    # - 포장공정 (Bagging)
-    # ============================================================================================================== #
-    def geOptLotSeqList(self, dmdLotList:list):
-        '''
-        - dmdLotObjList: 월 단위의 Demand Product Lot List
-                           ex) [prodLotObj1, prodLotObj2, prodLotObj3, prodLotObj4, ...]
-        - dueDateUom (mon / week / day)
-            1) nan : 생산주기가 없는 경우 Grade 별로 Sequencing 후 각 Grade 별로 Lot을 임의 할당
-            2) mon : 월 단위의 납기 고려하여 Seqeuncing을 진행
-            3) day : 일 단위의 납기 기준의 경우 납기 기준으로
-
-        '''
-        dueDateUom = comUtility.Utility.DueDateUom  # 납기 기준 단위: 없음 / 월 / 일
-
-        if dueDateUom == 'nan':
-            optLotSeqList = self._optLotSeqNan(dmdLotList=dmdLotList)
-        elif dueDateUom == 'mon':
-            optLotSeqList = self._optLotSeqMon(dmdLotList=dmdLotList)
-        else:
-            optLotSeqList = self._optLotSeqDay(dmdLotList=dmdLotList)
-
-        return optLotSeqList
-
-    # ------------------------------------------------------------------------------------------------------ #
-    # Due Date 기준 별 Lot Sequencing
-    # - Grade 최적화 sequence 기준으로 Lot을 grouping하여 sequencing(lpst 필요 없음)
-    # ------------------------------------------------------------------------------------------------------ #
-    def _optLotSeqNan(self, dmdLotList:list):
-
-        # Grade Sequence Optimization using SCOP algorithm
-        # gradeSeqOpt = self.SeqOptByScop(dmdLotList=dmdLotList)
-
-        # Grade Sequence 별로 Lot을 grouping해서 List 변환
-        # lotSeqOptList = self.GetLotSeqOptList(gradeSeqOpt=gradeSeqOpt, dmdLotList=dmdLotList, dueUom="nan")
-        pass
-
-    def _optLotSeqMon(self, dmdLotList:list):
-        facStartDate = comUtility.Utility.DayStartDate  # 공장 시작시간
-
-        # 월별 생산 제품 분리
-        monDmdLotDict = self._getMonDmdLotDict(dmdLotList=dmdLotList)
-
-        # 월 단위로 Lot Sequencing
-        for val in monDmdLotDict.values():
-            pass
-
-            # raise Warning(
-            #     f"Make Me ! {self.__class__}.optLotSeqMon() !"
-            # )
-
-        # prodSeqArr = []
-        # # 각 Grade 별 product 초기화
-        # for val in gradeDueSeqDict.values():
-        #     prodSeqArr = prodSeqArr.append[[val[0]]]     # 각 Grade 별 duedate가 가장 작은 값으로 초기화
-        #
-        # for prodSeq in prodSeqArr:
-        #     # prodSeq: [FistProdLotObj]
-        #     candidate = {}
-        #     for prodLotObj in dmdProdLotList:
-        #         if prodLotObj != prodSeq[0]:
-        #             lotObj:objLot.Lot = prodLotObj
-        #             ### 제약조건 반영
-        #             ## 1. 납기 조건
-        #             if True == True:
-        #                 ## 2. 제약 조건
-        #                 if True == True:
-        #                     candidate.update({(prodSeq, lotObj) : prodWheelDict[(prodSeq, lotObj)]})
-        pass
-
-    def _optLotSeqDay(self, dmdLotList:list):
-        pass
-
     # ------------------------------------------------------------------------------------------------------ #
     # Grade Sequence Optimization Using SCOP algorithm
     # ------------------------------------------------------------------------------------------------------ #
@@ -741,47 +643,6 @@ class Factory:
 
         return lotSeqOptList
 
-    # --------------------------------------------------------- #
-    # Packaging Type Sequence Optimization
-    # : Due Uom - nan/mon  같은 Grade 제품 간의 구분 안함
-    # : Due Uom - day 같은 Grade에서 due data 기준으로 순서 고려
-    # --------------------------------------------------------- #
-
-    # Warehouse에서 Check
-    # ------------------------------------------------------------------------------------------------------ #
-    # Grade Sequence Change Check 모둘
-    # ------------------------------------------------------------------------------------------------------ #
-    # - Lot Leave 이전 Grade Sequence와 Lot Leave 이후 Grade Sequence가 같은 경우 : Grade Sequence Change 없음
-    # - Lot Leave 이전 Grade Sequence에서 첫번째 Grade 제외한  Grade Sequence와 Lot Leave 이후 Grade Sequence가 같은 경우
-    #   : Grade Sequence Change 없음
-    # - Lot Leave 이전 Grade Sequence에서 첫번째 Grade 제외한  Grade Sequence와 Lot Leave 이후 Grade Sequence가 다른 경우
-    #   : Grade Sequence Change 발생
-    # ------------------------------------------------------------------------------------------------------ #
-    # def ChkGradeSeqChange(self, beforeLotList, afterLotList):
-    #     beforeGradeSeq = []
-    #     afterGradeSeq = []
-    #
-    #     for bfLot in beforeLotList:
-    #         bfLotObj:objLot.Lot = bfLot
-    #         if len(beforeGradeSeq) == 0:
-    #             beforeGradeSeq.append(bfLotObj.Grade)
-    #         else:
-    #             if beforeGradeSeq[-1] != bfLotObj.Grade:
-    #                 beforeGradeSeq.append(bfLotObj.Grade)
-    #
-    #     for afLot in afterLotList:
-    #         afLotObj:objLot.Lot = afLot
-    #         if len(afterGradeSeq) == 0:
-    #             afterGradeSeq.append(afLotObj.Grade)
-    #         else:
-    #             if afterGradeSeq[-1] != afLotObj.Grade:
-    #                 afterGradeSeq.append(afLotObj.Grade)
-    #
-    #     if (beforeGradeSeq == afterGradeSeq) or (beforeGradeSeq[1:] == afterGradeSeq):
-    #         return False    # Grade Sequence Change 없음
-    #     else:
-    #         return True     # Grade Sequence Change 발생
-    #
     def _getLotGradeList(self, lotList:list):
         lotGradeList = []
 
@@ -819,12 +680,6 @@ class Factory:
         lastDayOfMon = dateTemp.replace(day=month_len, hour=23, minute=59, second=59)
         return lastDayOfMon
 
-
-    # 월별 생산 Capa / 월별 수요 capa 계산
-    def _calcMonDmdCapa(self):
-
-        pass
-
     def getReactorDmdProdGroup(self, gradeGroup:dict, dmdGradeList:list):
         '''
         gradeGroup: {gradeGroup1 : [GRADE_A, ...],
@@ -846,41 +701,6 @@ class Factory:
 
         return dmdReactorProdDict
 
-    # def getDmdGradeList(self, dmdProdLotjList:list):
-    #     dmdGradeList = []
-    #
-    #     for prodLotObj in dmdProdLotjList:
-    #         lotObj:objLot.Lot = prodLotObj
-    #         if lotObj.Grade not in dmdGradeList:
-    #             dmdGradeList.append(lotObj.Grade)
-    #
-    #     return dmdGradeList
-
-    # def getLotDueDate(self, lotObj):
-    #     return lotObj.DueDate
-
-    # def getGradeDueSeq(self, dmdProdLotList:list):
-    #     dmdGradeList = self.getDmdGradeList(dmdProdLotjList=dmdProdLotList)
-    #
-    #     gradeDueSeqDict = {}
-    #     # 모든 Grade를 Dictionary Key로 setting
-    #     for dmdGrade in dmdGradeList:
-    #         gradeDueSeqDict.update({dmdGrade, []})
-    #
-    #     # Grade 별 Lot List 생성
-    #     for prodLotObj in dmdProdLotList:
-    #         lotObj:objLot.Lot = prodLotObj
-    #         gradeList = gradeDueSeqDict[lotObj.Grade]
-    #         gradeList.append(lotObj)
-    #         gradeDueSeqDict.update({lotObj.Grade : gradeList})
-    #
-    #     # Grade별 Due date 기준으로 sorting
-    #     for key, val in gradeDueSeqDict.items():
-    #         sorted_val = val.sort(key=self.getLotDueDate)
-    #         gradeDueSeqDict.update({key:sorted_val})
-    #
-    #     return gradeDueSeqDict
-
     # Production Wheel Cost - cost 기준에 맞춰 Dictionary로 생성
     def _setProdWheelDict(self, costCalStd:str):
         # prodWheel = self._prodWheel
@@ -897,243 +717,6 @@ class Factory:
 
         return appliedProdWheel
 
-    # ================================================================================= #
-    # RM -> Reactor
-    # ================================================================================= #
-
-    # def AssignLotToReactor(self, lotObjList:list):
-    #
-    #     reactorOperObj = self._getReactorOper()
-    #
-    #     for lot in lotObjList:
-    #         lotObj:objLot.Lot = lot
-    #
-    #         macObj = reactorOperObj.MacObjList[0]
-    #         lotObj.Machine = macObj
-    #         lotObj.WareHouse = None
-    #         lotObj.Location = reactorOperObj
-    #         lotObj.ToLoc = reactorOperObj.ToLoc
-    #
-    # RM에서 LotObjList를 받아오는 처리
-    # def _getRmLotObjList(self):
-    #     rmLotObjList = []
-    #
-    #     for wh in self.WhouseObjList:
-    #         whObj:objWarehouse.Warehouse = wh
-    #         if whObj.Kind == 'RM':
-    #             rmLotObjList = whObj.LotObjList
-    #
-    #     return rmLotObjList
-    #
-    # def _getReactorOper(self):
-    #
-    #     for oper in self.OperList:
-    #         operObj:simOperMgr.Operation = oper
-    #
-    #         if operObj.Kind == "REACTOR":
-    #             return operObj
-    #
-    #     print("RACTOR 공정 존재하지 않음")
-    #     raise AssertionError()
-
-    # ================================================================================= #
-    # Reactor -> Silo
-    # ================================================================================= #
-
-    # def CheckLotObjSiloGrade(self, lotObjList:list):
-    #     '''
-    #     Lot을 각 silo의 현재 상태를 고려해서 할당 가능한
-    #     '''
-    #
-    #     siloObjList = self.GetCurSiloState()
-    #
-    #     for prodLotObj in lotObjList:
-    #         lotObj:objLot.Lot = prodLotObj
-    #
-    #         # 각각의 Silo에 lotObj가 들어있는지 search
-    #         for silo in siloObjList:
-    #             siloObj:objWarehouse.Warehouse = silo
-    #             siloLotObjList = silo.LotObjList
-    #             lotObjGradeList = self._getLotObjGrade(lotObjList=siloLotObjList)
-    #
-    #             # silo에 여러 grade 제품이 들어있는지 확인 - 았으면 에러처리
-    #             if len(lotObjGradeList) > 1:
-    #                 print("{} Silo에 여러 grade 제품이 들어있음")
-    #                 raise AssertionError()
-    #
-    #             if lotObjGradeList == None: # Silo에 제품이 없는 경우
-    #                 continue
-    #
-    #             elif lotObj.Grade == lotObjGradeList[0]:
-    #                 if lotObj.Qty < siloObj.CurCapa:        # Silo capa
-    #                     lotObj.Silo = siloObj.Id
-    #                     # siloObj.CurCapa -= lotObj.Qty       # silo에 할당된 양 capa에서 차감하는 처리
-    #                     # siloObj.LotObjList.append(lotObj)   # silo에 할당할 lot을 추가하는 처리
-    #                     break
-    #
-    #     return lotObjList
-
-    # def AssignLotToSilo(self, lotObjList:list):
-    #
-    #     siloObjList = self.GetCurSiloState()
-    #
-    #     for prodLotObj in lotObjList:
-    #         lotObj:objLot.Lot = prodLotObj
-    #
-    #         if len(lotObj.Silo) != 0:   # Silo가 존재하는 경우 그 silo에 할당
-    #             whObj = self._getSiloWhObj(whId=lotObj.Silo)
-    #             lotObj.WareHouse = whObj
-    #             lotObj.Machine = None
-    #             lotObj.Location = whObj
-    #             # lotObj.FromLoc = whObj.FromLoc
-    #             lotObj.ToLoc = whObj.ToLoc
-    #
-    #             # 할당된 silo에 lot을 추가하는 처리
-    #             whObj.LotObjList.append(lotObj)   # silo에 할당할 lot을 추가하는 처리
-    #             whObj.CurCapa -= lotObj.Qty       # silo에 할당된 양 capa에서 차감하는 처리
-    #
-    #         else:   # mapping 할 silo가 없는 경우 새로 할당할 silo를 찾는 처리
-    #             for silo in siloObjList:
-    #                 siloObj:objWarehouse.Warehouse = silo
-    #                 siloLotObjList = siloObj.LotObjList
-    #                 # lotObjGradeList = self._getLotObjGrade(siloLotObjList)
-    #
-    #                 if len(siloObj.LotObjList) == 0:    # Silo에 할당 된 lot이 없으면 할당 처리
-    #                    whObj = self._getSiloWhObj(whId=lotObj.Silo)
-    #                    lotObj.WareHouse = whObj
-    #                    lotObj.Machine = None
-    #                    lotObj.Location = whObj
-    #                    # lotObj.FromLoc = whObj.FromLoc
-    #                    lotObj.ToLoc = whObj.ToLoc
-    #
-    #                    # 할당된 silo에 lot을 추가하는 처리
-    #                    whObj.LotObjList.append(lotObj)    # silo에 할당할 lot을 추가하는 처리
-    #                    whObj.CurCapa -= lotObj.Qty        # silo에 할당된 양 capa에서 차감하는 처리
-    #
-    # def GetCurSiloState(self):
-    #
-    #     siloWhList = []
-    #
-    #     for whObj in self.WhouseObjList:
-    #         wh:objWarehouse.Warehouse = whObj
-    #
-    #         if wh.Kind == 'silo':
-    #             siloWhList.append(wh)
-    #
-    #     return siloWhList
-    #
-    # def _getSiloWhObj(self, whId:str):
-    #
-    #     for wh in self.WhouseObjList:
-    #         whObj:objWarehouse.Warehouse = wh
-    #
-    #         if whObj.Kind == 'silo' and whObj.Id == whId:
-    #             return whObj
-    #
-    # def _getLotObjGrade(self, lotObjList:list):
-    #     lotObjGradeList = []
-    #
-    #     for prodLotObj in lotObjList:
-    #         lotObj:objLot.Lot = prodLotObj
-    #
-    #         if lotObj.Grade not in lotObjGradeList:
-    #             lotObjGradeList.append(lotObj.Grade)
-    #
-    #     return lotObjGradeList
-
-    # ================================================================================= #
-    # Silo -> Packaging
-    # ================================================================================= #
-
-    # def AssignLotToPackaging(self, lotObjList:list):
-    #     packOperObj = self._getPackOper()
-    #     packMacList = self._getPackMacList()
-    #
-    #     for lot in lotObjList:
-    #         lotObj:objLot.Lot = lot
-    #
-    #         for packMac in packMacList:
-    #             packMacObj:objMachine.Machine = packMac
-    #
-    #             if lotObj.PackSize == packMacObj.Id:
-    #                 if packMacObj.Status == 'IDLE':     # Machine이 idle 상태인 경우 제품 할당 처리
-    #                     lotObj.Oper = packOperObj
-    #                     lotObj.Machine = packMacObj.Id
-    #                     lotObj.Location = packOperObj
-    #                     # FromLoc = packOperObj.FromLoc
-    #                     lotObj.ToLoc = packOperObj.ToLoc
-    #
-    #                     # Lot이 들어있던 silo의 capa만큼 복원하는 처리
-    #                     lotSilo = self._getLotSilo(siloId=lotObj.Silo)
-    #                     lotSilo.CurCapa += lotObj.Qty
-    #
-    #                 elif packMacObj.Status == 'PROGRESS':   # 해당 machine이 이미 돌아가는 있는 경우 할당 불가
-    #                     continue
-    #
-    # def _getPackOper(self):
-    #
-    #     for oper in self.OperList:
-    #         operObj:simOperMgr.Operation = oper
-    #         if operObj.ID == 'BAGGING':
-    #             return operObj
-    #
-    # def _getPackMacList(self):
-    #
-    #     packMacList = []
-    #
-    #     for oper in self.OperList:
-    #         operObj:simOperMgr.Operation = oper
-    #         if operObj.ID == 'BAGGING':
-    #             packMacList = operObj.MacObjList
-    #
-    #     return packMacList
-    #
-    # def _getLotSilo(self, siloId:str):
-    #
-    #     for wh in self.WhouseObjList:
-    #         whObj:objWarehouse.Warehouse = wh
-    #         if whObj.Id == siloId:
-    #             return whObj
-
-    # ================================================================================= #
-    # Packaging -> FGI
-    # ================================================================================= #
-
-    # def AssignLotToFGI(self, lotObjList:list):
-    #
-    #     fgiWhObj = self._getFgiWh()
-    #
-    #     for lot in lotObjList:
-    #         lotObj:objLot.Lot = lot
-    #
-    #         if fgiWhObj.CurCapa > lotObj.Qty:   # 자동창고의 현재 capa 체크
-    #             # 이동한 lot 관련 처리
-    #             lotObj.Oper = None
-    #             lotObj.Machine = None
-    #             lotObj.Location = fgiWhObj
-    #             lotObj.ToLoc = fgiWhObj.ToLoc
-    #
-    #             # 자동창고 관련 처리
-    #             fgiWhObj.LotObjList.append(lotObj)  # 자동창고에 lot 추가
-    #             fgiWhObj.CurCapa -= lotObj.Qty      # 추가한 lot 수량만큰 현재 창고 capa에서 차감 처리
-    #
-    #         else:
-    #             # ==================================== #
-    #             # 중합공정 중단 처리 or 강제 출하처리 추가 필요
-    #             # ==================================== #
-    #             break    # 자동창고가 Full 인 상태이므로 적재 중
-
-    # def _getFgiWh(self):
-    #
-    #     for wh in self.WhouseObjList:
-    #         whObj:objWarehouse.Warehouse = wh
-    #
-    #         if whObj.Kind == "FGI":
-    #             return whObj
-    #
-    #     print("FGS warehouse 객체가 없음")
-    #     raise AssertionError()
-
     def _findWhById(self, wh_id: str):
         for obj in self.WhouseObjList:
             whObj: objWarehouse.Warehouse = obj
@@ -1142,7 +725,7 @@ class Factory:
 
         return None
 
-    def _register_new_oper(self, oper_id: str, kind: str, return_flag: bool = False):
+    def _registerNewOper(self, oper_id: str, kind: str, return_flag: bool = False):
 
         operObj: simOperMgr.Operation = simOperMgr.Operation(factory=self, oper_id=oper_id, kind=kind)
         operObj.setupObject()
@@ -1151,12 +734,12 @@ class Factory:
         if return_flag:
             return operObj
 
-    def _register_new_machine(self, mac_id: str, oper: simOperMgr, uom="",
-                              work_start_hour: int = None,
-                              work_end_hour: int = None,
-                              use_work_hour: bool = False,
-                              return_flag: bool = False
-                              ):
+    def _registerNewMac(self, mac_id: str, oper: simOperMgr, uom="",
+                        work_start_hour: int = None,
+                        work_end_hour: int = None,
+                        use_work_hour: bool = False,
+                        return_flag: bool = False
+                        ):
 
         macObj: objMachine = objMachine.Machine(factory=self, operation=oper, mac_id=mac_id)
         macObj.setup_object(status="IDLE", uom=uom, use_work_hour=use_work_hour,
@@ -1170,7 +753,7 @@ class Factory:
         if return_flag:
             return macObj
 
-    def _register_new_warehouse(self, wh_id: str, kind: str, capacity: float = None, return_flag: bool = False):
+    def _registerNewWarehouse(self, wh_id: str, kind: str, capacity: float = None, return_flag: bool = False):
 
         whObj: objWarehouse = objWarehouse.Warehouse(factory=self, whId=wh_id, kind=kind)
         whObj.setupObject(capacity)
@@ -1193,7 +776,7 @@ class Factory:
             attr_obj = self._get_attr(attr=to)
             # attr_obj.
 
-    def _remove_lot(self, lot: objLot):
+    def _removeLot(self, lot: objLot):
         lotObj: objLot.Lot = lot
         try:
             self._lot_obj_list.remove(lotObj)
@@ -1239,3 +822,82 @@ class Factory:
     def _chk_exists(self, attr: str):
         existence: bool = attr in self.__dict__.keys()
         return existence
+
+        # ============================================================================================================== #
+        # Lot Sequencing Optimization
+        # ============================================================================================================== #
+        # Logic
+        # 1.RM Warehouse 에서 LotObjList 받아오기
+        # 2.Production Cycle 기준으로 Lot Sequencing 최적화(dueDataUom 기준)
+        #   - nan: 고정생산주기가 없는 경우, Grade Sequencing (Production Wheel만 고려)
+        #   - mon: 월 단위의 납기인 경
+        #          우선순위
+        #           - 월 생산 Capa > 월 수요 총 Capa : Production Wheel 고려)
+        #           - 월 생산 Capa < 월 수요 총 Capa : Demand Priority(내수/수출) 고려)
+        #   - day: 납기일을 최우선 기준으로하여 lot Sequencing (우선순위: Demand Priority > 납기일 > prodcution wheel cost)
+        # 3.SCOP algorithms을 이용하여 Grade Sequence Optimization
+        # ============================================================================================================== #
+        # 4.제약 반영
+        # ============================================================================================================== #
+        # 4-1.Capacity 제약 Module (Warehouse에 적용)
+        # objWarehouse 에서 Check
+        # - Silo Warehouse
+        # - FGI Warehouse
+        # ============================================================================================================== #
+        # 4-2.Time 제약 Module - Operation의 Machine에 적용
+        # somOperMgr 에서 Check
+        # - 중합공정 (Reactor)
+        # - 포장공정 (Bagging)
+        # ============================================================================================================== #
+
+    def geOptLotSeqList(self, dmdLotList: list):
+        '''
+        - dmdLotObjList: 월 단위의 Demand Product Lot List
+                           ex) [prodLotObj1, prodLotObj2, prodLotObj3, prodLotObj4, ...]
+        - dueDateUom (mon / week / day)
+            1) nan : 생산주기가 없는 경우 Grade 별로 Sequencing 후 각 Grade 별로 Lot을 임의 할당
+            2) mon : 월 단위의 납기 고려하여 Seqeuncing을 진행
+            3) day : 일 단위의 납기 기준의 경우 납기 기준으로
+
+        '''
+
+    # --------------------------------------------------------- #
+    # Packaging Type Sequence Optimization
+    # : Due Uom - nan/mon  같은 Grade 제품 간의 구분 안함
+    # : Due Uom - day 같은 Grade에서 due data 기준으로 순서 고려
+    # --------------------------------------------------------- #
+
+    # Warehouse에서 Check
+    # ------------------------------------------------------------------------------------------------------ #
+    # Grade Sequence Change Check 모둘
+    # ------------------------------------------------------------------------------------------------------ #
+    # - Lot Leave 이전 Grade Sequence와 Lot Leave 이후 Grade Sequence가 같은 경우 : Grade Sequence Change 없음
+    # - Lot Leave 이전 Grade Sequence에서 첫번째 Grade 제외한  Grade Sequence와 Lot Leave 이후 Grade Sequence가 같은 경우
+    #   : Grade Sequence Change 없음
+    # - Lot Leave 이전 Grade Sequence에서 첫번째 Grade 제외한  Grade Sequence와 Lot Leave 이후 Grade Sequence가 다른 경우
+    #   : Grade Sequence Change 발생
+    # ------------------------------------------------------------------------------------------------------ #
+    # def ChkGradeSeqChange(self, beforeLotList, afterLotList):
+    #     beforeGradeSeq = []
+    #     afterGradeSeq = []
+    #
+    #     for bfLot in beforeLotList:
+    #         bfLotObj:objLot.Lot = bfLot
+    #         if len(beforeGradeSeq) == 0:
+    #             beforeGradeSeq.append(bfLotObj.Grade)
+    #         else:
+    #             if beforeGradeSeq[-1] != bfLotObj.Grade:
+    #                 beforeGradeSeq.append(bfLotObj.Grade)
+    #
+    #     for afLot in afterLotList:
+    #         afLotObj:objLot.Lot = afLot
+    #         if len(afterGradeSeq) == 0:
+    #             afterGradeSeq.append(afLotObj.Grade)
+    #         else:
+    #             if afterGradeSeq[-1] != afLotObj.Grade:
+    #                 afterGradeSeq.append(afLotObj.Grade)
+    #
+    #     if (beforeGradeSeq == afterGradeSeq) or (beforeGradeSeq[1:] == afterGradeSeq):
+    #         return False    # Grade Sequence Change 없음
+    #     else:
+    #         return True     # Grade Sequence Change 발생

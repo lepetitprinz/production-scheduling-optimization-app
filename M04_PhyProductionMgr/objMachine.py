@@ -66,13 +66,13 @@ class Machine(object):
                 startTime = runTime + timedelta(hours=int(gradeChangeCost))
                 self._setStartTime(startTime=startTime)
                 self.Lot.ReactIn = self.StartTime
-                self.Lot.set_location(location=self, currLoc=self.Id)
+                self.Lot.SetLocation(location=self, currLoc=self.Id)
 
             else:
                 runTime = comUtility.Utility.runtime
                 self._setStartTime(startTime=runTime)
                 self.Lot.ReactIn = self.StartTime
-                self.Lot.set_location(location=self, currLoc = self.Id)
+                self.Lot.SetLocation(location=self, currLoc = self.Id)
                 self.BfLotGrade = lot.Grade
 
                 self.BfLotGrade = lot.Grade
@@ -81,7 +81,7 @@ class Machine(object):
         elif self.Oper.Kind == "BAGGING":
             self._setStartTime(startTime=comUtility.Utility.runtime)
             self.Lot.BaggingIn = self.StartTime
-            self.Lot.set_location(location=self, currLoc = self.Id)
+            self.Lot.SetLocation(location=self, currLoc = self.Id)
 
         duration: datetime.timedelta = self._getLotProcTime(lot=lot)
         endTime = self.StartTime + duration

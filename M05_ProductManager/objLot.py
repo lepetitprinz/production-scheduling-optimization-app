@@ -58,7 +58,7 @@ class Lot(object):
         self.Machine: objMachine.Machine = None
         self.WareHouse: objWarehouse.Warehouse = None
 
-    def setup_object(self, due_date: str, prodCode: str, qty: float):
+    def setupObject(self, due_date: str, prodCode: str, qty: float):
 
         self.ProdCode = prodCode
         self.Grade = self._get_attr_from_id(id=self.Id, attr="Grade")
@@ -67,15 +67,15 @@ class Lot(object):
         self.Qty = qty
 
         # Time 관련 속성 setting
-        self.DueDate = self._get_last_day_of_month(due_date=due_date)
-        self.PackDuration, self.PackDurationFloat = self._get_pack_duration(grade=self.Id)
-        self.ReactDuration, self.ReactDurationFloat = self._get_react_duration(grade=self.Grade)
+        self.DueDate = self._getLastDayOfMonth(due_date=due_date)
+        self.PackDuration, self.PackDurationFloat = self._getBaggingDuration(grade=self.Id)
+        self.ReactDuration, self.ReactDurationFloat = self._getReactorDuration(grade=self.Grade)
         self.Duration = math.ceil(self.PackDurationFloat + self.ReactDurationFloat)
 
         self.StartTimeMax = self.DueDate - datetime.timedelta(hours=self.Duration)
         self.StartTimeMin = self.DueDate.replace(day=1, hour=8, minute=0, second=0)
 
-    def set_location(self, location: str, currLoc: str):
+    def SetLocation(self, location: str, currLoc: str):
         self.Location = location
         self.CurrLoc = currLoc
 
@@ -87,21 +87,21 @@ class Lot(object):
         self.__setattr__(name=attr, value=value)
 
     def reduce_duration(self, by: float):
-        self.PackDuration, self.PackDurationFloat = self._get_pack_duration(grade=self.Id, by=by)
-        self.ReactDuration, self.ReactDurationFloat = self._get_react_duration(grade=self.Grade, by=by)
+        self.PackDuration, self.PackDurationFloat = self._getBaggingDuration(grade=self.Id, by=by)
+        self.ReactDuration, self.ReactDurationFloat = self._getReactorDuration(grade=self.Grade, by=by)
         self.Duration = math.ceil(self.PackDurationFloat + self.ReactDurationFloat)
 
         self.StartTimeMax = self.DueDate - datetime.timedelta(hours=self.Duration)
         self.StartTimeMin = self.DueDate.replace(day=1, hour=8, minute=0, second=0)
 
-    def _get_last_day_of_month(self, due_date: str):
+    def _getLastDayOfMonth(self, due_date: str):
         date_tmp: datetime.datetime = datetime.datetime.strptime(due_date, '%Y%m')
         last_day, month_len = calendar.monthrange(year=date_tmp.year, month=date_tmp.month)
         date_tmp = date_tmp.replace(day=month_len, hour=23, minute=59, second=59)
         return date_tmp
 
-    def _get_pack_duration(self, grade: str, by: float=1.0):
-        dataMgr: dbDataMgr.DataManager = comUtility.Utility.get_data_manager()
+    def _getBaggingDuration(self, grade: str, by: float=1.0):
+        dataMgr: dbDataMgr.DataManager = comUtility.Utility.GetDataManager()
         dict_prod_yield: dict = dataMgr._get_dict_prod_yield()
         dict_prod_yield: dict = dict_prod_yield['package']
         rslt: datetime.timedelta = datetime.timedelta(hours=0)
@@ -116,8 +116,8 @@ class Lot(object):
         rslt_chp = comUtility.Utility.chop_microsecond(rslt)
         return rslt_chp, tmp_rslt
 
-    def _get_react_duration(self, grade: str, by: float=1.0):
-        dataMgr: dbDataMgr.DataManager = comUtility.Utility.get_data_manager()
+    def _getReactorDuration(self, grade: str, by: float=1.0):
+        dataMgr: dbDataMgr.DataManager = comUtility.Utility.GetDataManager()
         dict_prod_yield: dict = dataMgr._get_dict_prod_yield()
         dict_prod_yield: dict = dict_prod_yield['reactor']
         rslt: datetime.timedelta = datetime.timedelta(hours=0)

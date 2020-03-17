@@ -12,15 +12,21 @@ from M01_Simulator import PE_Simulator
 
 class Utility:
 
-    project_dir: str = os.path.dirname(os.getcwd())
     _simul: PE_Simulator = None
+    project_dir: str = os.path.dirname(os.getcwd())
+
+    # Simulation Version
+    FsVerId: str = ''
+    MPVerId: str = ''
+
+    # Time 정보
+    runtime: datetime.datetime = None
     DayStartTime: str = "00:00:00"
     DayStartDate: datetime.datetime = None
     DayEndDate: datetime.datetime = None
+    DueDateUom: str = 'nan'     # 고정생산주기(납기기준): nan / mon / day
     DayHorizon: datetime.timedelta = datetime.timedelta(days=92)
     MonthMaxDays: dict = {}
-    runtime: datetime.datetime = None
-    DueDateUom: str = 'nan'     # 고정생산주기(납기기준): nan / mon / day
 
     # Silo -> Bagging 전송 유예 옵션
     SiloWait: datetime.timedelta = None
@@ -31,13 +37,17 @@ class Utility:
     # Dictionary 형태 Data
     ProdMstDict: dict = {}
     DmdQtyDict: dict = {}
-    # =========================================== #
-    # Cofiguration 정보
-    # =========================================== #
     EngConfDict: dict = {}
-    # Simulation Version
-    FsVerId: str = ''
-    MPVerId: str = ''
+
+    # Production Wheel
+    ProdWheelDf = None
+    ProdWheelCalStd: str = 'hour'
+    ProdWheelHour: dict = {}
+
+
+    # =================================================== #
+    # Cofiguration 정보
+    # =================================================== #
 
     # Scheduling Period 장보
     ProdCycle: str = ""
@@ -54,38 +64,30 @@ class Utility:
     SiloCapa: int = 4000
     SiloQty:int = 10
 
-    # =============== #
-    # Constraint 정보 #
-    # =============== #
-    AfterSdGrade: str = ""
-
-    # Production Wheel 관련
-    ProdWheelDf = None
-    ProdWheelCalStd: str = 'hour'
-    ProdWheelHour: dict = {}
-
     # Lot Sequencing Optimization (SCOP algorithm)
     OptTimeLimit = 1
+    # =================================================== #
+    # Constraint 정보 #
+    # =================================================== #
 
-    # Time Constraint Cofiguration
-    GradeChangeFinishConst: bool = False    # Configuration DB화 필요
-    GradeGroupChangeConst: bool = False     # Configuration DB화 필요
-    BaggingOperTimeConst: bool = False      # Configuration DB화 필요
+    GradeChangeFinishConst: bool = False
+    GradeGroupChangeConst: bool = False
+    BaggingOperTimeConst: bool = False
 
     BaggingLeadTimeConst: bool = False
     BaggingLeadTime: int = 0
 
-    #
     BaggingWorkCalendarUse: bool = False
     BaggingWorkStartHour: int = 0
     BaggingWorkEndHour: int = 24
 
     # Reactor Shutdown 일정 변수
+    AfterSdGrade: str = ""
     ReactorShutdownStartDate: datetime.datetime = None
     ReactorShutdownEndDate: datetime.datetime = None
 
     @staticmethod
-    def setupObject(simul: PE_Simulator, engConfig: pd.DataFrame):
+    def SetupObject(simul: PE_Simulator, engConfig: pd.DataFrame):
         Utility._simul = simul
 
         engConfDict = {}
@@ -146,7 +148,7 @@ class Utility:
     def setDayStartDate(year: int, month: int, day: int, hour: int = None, min: int = None, second: int = None):
 
         if hour is None or min is None or second is None:
-            if Utility.chk_day_start_time(Utility.DayStartTime):
+            if Utility.ChkDayStartTime(Utility.DayStartTime):
                 hour = int(Utility.DayStartTime.split(":")[0]) if hour is None else hour
                 min = int(Utility.DayStartTime.split(":")[1]) if min is None else min
                 second = int(Utility.DayStartTime.split(":")[2]) if second is None else second
@@ -172,48 +174,29 @@ class Utility:
         return calendar.monthrange(year=year, month=month)
 
     @staticmethod
-    def calcDayEndDate():
+    def CalcDayEndDate():
         Utility.DayEndDate = Utility.DayStartDate + Utility.DayHorizon
 
     @staticmethod
-    def setDayStartTime(value: str):
-        if Utility.chk_day_start_time(value=value):
+    def SetDayStartTime(value: str):
+        if Utility.ChkDayStartTime(value=value):
             Utility.DayStartTime = value
 
     @staticmethod
-    def setDayHorizon(days: int):
+    def SetDayHorizon(days: int):
         pass
         # Utility.DayHorizon = datetime.timedelta(days=days)
 
     @staticmethod
-    def set_runtime(runtime: datetime.datetime):
+    def SetRuntime(runtime: datetime.datetime):
         Utility.runtime = runtime
 
     @staticmethod
-    def get_data_manager():
+    def GetDataManager():
         data_manager: dbDataMgr.DataManager = Utility._simul.DataMgr
         return data_manager
 
     @staticmethod
-    def chk_day_start_time(value: str):
+    def ChkDayStartTime(value: str):
         is_matching: bool = type(value) is str and Utility.day_start_time_regex.match(value) is not None
         return is_matching
-
-
-
-
-def test():
-    Utility.setDayStartTime("23:53:62")
-    print(Utility.DayStartTime)
-
-    Utility.setDayStartTime("00:12:12")
-    print(Utility.DayStartTime)
-
-    Utility.setDayStartDate(year=2020, month=3, day=8)
-    print(Utility.DayStartDate)
-
-    print(Utility.GetMonthMaxDayDict([(2020, 3), (2020, 4), (2020, 5)]))
-
-
-if __name__ == '__main__':
-    test()

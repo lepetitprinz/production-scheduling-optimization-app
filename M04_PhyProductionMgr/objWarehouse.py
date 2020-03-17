@@ -62,7 +62,7 @@ class Warehouse:
             print(row)
             prodId: str = row['product'][:row['product'].find("_", row['product'].find("_") + 1)]
             lotObj: objLot.Lot = objLot.Lot(id=row['product'], prodId=prodId, loc=self)
-            lotObj.setup_object(
+            lotObj.setupObject(
                 due_date=row['yyyymm'],
                 prodCode = row['prodCode'],
                 qty = row['qty']
@@ -385,18 +385,18 @@ class Warehouse:
             self.BeforeLotList = self.LotObjList.copy()
             self.LotObjList.remove(lot)
             if shipping_flag:
-                self._factory._remove_lot(lot=lot)
+                self._factory._removeLot(lot=lot)
         except ValueError as e:
             raise e
 
-    def _get_least_lpst_lot(self):
+    def _getMinLpstLot(self):
         # self.assign_random_lpst()
-        self._rebuild_lpst_lot_dict()
+        self._rebuildLpstLotDict()
         Warning(f"Fix Me !! from {self.__class__}._get_least_lpst_lot !!")
         least_lpst_lot: objLot.Lot = self.LpstLotDict[min(self.LpstLotDict.keys())][0]
         return least_lpst_lot
 
-    def _rebuild_lpst_lot_dict(self):
+    def _rebuildLpstLotDict(self):
         self.LpstLotDict = dict()
         for obj in self.LotObjList:
             lotObj: objLot.Lot = obj
@@ -427,7 +427,7 @@ class Warehouse:
                 "Lot 객체가 아닌것을 Lot 객체 리스트에 Append 하려 하고 있습니다."
             )
         lotObj: objLot.Lot = lotObj
-        lotObj.set_location(self, self.Id)
+        lotObj.SetLocation(self, self.Id)
         self.LotObjList.append(lotObj)
         self._factory._register_lot_to(lot_obj=lotObj, to="self")
 
@@ -480,46 +480,6 @@ class Warehouse:
                         self.FirstEventTime = runTime
             else:
                 self.FirstEventTime = runTime
-
-    # def assign_random_lpst(self):
-    #     for obj in self.LotObjList:
-    #         lotObj: objLot.Lot = obj
-    #         lotObj.Lpst = self.LotObjList.index(lotObj)
-    #     self._rebuild_lpst_lot_dict()
-
-    # ------------------------------------------------------------------------------------------------------ #
-    # Time Constraint
-    # - Reactor (중합)
-    # - Bagging (포장)
-    # ------------------------------------------------------------------------------------------------------ #
-
-    # Reactor Time Constraint
-    def ChkAssignableToReactor(self, lot: objLot):
-
-        if self.GradeChangeFinishConst == True:
-            self._chkGradeChangeFinish(lot=lot)
-
-        if self.GradeGroupChangeConst == True:
-            self._chkGradeGroupChange(lot=lot)
-
-        return True
-
-    def _chkGradeChangeFinish(self, lot: objLot):
-        pass
-
-    def _chkGradeGroupChange(self, lot: objLot):
-        pass
-
-    # Bagging Time Constraint
-    def ChkAssignableToBagging(self, lot: objLot):
-
-        if self.BaggingOperTimeConst is True:
-            self._chkBaggingOperTime(lot=lot)
-
-        return True
-
-    def _chkBaggingOperTime(self, lot: objLot):
-        pass
 
     def SetProdScheduleRslt(self, lot):
         lotOjb:objLot.Lot = lot
