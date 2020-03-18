@@ -126,7 +126,8 @@ class Simulator:
             facObj: simFactoryMgr.Factory = self._facObjList[0]
             for wh in facObj.WhouseObjList:
                 whObj:objWarehouse.Warehouse = wh
-                # 최종 생산물 데이터 저장
+
+                # Final Production Data save
                 if whObj.Kind == 'FGI':
                     prodScheduleRslt = whObj.ProdScheduleRsltArr
                     self.DataMgr.SaveProdScheduleRslt(prodScheduleRslt=prodScheduleRslt)
@@ -134,6 +135,7 @@ class Simulator:
                 if whObj.Kind == 'RM' or whObj.Kind == 'silo':
                     shortageLotObjList.extend(whObj.LotObjList)
 
+            # Shortage Data Save
             for oper in facObj.OperList:
                 operObj:simOperMgr.Operation = oper
                 if operObj.Kind == 'REACTOR':
@@ -147,3 +149,11 @@ class Simulator:
                             shortageLotObjList.append(macObj.Lot)
 
             self.DataMgr.SaveShortageRslt(shortageLotList=shortageLotObjList)
+
+            # Grade Change Cost Data Save
+            for oper in facObj.OperList:
+                operObj: simOperMgr.Operation = oper
+                if operObj.Kind == 'REACTOR':
+                    macObj: objMachine.Machine = operObj.MacObjList[0]
+                    gradeChangeCostList = macObj.GradeChangeCostList
+                    self.DataMgr.SaveGradeChangeCostRslt(gradeChangeCostList=gradeChangeCostList)

@@ -29,6 +29,9 @@ class Machine(object):
         self.Lot: objLot.Lot = None
         self.BfLotGrade: str = None
 
+        # Grade Change Cost List
+        self.GradeChangeCostList: list = []
+
     def setup_object(self, status: str, uom: str = "", use_work_hour: bool = False,
                      work_start_hour: int = None, work_end_hour: int = None):
         self.Status = status
@@ -64,6 +67,12 @@ class Machine(object):
 
                 runTime = comUtility.Utility.Runtime
                 startTime = runTime + timedelta(hours=int(gradeChangeCost))
+
+                # Grade Change Cost 기록 처리
+                if gradeChangeCost > 0:
+                    self._saveGradeChangeCost(cost=gradeChangeCost, bfGrade=bfLotGrade, afGrade=currLotGrade,
+                                              start=runTime, end=startTime )
+
                 self._setStartTime(startTime=startTime)
                 self.Lot.ReactIn = self.StartTime
                 self.Lot.SetLocation(location=self, currLoc=self.Id)
@@ -86,6 +95,32 @@ class Machine(object):
         duration: datetime.timedelta = self._getLotProcTime(lot=lot)
         endTime = self.StartTime + duration
         self._setEndTime(end_time=endTime)
+
+    def _saveGradeChangeCost(self, cost:int, bfGrade: str, afGrade: str,
+                             start: datetime.datetime, end: datetime.datetime):
+        startTimeStr = start.strftime("%Y-%m-%d %H:%M:%S")
+        endTimeStr = end.strftime("%Y-%m-%d %H:%M:%S")
+        gradeChangeOg = comUtility.Utility.GradeChangeOgDict[(bfGrade, afGrade)]
+        gradeChangeCost = [
+                comUtility.Utility.FsVerId,     # FS_VRSN_ID
+                'REACTOR',                      # PLANT_NAME
+                'M1',                           # LINE_NAME
+                'GRADE CHANGE',                 # PLAN_TYPE
+                bfGrade + ' -> ' + afGrade,     # PLAN_CODE
+                '',                             # SALE_MAN
+                'OG',                           # PRODUCT
+                '',                             # CUSTOMER
+                'OG',                           # LOT_NO
+                '',                             # DATE_FROM
+                '',                             # DATE_TO
+                startTimeStr,                   # DATE_FROM_TEXT
+                endTimeStr,                     # DATE_TO_TEXT
+                'FF696969',                     # COLOR
+                int(cost),                      # Grade Change Cost
+                int(gradeChangeOg)              # OG QTY
+                ]
+
+        self.GradeChangeCostList.append(gradeChangeCost)
 
     def lotLeave(self, actual_leave_flag: bool = True):
         leaving_lot: objLot.Lot = self.Lot
@@ -249,7 +284,3 @@ class Machine(object):
 #
 #     print("DEBUGGING")
 
-
-if __name__ == '__main__':
-
-    test()

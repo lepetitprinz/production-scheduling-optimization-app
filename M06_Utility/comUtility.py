@@ -38,12 +38,12 @@ class Utility:
     ProdMstDict: dict = {}
     DmdQtyDict: dict = {}
     EngConfDict: dict = {}
+    GradeChangeOgDict: dict = {}
 
     # Production Wheel
     ProdWheelDf = None
     ProdWheelCalStd: str = 'hour'
     ProdWheelHour: dict = {}
-
 
     # =================================================== #
     # Cofiguration 정보

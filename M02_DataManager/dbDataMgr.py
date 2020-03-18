@@ -37,6 +37,7 @@ class DataManager:
         self._prodYieldDict: dict = {}
         self._dict_days_by_month: dict = {}
         self._prodToYieldDict: dict = {}
+        self._gradeChangeOgDict: dict = {}
 
     def SetupEngConfData(self):
         self._conMgr = dbConMgr.ConnectionManager()
@@ -113,6 +114,7 @@ class DataManager:
         self._getProdMstDict()
         self._getDmdQtyDict()
         self._getProdYieldDict()
+        self._getGradeChangeOgDict()
 
         self._fsVerId = comUtility.Utility.FsVerId
         comUtility.Utility.DmdQtyDict = self._dmdToQtyDict.copy()
@@ -182,11 +184,18 @@ class DataManager:
         self._prodMstDict = prodMstDict
         comUtility.Utility.ProdMstDict = prodMstDict
 
+    def _getGradeChangeOgDict(self):
+        gradeChangeOgDict = {}
+        for idx, row in self.dbProdWheel.iterrows():
+            gradeChangeOgDict[(row['grade_from'], row['grade_to'])] = row['og']
+
+        self._gradeChangeOgDict = gradeChangeOgDict
+        comUtility.Utility.GradeChangeOgDict = gradeChangeOgDict
     # ============================================================================================================== #
     # Data -> DB Upload Module
     # ============================================================================================================== #
 
-    def SaveProdScheduleRslt(self, prodScheduleRslt:list):
+    def SaveProdScheduleRslt(self, prodScheduleRslt: list):
         prodScheduleArr = prodScheduleRslt
 
         dailySchedArr = self._makeDailySchedRslt(prodScheduleArr=prodScheduleArr)
@@ -194,10 +203,14 @@ class DataManager:
         self.UpdateSchedDailyRslt(schedDailyRsltArr=dailySchedArr)
         self.UpdateSchedHourRslt(schedHourRsltArr=prodScheduleArr)
 
+    def SaveGradeChangeCostRslt(self, gradeChangeCostList: list):
+
+        self.UpdateGradeChangeCostRslt(gradeChangeCostArr=gradeChangeCostList)
+
     def _makeDailySchedRslt(self, prodScheduleArr: list):
         dailySchedArr = []
         # 일별 분할을 위한 데이터 전처리
-        schedColumns = ['FS_VRSN_ID', 'PLANT_NAME' ,'LINE_NAME','PLAN_CODE',
+        schedColumns = ['FS_VRSN_ID', 'PLANT_NAME','LINE_NAME', 'PLAN_TYPE', 'PLAN_CODE',
                       'SALE_MAN', 'PRODUCT', 'CUSTOMER', 'LOT_NO',
                       'DATE_FROM', 'DATE_TO', 'DATE_FROM_TEXT', 'DATE_TO_TEXT',
                       'COLOR', 'DURATION', 'QTY']
@@ -294,16 +307,16 @@ class DataManager:
         '''
 
         strTemplate: str = """ insert into SCMUSER.TB_FS_QTY_HH_DATA(
-                                    FS_VRSN_ID, PLANT_NAME, LINE_NAME, PLAN_CODE, SALE_MAN, PRODUCT, CUSTOMER,
+                                    FS_VRSN_ID, PLANT_NAME, LINE_NAME, PLAN_TYPE, PLAN_CODE, SALE_MAN, PRODUCT, CUSTOMER,
                                     LOT_NO, DATE_FROM, DATE_TO, DATE_FROM_TEXT, DATE_TO_TEXT, COLOR, DURATION, QTY,
                                     CREATE_DATE
-                               )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, sysdate) """
+                               )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, sysdate) """
 
         totLen = len(schedHourRsltArr)
         flag = False
         errCnt = 0
         # sqlDel= ""
-        sqlDel= "delete from SCMUSER.TB_FS_QTY_HH_DATA where FS_VRSN_ID = '{}'".format(comUtility.Utility.FsVerId)
+        sqlDel= "delete from SCMUSER.TB_FS_QTY_HH_DATA where FS_VRSN_ID = '{}' and PLAN_TYPE = 'PRODUCTION'".format(comUtility.Utility.FsVerId)
         errCode = 0
         while flag == False:
             flag, errCode = self._conMgr.BatchQuery(sqlTemplate=strTemplate, dataArr=schedHourRsltArr, sqlDel=sqlDel)
@@ -353,7 +366,7 @@ class DataManager:
 
         return flag, errCode
 
-    def SaveShortageRslt(self, shortageLotList):
+    def SaveShortageRslt(self, shortageLotList: list):
         strTemplate: str = """ insert into SCMUSER.TB_FS_SHORTAGE_DATA(
                                     FS_VRSN_ID, PLAN_YYMM, PROD_CODE, LOT_ID, GRADE, PACK_SIZE, PACK_KIND,
                                     LOT_QTY, INPUT_QTY, LOCATION, CREATE_DATE
@@ -377,6 +390,37 @@ class DataManager:
             else:
                 errCnt += 1
                 print("fail")
+
+    def UpdateGradeChangeCostRslt(self, gradeChangeCostArr: list):
+
+        strTemplate: str = """ insert into SCMUSER.TB_FS_QTY_HH_DATA(
+                                            FS_VRSN_ID, PLANT_NAME, LINE_NAME, PLAN_TYPE, PLAN_CODE, SALE_MAN, PRODUCT, CUSTOMER,
+                                            LOT_NO, DATE_FROM, DATE_TO, DATE_FROM_TEXT, DATE_TO_TEXT, COLOR, DURATION, QTY,
+                                            CREATE_DATE
+                                       )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, sysdate) """
+
+        totLen = len(gradeChangeCostArr)
+        flag = False
+        errCnt = 0
+        # sqlDel= ""
+        sqlDel = "delete from SCMUSER.TB_FS_QTY_HH_DATA where FS_VRSN_ID = '{}' and PLAN_TYPE = 'GRADE CHANGE'".format(
+            comUtility.Utility.FsVerId)
+        errCode = 0
+        while flag == False:
+            flag, errCode = self._conMgr.BatchQuery(sqlTemplate=strTemplate, dataArr=gradeChangeCostArr, sqlDel=sqlDel)
+            if flag == True:
+                if errCnt > 0:
+                    print("success - [재전송]")
+                else:
+                    print("Saving Grade Change Cost Result : success")
+                errCnt = 0
+                break
+            else:
+                errCnt += 1
+                print("fail")
+                # self._sendDataErrorProc(errCnt=errCnt, fnName="UpdateUnpegStatus")
+
+        return flag, errCode
 
     def _getShortageLotArr(self, shortageLotList: list):
         shortageRsltArr = []
