@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 import datetime
+from dateutil.relativedelta import relativedelta
 from scop import Model, Alldiff, Quadratic
 
 from M03_Site import simFactoryMgr, simOperMgr
@@ -77,40 +78,40 @@ class Warehouse:
     def SyncRunningTime(self):
         lotObj: objLot.Lot = self._pickAvailableLot()
 
-        # 최종 생산완료 된 경우 출하 처리
-        if self.ToLoc == "Sales":
-            self.Shipping()
-            self.resetFstEventTime()
+        if lotObj != None:
+            # 최종 생산완료 된 경우 출하 처리
+            if self.ToLoc == "Sales":
+                self.Shipping()
+                self.resetFstEventTime()
 
-        else:
-
-            # 선택한 Lot에 대해 할당 가능한 Operation - Machine을 찾는 처리
-            to_oper, available_machines, not_available_machines = \
-                self._findAvailableNextOper(lot=lotObj)
-            if len(available_machines) > 0:
-                self.lotLeave(to_loc=to_oper, lot=lotObj)
-                # self.setFstEventTime()
-                if self.Kind is not "RM":
-                    self.resetFstEventTime()
-                elif len(self.LotObjList) == 0:
-                    self.resetFstEventTime()
-            elif len(available_machines) == 0:
-                # is_in_break, break_end_time = to_oper.are_machines_in_break(lot=least_lpst_lot)
-                # if len(is_in_break)
-                print(f"\t\t{to_oper.__class__.__name__}({to_oper.Id}) No Machines Avaiable. Waiting for Processing...\n"
-                      f"\t\t{lotObj.Id, lotObj.Qty, lotObj.ReactDuration, lotObj.PackDuration}>> ")
-                to_oper.ResetFstEventTime()
-                if self.Id != "RM":
-                    to_oper.inform_to(from_obj=self, runTime=to_oper.FirstEventTime, downFlag=True)
-                else:
-                    if len(not_available_machines) == 0:
+            else:
+                # 선택한 Lot에 대해 할당 가능한 Operation - Machine을 찾는 처리
+                to_oper, available_machines, not_available_machines = \
+                    self._findAvailableNextOper(lot=lotObj)
+                if len(available_machines) > 0:
+                    self.lotLeave(to_loc=to_oper, lot=lotObj)
+                    # self.setFstEventTime()
+                    if self.Kind is not "RM":
+                        self.resetFstEventTime()
+                    elif len(self.LotObjList) == 0:
+                        self.resetFstEventTime()
+                elif len(available_machines) == 0:
+                    # is_in_break, break_end_time = to_oper.are_machines_in_break(lot=least_lpst_lot)
+                    # if len(is_in_break)
+                    print(f"\t\t{to_oper.__class__.__name__}({to_oper.Id}) No Machines Avaiable. Waiting for Processing...\n"
+                          f"\t\t{lotObj.Id, lotObj.Qty, lotObj.ReactDuration, lotObj.PackDuration}>> ")
+                    to_oper.ResetFstEventTime()
+                    if self.Id != "RM":
                         to_oper.inform_to(from_obj=self, runTime=to_oper.FirstEventTime, downFlag=True)
                     else:
-                        to_oper.inform_to(from_obj=self, runTime=to_oper.FirstEventTime,
-                                          down_cause=not_available_machines[0][-1], downFlag=True)
+                        if len(not_available_machines) == 0:
+                            to_oper.inform_to(from_obj=self, runTime=to_oper.FirstEventTime, downFlag=True)
+                        else:
+                            to_oper.inform_to(from_obj=self, runTime=to_oper.FirstEventTime,
+                                              down_cause=not_available_machines[0][-1], downFlag=True)
 
-                # to_oper.set_first_event_time()
-                # self.set_first_event_time(break_end_time)
+                    # to_oper.set_first_event_time()
+                    # self.set_first_event_time(break_end_time)
 
     def _shipping(self, lot: objLot):
         # least_lpst_lot: objLot.Lot = self._get_least_lpst_lot()
@@ -158,12 +159,25 @@ class Warehouse:
             else:
                 # Grade Sequence Optimization using SCOP algorithm
                 # Grade Sequence 별로 Lot을 그룹화해서 List 변환
-                lotSeqOptList = self.SeqOptByScop(self.LotObjList)
 
-                # re-optimization 한 Lot List를 RM warehouse에 재할당
-                self.LotObjList = lotSeqOptList
+                # Production Cycle: NONE 인 경우 전체 Lot List 최적화
+                if comUtility.Utility.ProdCycle == 'NONE':
+                    lotSeqOptList = self.SeqOptByScop(self.LotObjList)
 
-                self.setFstEventTime()
+                    # re-optimization 한 Lot List를 RM warehouse에 재할당
+                    self.LotObjList = lotSeqOptList
+                    self.setFstEventTime()
+
+                # Production Cycle: Monthly 인 경우 runtime 기준 월의 Lot List만 최적화
+                elif comUtility.Utility.ProdCycle == 'MONTHLY':
+                    currMonth = comUtility.Utility.Runtime.strftime('%Y%m')  # runtime의 년+월
+                    curMonLotList, exceptLotObjList = self._getSepMonLotList(currMonth=currMonth)
+                    currLotSeqOptList = self.SeqOptByScop(curMonLotList)
+                    lotSeqOptList = currLotSeqOptList.extend(exceptLotObjList)
+
+                    # re-optimization 한 Lot List를 RM warehouse에 재할당
+                    self.LotObjList = lotSeqOptList
+                    self.setFstEventTime()
         else:
             # self._rebuild_lpst_lot_dict()
             # self.resetFstEventTime()
@@ -297,11 +311,11 @@ class Warehouse:
         # self._rebuild_lpst_lot_dict()
 
         # Silo -> Bagging 전송 유예 처리 반영
-        FirstEventTime = comUtility.Utility.runtime
+        FirstEventTime = comUtility.Utility.Runtime
         if self.Kind == "silo":
             if comUtility.Utility.BaggingLeadTimeConst:
                 self._waitFlag = True
-            FirstEventTime = comUtility.Utility.runtime + comUtility.Utility.SiloWait
+            FirstEventTime = comUtility.Utility.Runtime + comUtility.Utility.SiloWait
         if self.FirstEventTime is None:
             self.setFstEventTime(FirstEventTime, use_flag=True)
         elif FirstEventTime <= self.FirstEventTime:
@@ -317,23 +331,14 @@ class Warehouse:
     def resetCurCapa(self):
         self.CurCapa = int(self.Capacity)
 
-    # Warehouse에 있는 Lot List에서 필요한 lot을 가져오는 처리
     def _pickAvailableLot(self):
-        # Shut Down Constraint 반영 여부 체크
-        if self.ShutDownFlag == True:
-            afterShutdownGrade = comUtility.Utility.AfterSdGrade    # Shutdown 후 지정한 Grade
+        prodCycle = comUtility.Utility.ProdCycle
+        if prodCycle == 'NONE':
+            firstLotObj = self._pickAvailableLotNone()
+        elif prodCycle == 'MONTHLY':
+            firstLotObj = self._pickAvailableLotMonth()
 
-            # Shut Down 후 특정 Grade 우선 생산 조건 반영을 위한 setting
-            sdReorderedLotList = self._getSdReorderedLotList(grade=afterShutdownGrade)  # Lot List Reordering
-            self.LotObjList = sdReorderedLotList    # Warehouse의 Lot List Update
-            self.ShutDownFlag = False               # Shutdown Flag 초기화
-            reorderedLotObj: objLot.Lot = self.LotObjList[0]
-
-            return reorderedLotObj
-
-        else:
-            firstLotObj: objLot.Lot = self.LotObjList[0]
-            return firstLotObj
+        return firstLotObj
 
     # Shut Down 후 특정 Grade 제품을 먼저 생산하기 위해 Lot List 순서를 reorder 하는 처리
     def _getSdReorderedLotList(self, grade:str):
@@ -352,6 +357,102 @@ class Warehouse:
         # Grade Lot - 나머지 Lot 순서로 재배열
         reorderedLotList.extend(GradeLotList)
         reorderedLotList.extend(exceptGradeLotList)
+
+        return reorderedLotList
+
+    # Warehouse에 있는 Lot List에서 필요한 lot을 가져오는 처리
+    def _pickAvailableLotNone(self):
+
+        # Shut Down Constraint 반영 여부 체크
+        if self.ShutDownFlag == True:
+            afterShutdownGrade = comUtility.Utility.AfterSdGrade    # Shutdown 후 지정한 Grade
+
+            # Shut Down 후 특정 Grade 우선 생산 조건 반영을 위한 setting
+            sdReorderedLotList = self._getSdReorderedLotList(grade=afterShutdownGrade)  # Lot List Reordering
+            self.LotObjList = sdReorderedLotList    # Warehouse의 Lot List Update
+            self.ShutDownFlag = False               # Shutdown Flag 초기화
+            reorderedLotObj: objLot.Lot = self.LotObjList[0]
+
+            return reorderedLotObj
+
+        else:
+            firstLotObj: objLot.Lot = self.LotObjList[0]
+            return firstLotObj
+
+    # Warehouse에 있는 Lot List에서 필요한 lot을 가져오는 처리
+    def _pickAvailableLotMonth(self):
+        if self.Kind == 'RM':
+            currMonth = comUtility.Utility.Runtime.strftime('%Y%m')     # runtime의 년+월
+            curMonLotList, exceptLotObjList = self._getSepMonLotList(currMonth=currMonth)
+
+            # Runtime 월의 lot이 모두 처리된 경우 다음 월 1일이 올떄까지 pick 하는 처리 중지
+            if len(curMonLotList) == 0:
+                nextMonth = comUtility.Utility.Runtime + relativedelta(months=+1)
+                nextMonthStr = nextMonth.strftime('%Y%m')
+                nextMonthFstDayStr = nextMonthStr + '01000000'
+                nextMonthFstDay = datetime.datetime.strptime(nextMonthFstDayStr, '%Y%m%d%H%M%S')
+                self.FirstEventTime = nextMonthFstDay   # RM의 Event Time을 runtime의 다음 달 1일로 초기화
+                return None
+
+            # runtime의 월에 lot이 존재하므로 당월 duedate인 lot을 선택
+            else:
+                # Shut Down Constraint 반영 여부 체크
+                if self.ShutDownFlag == True:
+                    afterShutdownGrade = comUtility.Utility.AfterSdGrade  # Shutdown 후 지정한 Grade
+
+                    # Shut Down 후 특정 Grade 우선 생산 조건 반영을 위한 setting
+                    sdReorderedLotList = self._getSdReorderedLotListMonth(grade=afterShutdownGrade,
+                                                                          currLotList=curMonLotList,
+                                                                          exceptLotList=exceptLotObjList)  # Lot List Reordering
+                    self.LotObjList = sdReorderedLotList  # Warehouse의 Lot List Update
+                    self.ShutDownFlag = False  # Shutdown Flag 초기화
+                    reorderedLotObj: objLot.Lot = self.LotObjList[0]
+
+                    return reorderedLotObj
+
+                else:
+                    for lot in self.LotObjList:
+                        lotObj:objLot.Lot = lot
+                        lotCurrMonth = lotObj.DueDate.strftime('%Y%m')
+                        if lotCurrMonth == currMonth:
+                            return lotObj
+
+        else:
+            firstLotObj: objLot.Lot = self.LotObjList[0]
+            return firstLotObj
+
+    def _getSepMonLotList(self, currMonth: str):
+        currLotObjList = []
+        exceptLotObjList = []
+        for lot in self.LotObjList:
+            lotObj: objLot.Lot = lot
+            lotProdMonth = lotObj.DueDate.strftime('%Y%m')
+            if lotProdMonth == currMonth:
+                currLotObjList.append(lotObj)
+            else:
+                exceptLotObjList.append(lotObj)
+
+        return currLotObjList, exceptLotObjList
+
+    # Shut Down 후 특정 Grade 제품을 먼저 생산하기 위해 Lot List 순서를 reorder 하는 처리
+    def _getSdReorderedLotListMonth(self, grade:str, currLotList:list, exceptLotList:list):
+        GradeLotList = []
+        exceptGradeLotList = []
+        reorderedLotList = []
+
+        for lot in currLotList:
+            lotObj:objLot.Lot = lot
+            if lotObj.Grade == grade:
+                GradeLotList.append(lotObj)
+            else:
+                exceptGradeLotList.append(lotObj)
+
+        # Grade Lot - 나머지 Lot 순서로 재배열
+        reorderedLotList.extend(GradeLotList)
+        reorderedLotList.extend(exceptGradeLotList)
+
+        #
+        reorderedLotList.extend(exceptLotList)
 
         return reorderedLotList
 
@@ -445,7 +546,7 @@ class Warehouse:
             self.setFstEventTime(runTime=None, use_flag=True)
         else:
             if not self._waitFlag:
-                self.setFstEventTime(comUtility.Utility.runtime, use_flag=True)
+                self.setFstEventTime(comUtility.Utility.Runtime, use_flag=True)
                 # if arrival_flag:
                 #     # Lot 이 들어온 경우
                 #
@@ -473,7 +574,7 @@ class Warehouse:
 
     def setFstEventTime(self, runTime: datetime.datetime = None, use_flag: bool = False):
         if not use_flag:
-            runTime = comUtility.Utility.runtime
+            runTime = comUtility.Utility.Runtime
             self.FirstEventTime = runTime
         else:
             if self.FirstEventTime is not None:
@@ -538,3 +639,5 @@ class Warehouse:
         self.ProdScheduleRsltArr.append(reactorScheduleRslt)
         self.ProdScheduleRsltArr.append(baggingScheduleRslt)
         self.BagScheduleRsltArr.append(baggingScheduleRslt)
+
+

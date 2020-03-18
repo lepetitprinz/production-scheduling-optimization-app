@@ -324,8 +324,8 @@ class ConnectionManager(object):
                     WHEN RES_CD IN ('P2', 'P7', 'P9') THEN 'bagging'
                 END AS OPER_ID
              , RES_CD AS MAC_ID
-             , PLAN_FROM_YYMMDD || FROM_TIME_VAL AS FROM_TIME
-             , PLAN_TO_YYMMDD || TO_TIME_VAL AS TO_TIME
+             , PLAN_FROM_YYMMDD || TO_TIME_VAL AS FROM_TIME
+             , TO_CHAR(TO_DATE(PLAN_TO_YYMMDD, 'YYYYMMDDHH24MISS')+1, 'YYYYMMDD') || FROM_TIME_VAL AS TO_TIME
         FROM SCMUSER.TB_FP_CAL_MST
         WHERE 1=1
           AND PLAN_FROM_YYMMDD BETWEEN '{}' AND '{}'

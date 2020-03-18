@@ -141,7 +141,8 @@ class Factory:
 
             from_date: datetime.datetime = datetime.datetime.strptime(from_date_str, "%Y%m%d%H%M%S")
             to_date: datetime.datetime = datetime.datetime.strptime(to_date_str, "%Y%m%d%H%M%S")
-            macObj.append_downtime(from_date=from_date, to_date=to_date, to_which="shutdown")
+            if comUtility.Utility.ReactorShutdownYn == 'Y':
+                macObj.append_downtime(from_date=from_date, to_date=to_date, to_which="shutdown")
 
     def setupRmWh(self):
         rmWh: objWarehouse.Warehouse = self._findWhById(wh_id="RM")
@@ -156,9 +157,8 @@ class Factory:
         # NONE >> 기존방식
         # MONTHLY >>
         if self._utility.ProdCycle == "MONTHLY":
-            for month in [3, 4, 5, 6]:
-                tmpRmWhLotList: list = [lot for lot in rmWhLotList
-                                        if lot.DueDate.month == month]
+            for month in [3, 4, 5, 6]:      # 수정 필요
+                tmpRmWhLotList: list = [lot for lot in rmWhLotList if lot.DueDate.month == month]
                 if len(tmpRmWhLotList) == 0:
                     continue
                 # Grade Sequence Optimization using SCOP algorithm
@@ -234,9 +234,10 @@ class Factory:
         fgi.setToLoc(to_loc="Sales")     # Ternminal Status
 
         # 머신 가동 제약 등록
-        m1.append_downtime(from_date=self._utility.ReactorShutdownStartDate,
-                           to_date=self._utility.ReactorShutdownEndDate,
-                           to_which="shutdown")
+        if comUtility.Utility.ReactorShutdownYn == 'Y':
+            m1.append_downtime(from_date=self._utility.ReactorShutdownStartDate,
+                               to_date=self._utility.ReactorShutdownEndDate,
+                               to_which="shutdown")
         # p2.append_downtime(from_date=, to_date=)
         # p7.append_downtime(from_date=, to_date=)
         # p9.append_downtime(from_date=, to_date=)
@@ -303,7 +304,7 @@ class Factory:
 
             endRTime = 0
 
-            if runTime != self._utility.runtime:
+            if runTime != self._utility.Runtime:
                 self._utility.SetRuntime(runTime)
 
             tgtCnt = len(tgtArr)

@@ -295,8 +295,9 @@ class DataManager:
 
         strTemplate: str = """ insert into SCMUSER.TB_FS_QTY_HH_DATA(
                                     FS_VRSN_ID, PLANT_NAME, LINE_NAME, PLAN_CODE, SALE_MAN, PRODUCT, CUSTOMER,
-                                    LOT_NO, DATE_FROM, DATE_TO, DATE_FROM_TEXT, DATE_TO_TEXT, COLOR, DURATION, QTY
-                               )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15) """
+                                    LOT_NO, DATE_FROM, DATE_TO, DATE_FROM_TEXT, DATE_TO_TEXT, COLOR, DURATION, QTY,
+                                    CREATE_DATE
+                               )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, sysdate) """
 
         totLen = len(schedHourRsltArr)
         flag = False
@@ -328,8 +329,8 @@ class DataManager:
 
         strTemplate: str = """ insert into SCMUSER.TB_FS_QTY_DD_DATA(
                                     FS_VRSN_ID, PLANT_NAME, LINE_NAME, MATRL_CD, MATRL_DESCR,
-                                    PROD_DATE, DAILY_QTY, DAILY_DURATION, DEMAND_TYPE)
-                               values(:1, :2, :3, :4, :5, :6, :7, :8, :9)"""
+                                    PROD_DATE, DAILY_QTY, DAILY_DURATION, DEMAND_TYPE, CREATE_DATE)
+                               values(:1, :2, :3, :4, :5, :6, :7, :8, :9, sysdate)"""
 
         totLen = len(schedDailyRsltArr)
         flag = False

@@ -7,7 +7,6 @@ from M04_PhyProductionMgr import objMachine, objStocker, objWarehouse
 from M05_ProductManager import objLot
 from M06_Utility import comUtility
 
-
 class Operation(object):
     def __init__(self, factory: simFactoryMgr, oper_id: str, kind: str):
         # self._facUtil: facUtility.FacUtility = None  #
@@ -63,14 +62,14 @@ class Operation(object):
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
             macBreakEnd: datetime.datetime = macObj.getMacStopEndTime()
-            if macBreakEnd == comUtility.Utility.runtime:
+            if macBreakEnd == comUtility.Utility.Runtime:
                 macObj.power_on()
                 print(f"\t\t{macObj.__class__.__name__} ({macObj.Id}) RESUMED FROM DOWN STATE !")
         self.inform_to_previous()
 
     def inform_to_previous(self, runTime: datetime.datetime = None):
         if runTime is None:
-            runTime = comUtility.Utility.runtime
+            runTime = comUtility.Utility.Runtime
         for obj in self._factory.WhouseObjList:
             whObj: objWarehouse.Warehouse = obj
             if self.FromLoc == whObj.Kind:
@@ -103,7 +102,7 @@ class Operation(object):
     def lotLeave(self):
         for obj in self.MacObjList:
             macObj: objMachine.Machine = obj
-            if macObj.EndTime == comUtility.Utility.runtime:
+            if macObj.EndTime == comUtility.Utility.Runtime:
                 lotObj: objLot.Lot = macObj.lotLeave(actual_leave_flag=False)
 
                 # Machine에 있는 lot을 다음 warehouse에 할당하는 처리
@@ -114,9 +113,9 @@ class Operation(object):
                     print(f"\t\t{macObj.__class__.__name__}({macObj.Id}).lot_leave() >> {(lotObj.Id, lotObj.Qty, lotObj.ReactDuration, lotObj.PackDuration)}")
                     assignWh.lotArrive(from_loc=macObj, lot=lotObj)
                     if self.Kind == "REACTOR":
-                        lotObj.ReactOut = comUtility.Utility.runtime
+                        lotObj.ReactOut = comUtility.Utility.Runtime
                     else:
-                        lotObj.BaggingOut = comUtility.Utility.runtime
+                        lotObj.BaggingOut = comUtility.Utility.Runtime
                     assignWh.resetFstEventTime(arrival_flag=True)
                     self.inform_to_previous(runTime=macObj.EndTime)
                     macObj.lotLeave()
@@ -236,7 +235,7 @@ class Operation(object):
                 macEndTimes.append(macObj.EndTime)
             elif macObj.hasCalendar:
                 if not init_flag:
-                    if macObj.getMacStopEndTime() != comUtility.Utility.runtime:
+                    if macObj.getMacStopEndTime() != comUtility.Utility.Runtime:
                         macEndTimes.append(macObj.getMacStopEndTime())
         if len(macEndTimes) > 0:
             newFstEventTime = min(macEndTimes)

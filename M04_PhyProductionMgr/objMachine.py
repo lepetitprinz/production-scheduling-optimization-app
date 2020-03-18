@@ -62,14 +62,14 @@ class Machine(object):
                 gradeChangeCost = comUtility.Utility.ProdWheelHour[(bfLotGrade, currLotGrade)]
                 self.BfLotGrade = lot.Grade     # Grade Chnage Cost 계산 후 update
 
-                runTime = comUtility.Utility.runtime
+                runTime = comUtility.Utility.Runtime
                 startTime = runTime + timedelta(hours=int(gradeChangeCost))
                 self._setStartTime(startTime=startTime)
                 self.Lot.ReactIn = self.StartTime
                 self.Lot.SetLocation(location=self, currLoc=self.Id)
 
             else:
-                runTime = comUtility.Utility.runtime
+                runTime = comUtility.Utility.Runtime
                 self._setStartTime(startTime=runTime)
                 self.Lot.ReactIn = self.StartTime
                 self.Lot.SetLocation(location=self, currLoc = self.Id)
@@ -79,7 +79,7 @@ class Machine(object):
 
         # Bagging의 machine의 경우 Grade Change Cost가 없음
         elif self.Oper.Kind == "BAGGING":
-            self._setStartTime(startTime=comUtility.Utility.runtime)
+            self._setStartTime(startTime=comUtility.Utility.Runtime)
             self.Lot.BaggingIn = self.StartTime
             self.Lot.SetLocation(location=self, currLoc = self.Id)
 
@@ -105,7 +105,7 @@ class Machine(object):
         chkUnavailableToMac: bool = False
         not_available_cause: str = ""
         duration: datetime.timedelta = self._getLotProcTime(lot=lot)
-        lotProcStartTime: datetime.datetime = comUtility.Utility.runtime
+        lotProcStartTime: datetime.datetime = comUtility.Utility.Runtime
         lotProcEndTime: datetime.datetime = lotProcStartTime + duration
 
         # Reactor 공정의 경우 Grade Change Cost를 반영
@@ -113,6 +113,7 @@ class Machine(object):
             bfLotGrade = self.BfLotGrade
             currLotGrade = lot.Grade
 
+            # 첫번쨰 Lot 등록시 예외 처리
             if bfLotGrade is None:
                 bfLotGrade = lot.Grade
 
@@ -133,6 +134,7 @@ class Machine(object):
                 start_time=lotProcStartTime, end_time=lotProcEndTime
             )
             if chkOverlap:
+                # Machine Down 사유가 shutdown 인지 확인
                 for macShutDown in self._calendar.seq_shutdown:
                     chkOverLapShutDown: bool = self._chkOverlapToMacStopPeriod(
                         from_to_tuple=macShutDown,
@@ -149,8 +151,8 @@ class Machine(object):
 
     def getMacStopEndTime(self):
         seq: list = self._calendar.seq_full
-        seq_end: list = [tup[1] for tup in seq if tup[1] >= comUtility.Utility.runtime]
-        break_end = min(seq_end) if len(seq_end) > 0 else comUtility.Utility.runtime
+        seq_end: list = [tup[1] for tup in seq if tup[1] >= comUtility.Utility.Runtime]
+        break_end = min(seq_end) if len(seq_end) > 0 else comUtility.Utility.Runtime
         return break_end
 
     def power_on(self):
@@ -186,7 +188,7 @@ class Machine(object):
         for downtime in self._calendar.seq_full:
             is_between = self._is_between(
                 from_to_tuple=downtime,
-                value=comUtility.Utility.runtime
+                value=comUtility.Utility.Runtime
             )
             if is_between:
                 return downtime

@@ -20,7 +20,7 @@ class Utility:
     MPVerId: str = ''
 
     # Time 정보
-    runtime: datetime.datetime = None
+    Runtime: datetime.datetime = None
     DayStartTime: str = "00:00:00"
     DayStartDate: datetime.datetime = None
     DayEndDate: datetime.datetime = None
@@ -81,7 +81,9 @@ class Utility:
     BaggingWorkStartHour: int = 0
     BaggingWorkEndHour: int = 24
 
+
     # Reactor Shutdown 일정 변수
+    ReactorShutdownYn: str = ""
     AfterSdGrade: str = ""
     ReactorShutdownStartDate: datetime.datetime = None
     ReactorShutdownEndDate: datetime.datetime = None
@@ -111,9 +113,6 @@ class Utility:
         Utility.MinLotSize = int(engConfDict['REACTOR_LOT_MIN'])
         Utility.MaxLotSize = int(engConfDict['REACTOR_LOT_MAX'])
 
-        # Shutdown 처리
-        Utility.AfterSdGrade = engConfDict['SHUTDOWN_PROD_ITEM']
-
         # Time Constraint
         baggingLeadTimeYn = engConfDict['BAGGING_LOT_CHANGE_TIME_LT_YN']
         if baggingLeadTimeYn == "Y":
@@ -129,10 +128,13 @@ class Utility:
         Utility.BaggingWorkEndHour = int(engConfDict['BAGGING_LOT_CHANGE_TIME_END'])
 
         # Reactor Shutdown Time 정보 세팅
-        Utility.ReactorShutdownStartDate = datetime.datetime.strptime(engConfDict['SHUTDOWN_START_DATE'], "%Y%m%d")
-        Utility.ReactorShutdownStartDate = Utility.ReactorShutdownStartDate.replace(hour=0, minute=0, second=0, microsecond=0)
-        Utility.ReactorShutdownEndDate = datetime.datetime.strptime(engConfDict['SHUTDOWN_END_DATE'], "%Y%m%d")
-        Utility.ReactorShutdownEndDate = Utility.ReactorShutdownEndDate.replace(hour=23, minute=59, second=59, microsecond=0)
+        ReactorShutdownYn = engConfDict['SHUTDOWN_PERIOD_YN']
+        if ReactorShutdownYn == 'Y' or ReactorShutdownYn == 'y':
+            Utility.AfterSdGrade = engConfDict['SHUTDOWN_PROD_ITEM']
+            Utility.ReactorShutdownStartDate = datetime.datetime.strptime(engConfDict['SHUTDOWN_START_DATE'], "%Y%m%d")
+            Utility.ReactorShutdownStartDate = Utility.ReactorShutdownStartDate.replace(hour=0, minute=0, second=0, microsecond=0)
+            Utility.ReactorShutdownEndDate = datetime.datetime.strptime(engConfDict['SHUTDOWN_END_DATE'], "%Y%m%d")
+            Utility.ReactorShutdownEndDate = Utility.ReactorShutdownEndDate.replace(hour=23, minute=59, second=59, microsecond=0)
 
     @staticmethod
     def setSiloWaitTime(hours: float):
@@ -159,7 +161,7 @@ class Utility:
             Utility.DayStartDate = datetime.datetime(year=year, month=month, day=day, hour=hour, minute=min, second=second)
         else:
             Utility.DayStartDate = datetime.datetime(year=year, month=month, day=day, hour=hour, minute=min, second=second)
-        Utility.runtime = datetime.datetime(year=year, month=month, day=day, hour=hour, minute=min, second=second)
+        Utility.Runtime = datetime.datetime(year=year, month=month, day=day, hour=hour, minute=min, second=second)
 
     @staticmethod
     def GetMonthMaxDayDict(year_month_pairs: list):
@@ -189,7 +191,7 @@ class Utility:
 
     @staticmethod
     def SetRuntime(runtime: datetime.datetime):
-        Utility.runtime = runtime
+        Utility.Runtime = runtime
 
     @staticmethod
     def GetDataManager():
