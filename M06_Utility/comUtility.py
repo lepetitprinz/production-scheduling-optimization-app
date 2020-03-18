@@ -128,8 +128,8 @@ class Utility:
         Utility.BaggingWorkEndHour = int(engConfDict['BAGGING_LOT_CHANGE_TIME_END'])
 
         # Reactor Shutdown Time 정보 세팅
-        ReactorShutdownYn = engConfDict['SHUTDOWN_PERIOD_YN']
-        if ReactorShutdownYn == 'Y' or ReactorShutdownYn == 'y':
+        Utility.ReactorShutdownYn = engConfDict['SHUTDOWN_PERIOD_YN']
+        if Utility.ReactorShutdownYn == 'Y' or Utility.ReactorShutdownYn == 'y':
             Utility.AfterSdGrade = engConfDict['SHUTDOWN_PROD_ITEM']
             Utility.ReactorShutdownStartDate = datetime.datetime.strptime(engConfDict['SHUTDOWN_START_DATE'], "%Y%m%d")
             Utility.ReactorShutdownStartDate = Utility.ReactorShutdownStartDate.replace(hour=0, minute=0, second=0, microsecond=0)
