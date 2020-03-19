@@ -141,8 +141,8 @@ class Factory:
 
             from_date: datetime.datetime = datetime.datetime.strptime(from_date_str, "%Y%m%d%H%M%S")
             to_date: datetime.datetime = datetime.datetime.strptime(to_date_str, "%Y%m%d%H%M%S")
-            if comUtility.Utility.ReactorShutdownYn == 'Y':
-                macObj.append_downtime(from_date=from_date, to_date=to_date, to_which="shutdown")
+            if comUtility.Utility.EqpOperationTimeLimitYn == 'Y':
+                macObj.append_downtime(from_date=from_date, to_date=to_date, to_which="daily")
 
     def setupRmWh(self):
         rmWh: objWarehouse.Warehouse = self._findWhById(wh_id="RM")

@@ -86,6 +86,8 @@ class Utility:
     ReactorShutdownStartDate: datetime.datetime = None
     ReactorShutdownEndDate: datetime.datetime = None
 
+    EqpOperationTimeLimitYn: bool = False
+
     @staticmethod
     def SetupObject(simul: PE_Simulator, engConfig: pd.DataFrame):
         Utility._simul = simul
@@ -121,6 +123,7 @@ class Utility:
         Utility.BaggingLeadTime = engConfDict['BAGGING_LOT_CHANGE_TIME_LT']
 
         # 일별 가동 시간 정보 등록
+        Utility.EqpOperationTimeLimitYn = engConfDict['EQP_OPERATION_TIME_LIMIT_YN']
         Utility.BaggingWorkCalendarUse = engConfDict['BAGGING_LOT_CHANGE_TIME_YN'] == 'Y'
         Utility.BaggingWorkStartHour = int(engConfDict['BAGGING_LOT_CHANGE_TIME_START'])
         Utility.BaggingWorkEndHour = int(engConfDict['BAGGING_LOT_CHANGE_TIME_END'])

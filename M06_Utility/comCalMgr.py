@@ -53,6 +53,9 @@ class CalendarManager(object):
         elif to_which == "breakdown":
             self.seq_breakdown.append(appending_tuple)
             self.seq_breakdown.sort()
+        elif to_which == "daily":
+            self.seq_daily.append(appending_tuple)
+            self.seq_daily.sort()
 
         self._machine.hasCalendar = True
 
