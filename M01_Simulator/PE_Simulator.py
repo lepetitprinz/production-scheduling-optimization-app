@@ -66,7 +66,7 @@ class Simulator:
                                    silo_qty=comUtility.Utility.SiloCapa,
                                    nof_silo=SiloQty, silo_wait_hours=int(silo_wait_hours))
 
-        self.SetupObject(use_mac_down_cal_db=False)
+        self.SetupObject(use_mac_down_cal_db=True)
 
     def SetupObject(self, use_mac_down_cal_db: bool = False):
 
@@ -157,3 +157,7 @@ class Simulator:
                     macObj: objMachine.Machine = operObj.MacObjList[0]
                     gradeChangeCostList = macObj.GradeChangeCostList
                     self.DataMgr.SaveGradeChangeCostRslt(gradeChangeCostList=gradeChangeCostList)
+
+            # Shutdown Data Save
+            if comUtility.Utility.ReactorShutdownYn == 'Y':
+                self.DataMgr.SaveShutDownRslt()

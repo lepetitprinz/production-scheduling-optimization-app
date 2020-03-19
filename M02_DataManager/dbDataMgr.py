@@ -207,6 +207,34 @@ class DataManager:
 
         self.UpdateGradeChangeCostRslt(gradeChangeCostArr=gradeChangeCostList)
 
+    def SaveShutDownRslt(self):
+        shutDownStart = comUtility.Utility.ReactorShutdownStartDate
+        shutDownStartStr = shutDownStart.strftime("%Y-%m-%d %H:%M:%S")
+        shutDownEnd = comUtility.Utility.ReactorShutdownEndDate
+        shutDownEndStr = shutDownEnd.strftime("%Y-%m-%d %H:%M:%S")
+        afterSdGrade = comUtility.Utility.AfterSdGrade
+
+        shutDownArr = [[
+                comUtility.Utility.FsVerId,     # FS_VRSN_ID
+                'REACTOR',                      # PLANT_NAME
+                'M1',                           # LINE_NAME
+                'SHUT DOWN',                    # PLAN_TYPE
+                'SHUT DOWN',                    # PLAN_CODE
+                '',                             # SALE_MAN
+                'SHUT DOWN',                    # PRODUCT
+                '',                             # CUSTOMER
+                'SHUT DOWN',                    # LOT_NO
+                '',                             # DATE_FROM
+                '',                             # DATE_TO
+                shutDownStartStr,               # DATE_FROM_TEXT
+                shutDownEndStr,                 # DATE_TO_TEXT
+                'FF696969',                     # COLOR
+                0,                              # Duration
+                0                               # QTY
+                ]]
+
+        self.UpdateShutDownRslt(shutDownArr=shutDownArr)
+
     def _makeDailySchedRslt(self, prodScheduleArr: list):
         dailySchedArr = []
         # 일별 분할을 위한 데이터 전처리
@@ -408,6 +436,37 @@ class DataManager:
         errCode = 0
         while flag == False:
             flag, errCode = self._conMgr.BatchQuery(sqlTemplate=strTemplate, dataArr=gradeChangeCostArr, sqlDel=sqlDel)
+            if flag == True:
+                if errCnt > 0:
+                    print("success - [재전송]")
+                else:
+                    print("Saving Grade Change Cost Result : success")
+                errCnt = 0
+                break
+            else:
+                errCnt += 1
+                print("fail")
+                # self._sendDataErrorProc(errCnt=errCnt, fnName="UpdateUnpegStatus")
+
+        return flag, errCode
+
+    def UpdateShutDownRslt(self, shutDownArr: list):
+
+        strTemplate: str = """ insert into SCMUSER.TB_FS_QTY_HH_DATA(
+                                                FS_VRSN_ID, PLANT_NAME, LINE_NAME, PLAN_TYPE, PLAN_CODE, SALE_MAN, PRODUCT, CUSTOMER,
+                                                LOT_NO, DATE_FROM, DATE_TO, DATE_FROM_TEXT, DATE_TO_TEXT, COLOR, DURATION, QTY,
+                                                CREATE_DATE
+                                           )values(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, sysdate) """
+
+        totLen = len(shutDownArr)
+        flag = False
+        errCnt = 0
+        # sqlDel= ""
+        sqlDel = "delete from SCMUSER.TB_FS_QTY_HH_DATA where FS_VRSN_ID = '{}' and PLAN_TYPE = 'SHUT DOWN'".format(
+            comUtility.Utility.FsVerId)
+        errCode = 0
+        while flag == False:
+            flag, errCode = self._conMgr.BatchQuery(sqlTemplate=strTemplate, dataArr=shutDownArr, sqlDel=sqlDel)
             if flag == True:
                 if errCnt > 0:
                     print("success - [재전송]")

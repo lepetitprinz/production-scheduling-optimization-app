@@ -69,7 +69,6 @@ class Utility:
     # =================================================== #
     # Constraint 정보 #
     # =================================================== #
-
     GradeChangeFinishConst: bool = False
     GradeGroupChangeConst: bool = False
     BaggingOperTimeConst: bool = False
@@ -80,7 +79,6 @@ class Utility:
     BaggingWorkCalendarUse: bool = False
     BaggingWorkStartHour: int = 0
     BaggingWorkEndHour: int = 24
-
 
     # Reactor Shutdown 일정 변수
     ReactorShutdownYn: str = ""
