@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
-# encoding: utf-8
 import sys
 import os
 import time
@@ -14,7 +10,7 @@ from M06_Utility import comUtility
 
 
 class ConnectionManager(object):
-    # 환경 설정
+    # Configuration
     os.environ["NLS_LANG"] = ".AL32UTF8"
     START_VALUE = u"Unicode \u3042 3".encode('utf-8')
     END_VALUE = u"Unicode \u3042 6".encode('utf-8')
@@ -69,38 +65,15 @@ class ConnectionManager(object):
             print(e)
         finally:
             print(f"rslt: {rslt}")
-        # try:
-        #     self._conTNS = cx_Oracle.makedsn(self._conIP, self._conPORT, self._conSID)
-        # except Exception as e:
-        #     pass
-
-        # try:
-        #     if len(self.conf_path) < 1:
-        #         self._reset_conf_path()
-        #
-        #     assert os.path.exists(self.conf_path),  f"[FileNotFound] {self.conf_path}"
-        #
-        #
-        #
-        # except IOError as e:
-        #     print("I/O error({}): {}".format(
-        #         e.errno, e.strerror
-        #     ))
-        # except:
-        #     print("Unexpected error:", sys.exc_info()[0])
-        #
-        # return True
 
     def GetDbData(self, sql: str, params=None):
         try:
             con = self._getConnection()
             cur = con.cursor()
-            # print("$$ Query / Con: {}, Cur: {}".format(id(con), id(cur)))
             cur.execute(sql, params or ())
             rslt = cur.fetchall()
             # con.commit()
             self._releaseConnection(con)
-            # print(rslt)
             return rslt
 
         except cx_Oracle.DatabaseError as err:
@@ -134,7 +107,7 @@ class ConnectionManager(object):
             errCnt = 0
             while errCnt < 11:
                 con = self._getConnection()
-                if con != None:
+                if con is not None:
                     break
                 else:
                     errCnt += 1
@@ -169,11 +142,6 @@ class ConnectionManager(object):
                     user=self._conUID,
                     password=self._conPWD,
                     dsn=self._conTNS,
-                    #min=1,
-                    #max = 2,
-                    #increment=1,
-                    #threaded=True,
-                    # encoding="UTF-8"
                 )
             return self._pool.acquire()
 
@@ -231,7 +199,7 @@ class ConnectionManager(object):
     # ================================================================================= #
     # DB에서 Data 불러오는 처리
     # ================================================================================= #
-    # 공급 계획 정보
+    # Supply Plan Information
     def GetDpQtyDataSql(self):
         sql = """ SELECT MST.PLAN_YYMM AS YYYYMM
                          , MST.ITEM_CD AS PROD_CODE
@@ -308,7 +276,7 @@ class ConnectionManager(object):
                       ON MST.ITEM_CD = J01.ITEM_CD """
         return sql
 
-    # 엔진 Configuration Data
+    # Engine Configuration Data
     def GetEngineConfDataSql(self):
         sql = """ SELECT PARAM_CD
                 , PARAM_NM
@@ -317,7 +285,7 @@ class ConnectionManager(object):
 
         return sql
 
-    # Machine 비가용 계획 Data
+    # Machine Unavailable Plan Data
     def GetMacUnAvlTimeDataSql(self):
         sql = """
         SELECT CASE WHEN RES_CD = 'M1' THEN 'reactor'

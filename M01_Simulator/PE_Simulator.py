@@ -8,6 +8,8 @@ from M04_PhyProductionMgr import objWarehouse, objMachine
 from M06_Utility import comUtility
 
 class Simulator:
+    FACTORY_ID = 'TEST'
+
     def __init__(self):
         self._util = comUtility.Utility
         self.DataMgr: dbDataMgr.DataManager = None
@@ -52,7 +54,7 @@ class Simulator:
 
         # Factory 인스턴스 세팅
         if self.DataMgr.dmdMonth is not None:
-            self._createNewFactory(factory_id="GS_CALTEX", day_start_time=day_start_time,
+            self._createNewFactory(factory_id=FACTORY_ID, day_start_time=day_start_time,
                                    year=comUtility.Utility.DayStartDate.year,
                                    month=comUtility.Utility.DayStartDate.month,
                                    day=comUtility.Utility.DayStartDate.day,
@@ -60,7 +62,7 @@ class Simulator:
                                    silo_qty=comUtility.Utility.SiloCapa,
                                    nof_silo=SiloQty, silo_wait_hours=int(silo_wait_hours))
         else:
-            self._createNewFactory(factory_id="GS_CALTEX", day_start_time=day_start_time, year=year, month=month,
+            self._createNewFactory(factory_id=FACTORY_ID, day_start_time=day_start_time, year=year, month=month,
                                    day=day,
                                    horizon_days=comUtility.Utility.DayHorizon.days,
                                    silo_qty=comUtility.Utility.SiloCapa,
@@ -80,8 +82,7 @@ class Simulator:
 
     def runSimulator(self):
         if len(self._facObjList) < 1:
-            # Factory가 없는 경우?
-            print("Factory 객체 없음")
+            print("Factory Object does not exist")
             raise AssertionError()
         elif len(self._facObjList) == 1:
             self._runSingleFactory()
@@ -90,10 +91,10 @@ class Simulator:
 
     def _runSingleFactory(self):
         facObj: simFactoryMgr.Factory = self._facObjList[0]
-        # 머신 깨우기
+        # Initialize Machine
         facObj.wake_up_machine()
-        # Lot 할당
-        # facObj.AssignLot()
+        # Allocate Lot
+        facObj.AssignLot()
 
         # Factory 초기 시작시간 셋팅
         self._util.SetRuntime(runtime=self._util.DayStartDate)
@@ -104,7 +105,18 @@ class Simulator:
     def _runMultiFactory(self):
         pass
 
-    def _createNewFactory(self, factory_id: str, day_start_time: str, year: int, month: int, day: int, horizon_days: int, silo_qty: int, nof_silo: int, silo_wait_hours: int = 0):
+    def _createNewFactory(
+            self,
+            factory_id: str,
+            day_start_time: str,
+            year: int,
+            month: int,
+            day: int,
+            horizon_days: int,
+            silo_qty: int,
+            nof_silo: int,
+            silo_wait_hours: int = 0
+    ):
         facObj: simFactoryMgr = simFactoryMgr.Factory(simul=self, facID=factory_id)
         facObj.SetupObject(
             dayStartTime=day_start_time,

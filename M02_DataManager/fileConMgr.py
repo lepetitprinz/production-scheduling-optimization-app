@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import os
 import pandas as pd
 
@@ -82,18 +80,9 @@ class FileManager(object):
 
     def _search_data_dir(self):
         # data 폴더 경로 찾는 처리
-
         data_dir: str = ""
         for fnm in os.listdir(comUtility.Utility.project_dir):
             if fnm == "data":
                 data_dir = os.path.join(comUtility.Utility.project_dir, fnm)
                 return data_dir
         return data_dir
-
-
-def test():
-    pass
-
-
-if __name__ == '__main__':
-    test()

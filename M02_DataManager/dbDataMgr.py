@@ -14,7 +14,7 @@ class DataManager:
 
     def __init__(self, source: str = "db", dmdMonth: int = None):
 
-        # 기본 정보
+        # Metadata
         self._source: str = source
         self._conMgr = None
 
@@ -49,11 +49,6 @@ class DataManager:
         return self.dbEngConf
 
     def SetupObject(self):
-        # if self._source == "db":
-        #     self._setup_db_connection()
-        # elif self._source == "file":
-        #     self._setup_file_connection()
-
         if self._source == "file":
             self._setup_file_connection()
 
@@ -104,13 +99,6 @@ class DataManager:
 
             self.dbMacUnAvlTime = pd.DataFrame(macUnAvlTime, columns=macUnAvlColName)
 
-            # self.dbEngConf = pd.DataFrame(engConfig, columns=engConfigColName)
-
-        # self.df_demand = self._conMgr.load_data(data_name="demand")
-        # self.dfProdWheel = self._conMgr.load_data(data_name="prod_wheel")
-        # self.df_prod_yield = self._conMgr.load_data(data_name="prod_yield")
-
-        # self._preprocessing()
         self._getProdMstDict()
         self._getDmdQtyDict()
         self._getProdYieldDict()
@@ -119,8 +107,6 @@ class DataManager:
         self._fsVerId = comUtility.Utility.FsVerId
         comUtility.Utility.DmdQtyDict = self._dmdToQtyDict.copy()
         comUtility.Utility.ProdWheelDf = self.dbProdWheel.copy()
-        # comUtility.Utility.SetRootPath(rootPath=self._conMgr.RootPath)
-        # comUtility.Utility.SetConfPath(confPath=self._conMgr.conf_path)
 
     def CloseDataMgr(self):
         self._conMgr.CloseConnection()
